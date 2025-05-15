@@ -1,0 +1,177 @@
+<!-- Profile Page -->
+<div class="profile-page-wrapper">
+    <div class="container profile-container">
+        <div class="row profile-sections">
+            <!-- Profile Card -->
+            <div class="col-lg-4">
+                <div class="card profile-card">
+                    <div class="card-body text-center">
+                        <div class="avatar-container mb-3">
+                            <img src="/public/assets/icons/avatar.svg" class="rounded-circle img-fluid" id="profileAvatar">
+                        </div>
+                        <p class="text-gold fw-bold mb-3" id="profileUsername"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats and Settings -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">Player Statistics</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="mb-0">Total Games</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-muted mb-0" id="statsTotalGames">0</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="mb-0">Wins</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-muted mb-0" id="statsWins">0</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="mb-0">Losses</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-muted mb-0" id="statsLosses">0</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="mb-0">Win Rate</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-muted mb-0" id="statsWinRate">0%</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <p class="mb-0">Rank</p>
+                            </div>
+                            <div class="col-sm-6">
+                                <p class="text-muted mb-0" id="statsRank">Beginner</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">Account Information</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Display Name</label>
+                            <input type="text" class="form-control" id="settingDisplayName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="settingEmail" readonly>
+                        </div>
+                        <div class="mb-4 p-3 border rounded bg-dark border-gold">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="fw-bold text-gold mb-0 twoFA-header">Two-Factor Authentication</h5>
+                                <span id="twoFAStatus" class="badge bg-danger">Disabled</span>
+                            </div>
+                            <p class="text-light small mb-3">
+                                <i class="bi bi-shield-lock-fill me-1"></i>
+                                Secure your account with an additional layer of protection using an authenticator app.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <button type="button" id="enableTwoFABtn" class="btn btn-outline-gold btn-sm" onclick="event.preventDefault();">
+                                    <i class="bi bi-lock-fill me-1"></i>Enable 2FA
+                                </button>
+                                <button type="button" id="disableTwoFABtn" class="btn btn-outline-danger btn-sm d-none" onclick="event.preventDefault();">
+                                    <i class="bi bi-unlock-fill me-1"></i>Disable 2FA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">Recent Matches</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Vs</th>
+                                        <th>Score</th>
+                                        <th>Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matchHistoryTable">
+                                    <tr>
+                                        <td colspan="4" class="text-center">No match history available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Two-Factor Authentication Modal -->
+        <div id="twoFAModal" class="two-fa-container d-none">
+            <div class="two-fa-content">
+                <div class="two-fa-header">
+                    <h5 class="two-fa-title">Two-Factor Authentication</h5>
+                    <button type="button" class="close-button" id="twoFACloseButton">&times;</button>
+                </div>
+                <div class="two-fa-body">
+                    <div class="alert alert-danger d-none" id="twofa-error"></div>
+                    
+                    <!-- QR Code Section (shown when enabling 2FA) -->
+                    <div id="qrCodeSection" class="d-none text-center mb-4">
+                        <h6 class="text-gold mb-3">Scan this QR code with your authenticator app</h6>
+                        <div id="qrCodeContainer" class="qr-code-container mb-3">
+                            <div class="spinner-border text-gold" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div class="text-light mb-2 small">Or enter this setup key manually:</div>
+                        <div id="secretKey" class="secret-key bg-dark text-gold p-2 mb-3"></div>
+                        <p class="text-light small">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            After scanning, enter the 6-digit code from your app below to verify and activate 2FA.
+                        </p>
+                    </div>
+                    
+                    <form id="twoFAForm">
+                        <div class="form-group">
+                            <label for="twoFACode" class="form-label">Verification Code</label>
+                            <input type="text" class="form-control" id="twoFACode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="123456" required>
+                            <div class="invalid-feedback">Please enter a valid 6-digit code</div>
+                        </div>
+                        
+                        <div class="form-button-container">
+                            <button type="submit" class="verify-button">
+                                <span class="spinner d-none" data-spinner></span>
+                                <span data-button-text>Verify</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add the profile-page class to the body when profile page is loaded
+    document.body.classList.add('profile-page');
+</script> 

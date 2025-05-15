@@ -1,0 +1,217 @@
+<div class="game-page-wrapper">
+    <div class="game-container text-center p-4">
+        <h2 class="text-gold mb-4">Pong Game</h2>
+        
+        <!-- Game mode buttons at the top in a single row -->
+        <div class="game-buttons top-buttons">
+            <button class="game-btn" id="pvpButton">1 VS 1</button>
+            <button class="game-btn" id="pveButton">1 VS AI</button>
+            <button class="game-btn" id="multiplayerButton">MULTIPLAYER</button>
+            <button class="game-btn" id="tournamentButton">TOURNAMENT</button>
+        </div>
+        
+        <!-- Game Area -->
+        <div class="gameContainer">
+            <!-- Player 1 info on the left side -->
+            <div class="player1Info">
+                <span class="playerName" id="player1Name">PLAYER 1</span>
+                <span class="score player1Score" id="player1Score">0</span>
+            </div>
+            
+            <!-- Game area in the middle -->
+            <div class="gameArea">
+                <!-- Video Background - Hidden by default -->
+                <div class="video-background" id="videoBackground" style="display: none;">
+                    <div class="video-overlay"></div>
+                    <video autoplay muted loop playsinline> 
+                        <source src="../public/assets/videos/bg1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                
+                <div class="paddle1 paddle" id="paddle1"></div>
+                <div class="paddle2 paddle" id="paddle2"></div>
+                <div class="paddle3 paddle" id="paddle3" style="display: none;"></div>
+                <div class="paddle4 paddle" id="paddle4" style="display: none;"></div>
+                <div class="ball" id="ball"></div>
+                <div class="net"></div>
+                
+                <!-- Tournament announcement overlay -->
+                <div id="tournamentAnnouncement" style="display: none;">
+                    Semifinal 1: Player 1 vs Player 2
+                </div>
+            </div>
+            
+            <!-- Player 2 info on the right side -->
+            <div class="player2Info">
+                <span class="playerName" id="player2Name">PLAYER 2</span>
+                <span class="score player2Score" id="player2Score">0</span>
+            </div>
+        </div>
+        
+        <!-- Start Game Instructions -->
+        <h3 class="startText" id="startText" style="display: none;">
+            Press any key to Start
+        </h3>
+        
+        <!-- Game buttons at the bottom in a single row -->
+        <div class="game-buttons bottom-buttons">
+            <button class="game-btn" id="settingsButton">SETTINGS</button>
+            <button class="game-btn" id="howToPlayButton">HOW TO PLAY</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div class="screen" id="settingsScreen" style="display: none;">
+            <h3>Game Settings</h3>
+            <div class="settings-container">
+                <div class="settings-column">
+                    <div class="setting">
+                        <label for="winScore">Points to Win:</label>
+                        <select id="winScore">
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="7">7</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="player1NameInput">Player 1 Name:</label>
+                        <input type="text" id="player1NameInput" placeholder="Player 1" maxlength="10">
+                    </div>
+                    <div class="setting">
+                        <label for="player2NameInput">Player 2 Name:</label>
+                        <input type="text" id="player2NameInput" placeholder="Player 2" maxlength="10">
+                    </div>
+                </div>
+                <div class="settings-column">
+                    <div class="setting">
+                        <label for="ballSpeedSelect">Ball Speed:</label>
+                        <select id="ballSpeedSelect">
+                            <option value="3">Slow</option>
+                            <option value="5" selected>Normal</option>
+                            <option value="8">Fast</option>
+                        </select>
+                    </div>
+                    <div class="setting" id="aiDifficultyContainer">
+                        <label for="aiDifficultySelect">AI Difficulty:</label>
+                        <select id="aiDifficultySelect">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="paddleSize">Paddle Size:</label>
+                        <select id="paddleSize">
+                            <option value="small">Small</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="backgroundSelect">Map:</label>
+                        <select id="backgroundSelect">
+                            <option value="classic" selected>Classic</option>
+                            <option value="video">Sparkle</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button class="game-btn" id="saveSettingsButton">Save Settings</button>
+            <button class="game-btn" id="backButton">Back to Menu</button>
+        </div>
+        
+        <!-- How to Play Screen -->
+        <div class="screen" id="howToPlayScreen" style="display: none;">
+            <h3>How to Play</h3>
+            <div class="instructionsContainer">
+                <div class="instructionSection">
+                    <h4>Controls:</h4>
+                    <p>Player 1: W (up) and S (down)</p>
+                    <p>Player 2: ↑ (up) and ↓ (down)</p>
+                    <p>In Multiplayer Mode:</p>
+                    <p>Player 3: E (up) and D (down)</p>
+                    <p>Player 4: I (up) and K (down)</p>
+                </div>
+                <div class="instructionSection">
+                    <h4>Gameplay:</h4>
+                    <p>Hit the ball with your paddle to return it to your opponent.</p>
+                    <p>Score points when your opponent misses the ball.</p>
+                    <p>First player to reach the win score wins the game!</p>
+                    <p><strong>Multiplayer (4P) Mode:</strong> In this tag-team mode, when a paddle hits the ball, it becomes inactive until its teammate hits the ball. Teams score points together.</p>
+                    <p><strong>Tournament Mode:</strong> 4 players compete in semifinals and then a final match to determine the champion.</p>
+                </div>
+                <div class="instructionSection">
+                    <h4>Tips:</h4>
+                    <p>The ball speeds up after each hit.</p>
+                    <p>Hitting the ball with the edge of the paddle gives it a steeper angle.</p>
+                    <p>You can adjust game settings before starting a match.</p>
+                </div>
+            </div>
+            <button class="game-btn" id="backFromHowToPlayButton">Back to Menu</button>
+        </div>
+        
+        <!-- Tournament Setup Screen -->
+        <div class="screen" id="tournamentScreen" style="display: none;">
+            <h3>Tournament Mode</h3>
+            <div id="tournamentBracket">
+                <div class="tournament-round">
+                    <h4>Semifinals</h4>
+                    <div class="tournament-match" id="semifinal1">
+                        <span id="semi1Player1">Player 1</span> vs <span id="semi1Player2">Player 2</span>
+                    </div>
+                    <div class="tournament-match" id="semifinal2">
+                        <span id="semi2Player1">Player 3</span> vs <span id="semi2Player2">Player 4</span>
+                    </div>
+                </div>
+                <div class="tournament-round">
+                    <h4>Final</h4>
+                    <div class="tournament-match" id="final">
+                        <span id="finalPlayer1">Winner</span> vs <span id="finalPlayer2">Winner</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tournament-inputs">
+                <div class="setting">
+                    <label for="tournament-p1">Player 1:</label>
+                    <input type="text" id="tournament-p1" placeholder="Player 1" maxlength="10">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p2">Player 2:</label>
+                    <input type="text" id="tournament-p2" placeholder="Player 2" maxlength="10">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p3">Player 3:</label>
+                    <input type="text" id="tournament-p3" placeholder="Player 3" maxlength="10">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p4">Player 4:</label>
+                    <input type="text" id="tournament-p4" placeholder="Player 4" maxlength="10">
+                </div>
+            </div>
+            <button class="game-btn" id="startTournamentButton">Start Tournament</button>
+            <button class="game-btn" id="backFromTournamentButton">Back to Menu</button>
+        </div>
+        
+        <!-- Win Screen Overlay -->
+        <div class="screen" id="winScreen" style="display: none;">
+            <h2>Game Over!</h2>
+            <h3 id="winnerText">Player 1 Wins!</h3>
+            <p>Final Score: <span id="finalScore">0 - 0</span></p>
+            <button class="game-btn" id="nextMatchButton" style="display: none;">Next Match</button>
+            <button class="game-btn" id="menuButton">Back to Menu</button>
+        </div>
+        
+        <!-- Window Size Warning Overlay -->
+        <div class="screen" id="sizeWarningScreen" style="display: none;">
+            <h2>Window Too Small!</h2>
+            <p>Please increase your window size to play the game properly.</p>
+            <p>For the best experience, use a larger screen or maximize your browser window.</p>
+        </div>
+    </div>
+    
+    <!-- Audio elements for sound effects -->
+    <audio src="../public/assets/sound/paddle.wav" id="paddleSound"></audio>
+    <audio src="../public/assets/sound/wall.wav" id="wallSound"></audio>
+    <audio src="../public/assets/sound/loss.wav" id="lossSound"></audio>
+</div> 

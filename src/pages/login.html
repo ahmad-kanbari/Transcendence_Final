@@ -1,0 +1,83 @@
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <div class="auth-container p-4">
+            <div class="text-center mb-4">
+                <h2 class="text-gold">Account Access</h2>
+                <p>Login or create a new account to track your scores and challenge friends</p>
+            </div>
+            
+            <div class="auth-tabs mb-4">
+                <div class="nav nav-tabs justify-content-center">
+                    <button class="nav-link active" id="loginTab">Login</button>
+                    <button class="nav-link" id="registerTab">Register</button>
+                </div>
+            </div>
+            
+            <div class="tab-content">
+                <!-- Login Form -->
+                <div id="loginFormContainer" class="tab-pane fade show active">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="loginUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="loginUsername" required autocomplete="username">
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/25</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" required autocomplete="current-password">
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/25</small>
+                            </div>
+                        </div>
+                        <div class="mb-3 text-end">
+                            <button type="button" id="login42Link" class="btn btn-outline-gold btn-sm">Login with 42</button>
+                        </div>
+                        <div class="d-grid">
+                            <button id="loginBtn" type="submit" class="btn btn-gold">Login</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="registerFormContainer" class="tab-pane fade">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" required autocomplete="username">
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/25</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="registerEmail" required autocomplete="email">
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/50</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" required autocomplete="new-password">
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/25</small>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" required autocomplete="new-password">
+                            <div id="passwordMatchStatus" class="form-text mt-1"></div>
+                            <div class="d-flex justify-content-end">
+                                <small class="text-white char-count">0/25</small>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button id="registerFormButton" type="submit" class="btn btn-gold">Create Account</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

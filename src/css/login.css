@@ -1,0 +1,165 @@
+/* Login page specific styles */
+#loginPage .row {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.auth-container {
+    width: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    max-width: 700px;
+}
+
+/* Auth Form */
+.auth-form {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--gold-dark);
+    margin-bottom: 1.5rem;
+}
+
+/* OAuth Separator */
+.oauth-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.oauth-separator::before,
+.oauth-separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--gold-dark);
+}
+
+.oauth-separator span {
+    padding: 0 10px;
+    color: var(--gold);
+    font-size: 0.9rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--gold);
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--gold-dark);
+    border-radius: 4px;
+    color: var(--white);
+    font-size: 1rem;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+}
+
+.form-switch {
+    text-align: center;
+    margin-top: 1rem;
+    color: var(--white);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.form-switch a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.form-switch a:hover {
+    text-decoration: underline;
+    color: var(--gold-light);
+}
+
+/* Auth Tabs */
+.auth-tabs .nav-tabs {
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.auth-tabs .nav-link {
+    color: rgba(255, 255, 255, 0.7);
+    background-color: transparent;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.auth-tabs .nav-link:hover {
+    color: var(--gold);
+    border-bottom-color: rgba(212, 175, 55, 0.3);
+}
+
+.auth-tabs .nav-link.active {
+    color: var(--gold);
+    background-color: transparent;
+    border-bottom: 2px solid var(--gold);
+}
+
+.auth-container h2 {
+    color: var(--gold);
+    margin-bottom: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.auth-container p {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+#passwordMatchStatus {
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    opacity: 0.9;
+}
+
+#passwordMatchStatus.text-success {
+    color: var(--gold) !important;
+}
+
+#passwordMatchStatus.text-danger {
+    color: #e74c3c !important;
+}
+
+#registerForm .form-control:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+}
+
+/* Add visual feedback when passwords match or don't match */
+#confirmPassword.is-valid {
+    border-color: var(--gold) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23d4af37' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+#confirmPassword.is-invalid {
+    border-color: #e74c3c !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23e74c3c'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23e74c3c' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+} 

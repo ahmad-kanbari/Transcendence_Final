@@ -1,0 +1,787 @@
+:root {
+    /* CSS Variables */
+    --gold: #d4af37;
+    --gold-light: #f5d76e;
+    --gold-dark: #a6862d;
+    --black: #111111;
+    --black-light: #222222;
+    --black-dark: #000000;
+    --white: #ffffff;
+    --gray: #888888;
+
+    /* Toast colors */
+    --toast-error-border: #dc3545;
+    --toast-bg: rgba(0, 0, 0, 0.7);
+    --toast-warning-color: #ffc107;
+    --toast-success-color: #28a745;
+    --toast-info-color: #17a2b8;
+}
+
+/* ===== HEADER STYLES ===== */
+.navbar {
+    background-color: #000000;
+    border-bottom: 2px solid var(--gold);
+    z-index: 1000;
+    padding: 10px 15px;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.logo {
+    font-weight: bold;
+    color: var(--gold) !important;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.logo-text {
+    color: var(--gold);
+    font-weight: bold;
+}
+
+.nav-link-gold {
+    color: #ffffff !important;
+    padding: 8px 15px !important;
+    margin: 0 5px;
+}
+
+.nav-link-gold:hover, .nav-link-gold.active {
+    color: var(--gold) !important;
+}
+
+/* Simple underline instead of animated one */
+.nav-link-gold.active {
+    border-bottom: 2px solid var(--gold);
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--gold);
+}
+
+.navbar-toggler {
+    border: 1px solid var(--gold);
+    padding: 6px 10px;
+}
+
+.navbar-toggler:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.navbar-dark .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28212, 175, 55, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.user-profile {
+    padding: 8px 15px !important;
+    margin: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    height: 100%;
+    transition: all 0.2s ease;
+}
+
+.user-profile:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+    border-radius: 4px;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+}
+
+/* Simple header avatar */
+.header-avatar {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+}
+
+/* Profile dropdown styles */
+.profile-dropdown {
+    display: none; /* Hidden by default, shown via JS when user is logged in */
+}
+
+.profile-dropdown-menu {
+    background-color: #1a1a1a;
+    border: 1px solid var(--gold);
+    margin-top: 8px !important;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 180px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    padding: 5px;
+}
+
+.dropdown-item.logout-btn,
+.dropdown-menu .dropdown-item#profileNavBtn {
+    color: var(--gold) !important;
+    font-weight: 500;
+    padding: 10px 16px;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 2px 0;
+    background-color: transparent !important;
+    text-decoration: none !important;
+}
+
+.dropdown-item.logout-btn i,
+.dropdown-menu .dropdown-item#profileNavBtn i {
+    font-size: 16px;
+    color: var(--gold) !important;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item.logout-btn:hover, 
+.dropdown-item.logout-btn:focus,
+.dropdown-menu .dropdown-item#profileNavBtn:hover,
+.dropdown-menu .dropdown-item#profileNavBtn:focus {
+    background-color: var(--gold) !important;
+    color: #000 !important;
+}
+
+/* Change icon color on hover */
+.dropdown-item.logout-btn:hover i, 
+.dropdown-item.logout-btn:focus i,
+.dropdown-menu .dropdown-item#profileNavBtn:hover i,
+.dropdown-menu .dropdown-item#profileNavBtn:focus i {
+    color: #000 !important;
+}
+
+/* Ensure the profile button is identical to the logout button */
+a#profileNavBtn.dropdown-item {
+    color: var(--gold) !important;
+    background-color: transparent !important;
+}
+
+a#profileNavBtn.dropdown-item:hover,
+a#profileNavBtn.dropdown-item:focus {
+    background-color: var(--gold) !important;
+    color: #000 !important;
+}
+
+a#profileNavBtn.dropdown-item:hover i,
+a#profileNavBtn.dropdown-item:focus i {
+    color: #000 !important;
+}
+
+/* ===== FOOTER STYLES ===== */
+footer {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: var(--gray);
+    border-top: 1px solid var(--gold-dark);
+    padding: 10px 0;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 50px; /* Fixed height */
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Add padding to main content to prevent footer overlap */
+body {
+    padding-bottom: 60px; /* Slightly more than footer height */
+}
+
+/* Responsive adjustments for header and footer */
+@media (max-width: 991.98px) {
+    /* Collapsed navbar styling */
+    .navbar-collapse {
+        background-color: #000;
+        padding: 10px;
+        margin-top: 10px;
+    }
+    
+    .nav-item {
+        margin: 5px 0;
+    }
+    
+    /* Center all items in collapsed menu */
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    /* Make dropdown centered and full width */
+    .dropdown-menu {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Center user profile in mobile view */
+    .user-profile {
+        justify-content: center;
+        padding: 8px 0 !important;
+        width: 100%;
+    }
+    
+    /* Profile dropdown in mobile */
+    .profile-dropdown-menu {
+        width: 100%;
+        margin: 5px auto !important;
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-text {
+        font-size: 1.2rem;
+    }
+    
+    .nav-link-gold {
+        padding: 6px 10px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar {
+        padding: 8px 10px;
+    }
+    
+    .logo-text {
+        font-size: 1rem;
+    }
+}
+
+/* Body Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    color: var(--white);
+    background-color: var(--black-light);
+    overflow-x: hidden;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body, html {
+    height: 100%;
+}
+
+/* ========== Spinner Component Styles ========== */
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 200px;
+    padding: 20px;
+}
+
+.spinner-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(212, 175, 55, 0.2);
+    border-top: 5px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-text {
+    color: var(--gold);
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    margin: 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Make sure hidden spinner is really hidden */
+.spinner-container.hidden {
+    display: none;
+}
+
+.spinner-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+}
+
+/* ========== Toast Component Styles ========== */
+.toast-component {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    width: 350px;
+    background-color: var(--bg-dark, #212529);
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    padding: 12px 16px;
+    color: white;
+    display: flex;
+    align-items: center;
+    z-index: 9999;
+    animation: toastSlideIn 0.3s ease forwards;
+    border-left: 6px solid transparent;
+}
+
+.toast-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+}
+
+.toast-icon-container {
+    margin-right: 15px;
+    font-size: 1.8rem;
+}
+
+.toast-text p {
+    margin: 0;
+}
+
+.toast-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Toast types */
+.toast-error {
+    border-left-color: var(--toast-error-border);
+    background-color: var(--toast-bg);
+}
+
+.toast-error .toast-icon-container,
+.toast-error .toast-title {
+    color: var(--toast-error-border);
+}
+
+.toast-warning {
+    border-left-color: var(--toast-warning-color);
+    background-color: var(--toast-bg)
+}
+
+.toast-warning .toast-icon-container,
+.toast-warning .toast-title {
+    color: var(--toast-warning-color);
+}
+
+.toast-success {
+    border-left-color: var(--toast-success-color);
+    background-color: var(--toast-bg)
+}
+
+.toast-success .toast-icon-container,
+.toast-success .toast-title {
+    color: var(--toast-success-color);
+}
+
+.toast-info {
+    border-left-color: var(--toast-info-color);
+    background-color: var(--toast-bg)
+}
+
+.toast-info .toast-icon-container,
+.toast-info .toast-title {
+    color: var(--toast-info-color);
+}
+
+/* Toast animations */
+@keyframes toastSlideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-component.hide {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+@keyframes toastSlideOut {
+    to { transform: translateX(100%); opacity: 0; }
+} 
+
+/* Video Background Styles */
+
+/* Video Background - Full Screen */
+.video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.video-background video {
+    position: absolute;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+}
+
+/* placed on top of the video to show a little bit of dark background so we can read the text */
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Ensure content appears above video */
+#App, .main-container, .page-content {
+    position: relative;
+    z-index: 1;
+} 
+
+
+/* ========== APP STYLES ========== */
+
+/* Content Container */
+.main-container {
+    position: relative;
+    z-index: 1;
+    min-height: calc(100vh - 50px); /* Viewport height minus footer height */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Page Content */
+.page-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 32px 15px;
+    margin: 60px auto 0;
+    
+    max-width: 1400px;
+}
+
+/* Pages */
+.page {
+    width: 100%;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none;
+}
+
+.active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Text Shadows */
+h1, h2, h3, h4, h5, h6 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Bootstrap utility overrides */
+.d-none {
+    display: none !important;
+}
+
+/* Status Message */
+.status-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background-color: var(--gold-dark);
+    color: var(--black);
+    padding: 12px 25px;
+    border-radius: 4px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    text-align: center;
+    max-width: 300px;
+    font-weight: bold;
+}
+
+.status-message.active {
+    transform: translateX(-50%) translateY(0);
+}
+
+.status-message.error {
+    background-color: #e74c3c;
+    color: var(--white);
+}
+
+
+/* Page Content Adjustments */
+
+
+/* Responsive adjustments */
+@media (min-height: 800px) {
+    .page-content {
+        /* Extra padding on larger screens */
+        padding-bottom: 80px; /* 5rem = 80px */
+    }
+}
+
+/* Row alignment */
+.row {
+    width: auto;
+    max-width: 100%;
+    justify-content: center;
+    margin: 0;
+}
+
+/* Text color utilities */
+.text-gold {
+    color: var(--gold) !important;
+}
+
+/* Link styling */
+.link-gold {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.link-gold:hover {
+    color: var(--gold-light);
+    text-decoration: underline;
+}
+
+/* Button styling */
+.btn-gold {
+    background-color: var(--gold);
+    color: var(--black);
+    border: none;
+    font-weight: bold;
+}
+
+.btn-gold:hover {
+    background-color: var(--gold-light);
+    color: var(--black);
+}
+
+.btn-outline-gold {
+    border: 2px solid var(--gold);
+    color: var(--gold);
+    font-weight: bold;
+}
+
+.btn-outline-gold:hover {
+    background-color: var(--gold);
+    color: var(--black);
+}
+
+/* Form styling */
+.form-control {
+    background-color: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--white);
+    padding: 12px 16px; /* 0.75rem 1rem = 12px 16px */
+    font-size: 16px; /* 1rem = 16px */
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background-color: rgba(30, 30, 30, 0.9);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.25); /* 0.25rem = 4px */
+    color: var(--white);
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.form-label {
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 8px; /* 0.5rem = 8px */
+}
+
+.form-check-input {
+    background-color: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.form-check-input:checked {
+    background-color: var(--gold);
+    border-color: var(--gold);
+}
+
+.form-check-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Generic button styling */
+button {
+    width: 100%;
+    padding: 13px; /* 0.8rem ≈ 13px */
+    background-color: var(--gold);
+    color: var(--black);
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background-color: var(--gold-light);
+}
+
+/* Tab content */
+.tab-content {
+    margin-top: 24px; /* 1.5rem = 24px */
+}
+
+/* Container styling */
+.container {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Container variants */
+.page-content.container-fluid {
+    max-width: 100%; /* Use full available width */
+}
+
+.page-content.container {
+    max-width: 1200px; /* Fixed width container */
+}
+
+/* Page containers */
+#pageSection {
+    min-height: 70vh;
+    padding: 20px 0;
+}
+
+/* Structure for ensuring footer appears correctly */
+.main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 50px); /* Viewport height minus footer height */
+}
+
+/* Fix for video visibility */
+.video-background {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Force footer visibility */
+footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    width: 100%;
+    visibility: visible !important;
+}
+
+/* Dropdown menu styling for black and gold theme */
+.custom-dropdown {
+    background-color: #222;
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5), 0 0 8px rgba(212, 175, 55, 0.3);
+    padding: 8px 0;
+    min-width: 180px;
+    margin-top: 10px;
+}
+
+.custom-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--gold);
+}
+
+.custom-dropdown-item {
+    color: #e0e0e0 !important;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.custom-dropdown-item:hover, 
+.custom-dropdown-item:focus {
+    background-color: rgba(212, 175, 55, 0.1);
+    color: var(--gold) !important;
+    transform: translateX(5px);
+}
+
+.custom-dropdown-item i {
+    color: var(--gold);
+    font-size: 1.1rem;
+}
+
+.gold-divider {
+    height: 1px;
+    background-color: var(--gold);
+    margin: 20px 0;
+}

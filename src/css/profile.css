@@ -1,0 +1,494 @@
+/* Profile page specific styles */
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    width: 100%;
+    margin-top: 200px;
+}
+
+/* Fix for ensuring content fits on small screens */
+body.profile-page {
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--black);
+}
+
+.profile-card {
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+
+/* Profile page wrapper to control overall height */
+.profile-page-wrapper {
+    position: relative;
+    z-index: 1;
+    padding-top: 60px; /* Reduced padding for header */
+    min-height: calc(100vh - 60px); /* Account for header */
+}
+
+/* Profile sections layout */
+.profile-sections {
+    margin: 0;
+    padding: 0;
+}
+
+.profile-sections > div {
+    margin-bottom: 20px;
+}
+
+/* Profile avatar */
+.avatar-container {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 1rem;
+    position: relative;
+}
+
+#profileAvatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 3px solid var(--gold);
+    padding: 3px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Avatar URL styling */
+#avatarUrl {
+    color: var(--gold) !important;
+    font-weight: 500;
+}
+
+/* Mobile-first approach for responsive design */
+/* Base styles are for mobile, then we adjust for larger screens */
+.profile-container {
+    padding-top: 15px; /* Reduced padding since profile-page-wrapper has more padding */
+}
+
+/* Read-only form controls - specifically for text inputs */
+input[type="text"].form-control[readonly],
+input[type="email"].form-control[readonly] {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(212, 175, 55, 0.2);
+    color: var(--white);
+    cursor: default;
+    pointer-events: none;
+}
+
+input[type="text"].form-control[readonly]:focus,
+input[type="email"].form-control[readonly]:focus {
+    box-shadow: none;
+    border-color: rgba(212, 175, 55, 0.2);
+}
+
+.border-gold {
+    border-color: var(--gold) !important;
+}
+
+/* Form control with gold border */
+.form-control.border-gold {
+    border: 1px solid var(--gold);
+}
+
+.form-control.border-gold:focus {
+    border-color: var(--gold-light);
+    box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
+}
+
+/* Fix for 2FA container on all screen sizes */
+.p-3.border.rounded.bg-dark.border-gold {
+    padding: 1rem !important;
+    margin-bottom: 1.5rem;
+}
+
+/* Ensure the form switch container properly wraps on mobile */
+@media (max-width: 576px) {
+    .d-flex.align-items-center.justify-content-between {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+.text-light.small.mt-2.mb-0 {
+    width: 100%;
+    margin-top: 0.75rem !important;
+}
+
+/* Intra Login styling */
+#profileIntraLogin {
+    font-size: 0.9rem;
+    color: var(--gold) !important;
+    font-weight: 500;
+}
+
+/* Profile cards */
+.card {
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: rgba(212, 175, 55, 0.1);
+    color: var(--gold);
+    font-weight: 600;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* Match history styling */
+.table {
+    color: var(--white);
+}
+
+/* Player stats styling */
+#statsTotalGames, #statsWins, #statsLosses, #statsWinRate, #statsRank {
+    color: var(--gold) !important;
+    font-weight: 500;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-striped tbody tr:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+/* Win/Loss row styling */
+.match-win {
+    background-color: rgba(46, 204, 113, 0.15) !important;
+    border-left: 3px solid #2ecc71 !important;
+}
+
+.match-win:hover {
+    background-color: rgba(46, 204, 113, 0.25) !important;
+}
+
+.match-win td:last-child {
+    font-weight: bold;
+    color: #2ecc71 !important;
+}
+
+.match-loss {
+    background-color: rgba(231, 76, 60, 0.15) !important;
+    border-left: 3px solid #e74c3c !important;
+}
+
+.match-loss:hover {
+    background-color: rgba(231, 76, 60, 0.25) !important;
+}
+
+.match-loss td:last-child {
+    font-weight: bold;
+    color: #e74c3c !important;
+}
+
+/* Existing table styling */
+.table-success {
+    background-color: rgba(46, 204, 113, 0.1) !important;
+}
+
+.table-danger {
+    background-color: rgba(231, 76, 60, 0.1) !important;
+}
+
+/* Profile message notifications */
+.profile-message {
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin-top: 15px;
+    transition: opacity 0.5s ease;
+}
+
+/* Two-Factor Authentication Styles */
+/* 2FA Status Badge */
+#twoFAStatus {
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+/* 2FA Buttons */
+#enableTwoFABtn, #disableTwoFABtn {
+    transition: all 0.3s ease;
+}
+
+#enableTwoFABtn:hover {
+    background-color: var(--gold);
+    color: var(--black);
+}
+
+#disableTwoFABtn:hover {
+    background-color: #dc3545;
+    color: var(--white);
+}
+
+/* Two-Factor Authentication Modal Styles */
+.two-fa-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050;
+}
+
+.two-fa-content {
+    background-color: #212529;
+    border-radius: 8px;
+    border: 1px solid #DAA520;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.two-fa-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #343a40;
+    position: relative;
+}
+
+.two-fa-title {
+    color: #DAA520;
+    margin: 0;
+    font-weight: bold;
+    text-align: center;
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-button:hover {
+    color: #DAA520;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.two-fa-body {
+    padding: 15px;
+}
+
+
+.form-button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.verify-button {
+    background-color: #DAA520;
+    color: #212529;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.verify-button:hover {
+    background-color: #c69500;
+}
+
+.verify-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* QR Code Styles */
+.qr-code-container {
+    background-color: #fff;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-code-container img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.secret-key {
+    font-family: monospace;
+    border-radius: 4px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    display: inline-block;
+    max-width: 100%;
+    text-align: center;
+}
+
+.twoFA-header , #profileUsername {
+    font-size: 15px;
+}
+
+/* CONSOLIDATED MEDIA QUERIES */
+@media (min-width: 768px) and (max-width: 991px) {
+    .profile-page-wrapper {
+        margin-top: 350px;
+    }
+    
+    .profile-container {
+        padding: 25px;
+    }
+}
+
+/* Small Screens (576px to 767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .profile-page-wrapper {
+        margin-top: 550px;
+    }
+    
+    .profile-container {
+        padding: 20px 15px;
+    }
+}
+
+/* Extra Small Screens (375px to 575px) */
+@media (min-width: 376px) and (max-width: 575px) {
+    .profile-page-wrapper {
+        margin-top: 800px;
+    }
+    
+    .profile-container {
+        padding: 15px 10px;
+    }
+}
+
+/* Very Small Screens (up to 375px) */
+@media (max-width: 375px) {
+    .profile-page-wrapper {
+        margin-top: 950px;
+    }
+    
+    .profile-container {
+        padding: 10px;
+    }
+}
+
+/* Match history table customization */
+.table thead th {
+    color: var(--gold) !important;
+    border-bottom: 2px solid var(--gold-light);
+    font-weight: 600;
+}
+
+/* Remove all borders from table rows */
+.table tbody tr {
+    border: none !important;
+}
+
+/* Make sure tournament header still has its top border */
+.table tbody tr.table-warning {
+    border-top: 3px solid var(--gold) !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(212, 175, 55, 0.1) !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(212, 175, 55, 0.05);
+}
+
+.table-striped tbody tr:nth-of-type(even) {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.table-warning {
+    background-color: rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Override match history row text colors for normal matches */
+.table tbody tr:not(.table-warning) td {
+    color: var(--white) !important;
+}
+
+/* Tournament match rows text */
+.table tbody tr.table-warning td {
+    color: var(--black) !important;
+}
+
+/* Grouped border for contiguous tournament matches */
+.table tbody tr.table-warning {
+    border-left: 3px solid var(--gold) !important;
+    border-right: 3px solid var(--gold) !important;
+}
+
+/* Top border on first tournament row in each block */
+.table tbody tr:not(.table-warning) + tr.table-warning,
+.table tbody tr.table-warning:first-child {
+    border-top: 3px solid var(--gold) !important;
+}
+
+/* Divider row between tournament blocks */
+.table tbody tr.divider-row td {
+    padding: 0;
+    border: none !important;
+    background: transparent !important;
+    height: 8px;
+}
+/* Add a dashed separator line */
+.table tbody tr.divider-row td {
+    border-top: 2px dashed var(--gold-light) !important;
+}
+/* Override: remove solid gold border above tournament summary rows, keep only the dotted separator */
+.table tbody tr.divider-row + tr.table-warning {
+    border-top: none !important;
+}
+
+/* Optional: remove left/right border on summary row if undesired */
+.table tbody tr.table-warning {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Remove solid gold border under the first tournament match row */
+.table tbody tr.table-warning + tr:not(.table-warning) {
+    border-bottom: none !important;
+}
+
+/* Remove border under the first match row following a tournament header */
+.table tbody tr.table-warning + tr {
+    border-top: none !important;
+    border-bottom: none !important;
+} 

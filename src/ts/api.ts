@@ -1,0 +1,507 @@
+import utils from './utils';
+import { PAGES, ENDPOINTS } from './constants';
+import { User } from './app';
+// Define interfaces for API responses and data
+interface ApiResponse<T = any> {
+  success: boolean;
+  error?: string;
+  data?: T;
+  authExpired?: boolean;
+  [key: string]: any;
+}
+
+interface LoginData {
+  username: string;
+  password: string;
+}
+
+interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface UserData {
+  user: any;
+  isAuthenticated?: boolean;
+}
+
+interface AuthUrlResponse {
+  success: boolean;
+  auth_url?: string;
+  error?: string;
+}
+
+interface PageFetchResult {
+  name: string;
+  element: HTMLElement;
+}
+
+interface PagesCollection {
+  [key: string]: HTMLElement | null;
+}
+
+interface MatchData {
+  player1Name: string;
+  player2Name: string;
+  player1Score: number;
+  player2Score: number;
+  winner: string;
+  matchType: string;
+  [key: string]: any;
+}
+
+class API {
+  async fetchHtml(url: string, returnElement: boolean = true): Promise<HTMLElement | ChildNode | null> {
+    try {
+      const response = await fetch(url);
+      
+      if (!response.ok) 
+        throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+      
+      const html = await response.text();
+      
+      const tempElement = document.createElement('div');
+      tempElement.innerHTML = html;
+      
+      return returnElement ? tempElement.firstChild : tempElement;
+    } catch (error) {
+      console.error(`Error fetching HTML from ${url}:`, error);
+      throw error;
+    }
+  }
+
+  async fetchAllPages(): Promise<PagesCollection> {
+    try {
+      const promises = Object.entries(PAGES).map(([name, url]) => 
+        this.fetchHtml(url as string, false).then(element => ({ name, element }))
+      );
+      
+      const results = await Promise.all(promises) as PageFetchResult[];
+      
+      const pages: PagesCollection = {};
+      results.forEach(result => {
+        pages[result.name] = result.element as HTMLElement;
+      });
+      
+      return pages;
+    } catch (error) {
+      console.error(`Error fetching pages:`, error);
+      throw error;
+    }
+  }
+
+  async login(loginData: LoginData): Promise<ApiResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.auth.login, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: result.error || 'Login failed' };
+      }
+
+      if (!result.user)
+        return { success: false, error: 'No user data received from server' };
+      
+      localStorage.setItem('user', JSON.stringify(result.user));
+      localStorage.setItem('isAuthenticated', 'false');
+      
+      return { success: true, data: result.user };
+    } catch (error: any) {
+      console.error('Login error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async register(registerData: RegisterData): Promise<ApiResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.auth.register, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registerData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        const err = result.error || result.email || result.username || result.password || result.confirmPassword || 'Registration failed';
+        return { success: false, error: err };
+      }
+      
+      return { success: true, data: result.data };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  async logout(): Promise<ApiResponse> {
+    try {
+      await fetch(ENDPOINTS.auth.logout, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      utils.cleanUp();
+
+      return { success: true };
+    } catch (error: any) {
+      utils.cleanUp();
+
+      return { success: false, error: error.message };
+    }
+  }
+
+  async get42AuthUrl(): Promise<AuthUrlResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.auth.auth42, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        },
+      });
+
+      if (!response.ok) {
+        console.error('API: 42 auth URL request failed with status:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('API: 42 auth error details:', errorText);
+        utils.cleanUp();
+        return { success: false };
+      }
+      
+      const data = await response.json();
+      
+      if (!data || !data.auth_url) {
+        throw new Error('No authorization URL received from server');
+      }
+      
+      return { success: true, auth_url: data.auth_url };
+    } catch (error: any) {
+      console.error('42 OAuth Error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getUserData(retryCount: number = 0): Promise<ApiResponse<UserData>> {
+    try {
+      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+      const response = await fetch(ENDPOINTS.user.me, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        
+        if (refreshResult.success) {
+          return await this.getUserData(retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp(); 
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.status}`);
+      }
+      
+      const userData = await response.json();
+
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      return { success: true, userData: userData.user, isAuthenticated };
+    } catch (error: any) {
+      console.error(`Error in getUserData (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+ 
+  async refreshToken(): Promise<ApiResponse> {
+    try {
+      const refreshEndpoint = ENDPOINTS.auth.refreshToken;
+   
+      const response = await fetch(refreshEndpoint, {
+        method: 'POST',
+        credentials: 'include', 
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      });
+
+      if (!response.ok) {
+        utils.cleanUp();
+        return { success: false, error: 'Token refresh failed' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Token refresh error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async setup2FA(retryCount: number = 0): Promise<any> {
+    try {
+      const response = await fetch(ENDPOINTS.auth.setup2FA, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+      
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        
+        if (refreshResult.success) {
+          return await this.setup2FA(retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp(); 
+          throw new Error('Authentication expired. Please log in again.');
+        }
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API.setup2FA: Error response', errorData);
+        throw new Error(errorData.error || 'Failed to setup 2FA');
+      }
+      
+      const responseData = await response.json();
+      
+      return responseData;
+    } catch (error: any) {
+      console.error(`API.setup2FA: Error caught (attempt ${retryCount + 1})`, error);
+      throw error;
+    }
+  }
+  
+  async verify2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      
+      const response = await fetch(ENDPOINTS.auth.verify2FA, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ otp_token: code })
+      });
+      
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        
+        if (refreshResult.success) {
+          return await this.verify2FA(code, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp(); 
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        return { 
+          success: false, 
+          error: responseData.error || 'Failed to verify 2FA code' 
+        };
+      }
+      
+      return { 
+        success: true, 
+        ...responseData 
+      };
+    } catch (error: any) {
+      console.error(`2FA verification error (attempt ${retryCount + 1}):`, error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+  }
+  
+  async disable2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.auth.disable2FA, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ otp_token: code })
+      });
+      
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        
+        if (refreshResult.success) {
+          return await this.disable2FA(code, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp(); 
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        return { 
+          success: false, 
+          error: responseData.error || 'Failed to disable 2FA' 
+        };
+      }
+      
+      return { 
+        success: true, 
+        ...responseData 
+      };
+    } catch (error: any) {
+      console.error(`2FA disabling error (attempt ${retryCount + 1}):`, error);
+      return { 
+        success: false, 
+        error: error.message 
+      };
+    }
+  }
+
+  async submitMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.game.match, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(matchData)
+      });
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.submitMatch(matchData, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { success: false, error: 'Authentication expired. Please log in again.', authExpired: true };
+        }
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to create match' };
+      }
+      return { success: true, data };
+    } catch (error: any) {
+      console.error(`submitMatch error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async createTournament(tournamentData: MatchData[], retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(ENDPOINTS.game.tournament, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(tournamentData)
+      });
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.createTournament(tournamentData, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { success: false, error: 'Authentication expired. Please log in again.', authExpired: true };
+        }
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to create tournament' };
+      }
+      return { success: true, data };
+    } catch (error: any) {
+      console.error(`createTournament error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+
+  GetFakeUserData(retryCount: number = 0):ApiResponse<UserData> {
+    try {
+      const isAuthenticated = true; // Simulate the user being authenticated
+      
+      const fakeUser: User = {
+        profile_image: "https://via.placeholder.com/150",
+        username: "FakeUser123",
+        email: "fakeuser123@example.com",
+        is_oauth_user: false,
+        total_games: 100,
+        wins: 60,
+        win_rate: (60 / 100) * 100, // Dynamically calculate win rate
+        losses: 40,
+        rank: "Gold",
+        is_two_factor_enabled: true,
+        matchHistory: [
+          { matchId: "match1", result: "win" },
+          { matchId: "match2", result: "loss" },
+        ],
+        tournaments: [
+          { tournamentId: "tourney1", placement: 1 },
+          { tournamentId: "tourney2", placement: 3 },
+        ],
+      };
+  
+      // Mock storing user data locally as in getUserData
+      localStorage.setItem("user", JSON.stringify(fakeUser));
+  
+      // Return a successful response with the mock user data
+      return {
+        success: true,
+        userData: { user: fakeUser, isAuthenticated },
+      };
+    } catch (error: any) {
+      console.error("Error in GetFakeUserData:", error);
+  
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+  
+}
+
+const api = new API();
+
+export default api;
