@@ -1,4 +1,5 @@
 import { TOAST_TYPES } from "./constants";
+import localization, { t } from "./localization";
 
 class Components {
 
@@ -30,33 +31,38 @@ class Components {
         this.hideSpinner();
     }
     
-    showToast(type : string, title : string, message : string, duration = 5000){
+    /**
+     * Show a toast notification with localization support
+     * @param type Toast type (error, warning, success, info)
+     * @param title Toast title (can be a translation key starting with '@')
+     * @param message Toast message (can be a translation key starting with '@')
+     * @param duration Duration in milliseconds
+     */
+    showToast(type: string, title: string, message: string, duration = 5000): void {
         if (!this.toastComponent || !this.toastTitle || !this.toastMessage || !this.toastIcon) {
-    
             this.toastComponent = this.toastComponent || document.getElementById('toastComponent');
             this.toastTitle = this.toastTitle || document.getElementById('toastTitle');
             this.toastMessage = this.toastMessage || document.getElementById('toastMsg');
-            this.toastIcon = this.toastIcon || document.querySelector('.toastIcon');
+            this.toastIcon = this.toastIcon || document.querySelector('.toast-icon');
 
             if (!this.toastComponent || !this.toastTitle || !this.toastMessage || !this.toastIcon) {
                 console.error('Toast component or its elements not found');
                 return;
             }
-
         }
 
-        if (this.toastTimeout){
+        if (this.toastTimeout) {
             clearTimeout(this.toastTimeout);    
         }
 
-        this.toastComponent.classList.remove('toast-error', 'toast-warning', 'toast-success', 'toast-info, hide');
-        if (TOAST_TYPES.includes(type)){
+        this.toastComponent.classList.remove('toast-error', 'toast-warning', 'toast-success', 'toast-info', 'hide');
+        if (TOAST_TYPES.includes(type)) {
             this.toastComponent.classList.add(`toast-${type}`);
-        }else {
+        } else {
             this.toastComponent.classList.add('toast-error');
         }
 
-        let iconClass: string | null;
+        let iconClass: string;
         switch (type) {
             case 'error':
                 iconClass = 'bi-exclamation-triangle-fill';
@@ -73,15 +79,20 @@ class Components {
             default:
                 iconClass = 'bi-exclamation-triangle-fill';
         }
-        this.toastIcon!.className = `bi ${iconClass}; toast-icon`;
-        this.toastTitle!.textContent= title;
-        this.toastMessage!.textContent= message;
+        
+        // If title or message start with '@', treat them as translation keys
+        const finalTitle = title.startsWith('@') ? t(title.slice(1)) : title;
+        const finalMessage = message.startsWith('@') ? t(message.slice(1)) : message;
+        
+        this.toastIcon!.className = `bi ${iconClass} toast-icon`;
+        this.toastTitle!.textContent = finalTitle;
+        this.toastMessage!.textContent = finalMessage;
         this.toastComponent!.classList.remove('d-none');
 
-            this.toastTimeout = setTimeout(() => {
-               this.hideToast();
-            }, duration); 
-        }
+        this.toastTimeout = setTimeout(() => {
+            this.hideToast();
+        }, duration); 
+    }
     
         hideToast() {
             if (!this.toastComponent) {

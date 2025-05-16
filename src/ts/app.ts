@@ -1,3 +1,5 @@
+// Tailwind CSS is now loaded via CDN
+
 import api from './api';
 import utils from './utils';
 import login from './login';
@@ -8,6 +10,8 @@ import router from './router';
 import profile from './profile';
 import register from './register';
 import components from './components';
+import localization, { t } from './localization';
+import accessibility from './accessibility';
 
 // Define interfaces for state and user
 interface User {
@@ -471,7 +475,19 @@ const app = new App();
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // Initialize accessibility features
+    accessibility.enhanceKeyboardNavigation();
+    
+    // Initialize the application
     await app.init();
+    
+    // Apply localization to the page after initialization
+    document.dispatchEvent(new CustomEvent('languageChanged', {
+      detail: { 
+        language: localization.currentLanguage, 
+        isRTL: localization.isRTL 
+      }
+    }));
   } catch (error) {
     if (components && components.hideSpinner) {
       components.hideSpinner();

@@ -10,7 +10,8 @@
       "sourceMap": true,
       "lib": ["DOM", "ES2020"],
       "allowJs": true,
-      "checkJs": false
+      "checkJs": false,
+      "resolveJsonModule": true
     },
     "include": ["src/**/*.ts", "src/**/*.js"],
     "exclude": ["node_modules", "dist"]

@@ -2,6 +2,8 @@ import api from './api';
 import utils from './utils';
 import components from './components';
 import { AVAILABLE_PAGES } from './constants';
+import localization, { t } from './localization';
+import accessibility from './accessibility';
 
 // Define interfaces for pages data structure
 interface PagesCollection {
@@ -90,6 +92,12 @@ class Pages {
       this.updateActiveNavLink(pageName);
       window.scrollTo(0, 0);
       
+      // Apply localization to the new page content
+      this.applyLocalizationToPage();
+      
+      // Enhance accessibility for the new page content
+      accessibility.enhanceKeyboardNavigation();
+      
       document.dispatchEvent(new CustomEvent('pageShown', { 
         detail: { page: pageName } 
       }));
@@ -114,6 +122,20 @@ class Pages {
     if (navLink) {
       navLink.classList.add('active');
     }
+  }
+  
+  /**
+   * Apply localization to the current page content
+   * This method translates all elements with data-i18n attributes
+   */
+  applyLocalizationToPage(): void {
+    // Let the localization service handle the translation by triggering an event
+    document.dispatchEvent(new CustomEvent('languageChanged', {
+      detail: { 
+        language: localization.currentLanguage, 
+        isRTL: localization.isRTL 
+      }
+    }));
   }
 }
 
