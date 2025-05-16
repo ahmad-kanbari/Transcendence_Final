@@ -2,16 +2,24 @@
   "name": "my_frontend_hisham",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/ahmad-kanbari/transcendence-frontend#readme",
+  "bugs": {
+    "url": "https://github.com/ahmad-kanbari/transcendence-frontend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmad-kanbari/transcendence-frontend.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --mode production",
     "start": "webpack serve --mode development"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "css-loader": "^7.1.2",

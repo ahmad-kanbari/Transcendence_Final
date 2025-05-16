@@ -5,8 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Pong Game</title>
         
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -38,92 +36,285 @@
             }
         </script>
         <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
         <link rel="stylesheet" href="src/css/index.css">
         <link rel="stylesheet" href="src/css/home.css">
         <link rel="stylesheet" href="src/css/game.css">
         <link rel="stylesheet" href="src/css/login.css">
         <link rel="stylesheet" href="src/css/profile.css">
         <link rel="stylesheet" href="src/css/accessibility.css">
+        
+        <style>
+            /* Accessibility Cyberpunk Styling */
+            .skip-to-content {
+                position: absolute;
+                top: -50px;
+                left: 0;
+                padding: 8px 16px;
+                background-color: #05D9E8;
+                color: #070718;
+                font-family: 'Orbitron', sans-serif;
+                font-weight: 700;
+                z-index: 9999;
+                transition: top 0.3s;
+                border: 1px solid #05D9E8;
+                box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+                clip: rect(0, 0, 0, 0);
+            }
+            
+            .skip-to-content:focus {
+                top: 0;
+                clip: auto;
+                outline: none;
+            }
+            
+            .accessibility-nav {
+                position: fixed;
+                z-index: 100;
+                background-color: rgba(7, 7, 24, 0.9);
+                border: 1px solid #05D9E8;
+                box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+                padding: 8px;
+                border-radius: 4px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                
+                /* Default position for mobile */
+                bottom: 16px;
+                right: 16px;
+                
+                /* Responsive adjustments */
+                @media (min-width: 768px) {
+                    top: 80px;
+                    right: 16px;
+                    bottom: auto;
+                }
+            }
+            
+            .accessibility-nav button {
+                background-color: #0F0F1B;
+                color: #05D9E8;
+                border: 1px solid #05D9E8;
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-family: 'Orbitron', sans-serif;
+                transition: all 0.3s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 40px;
+                min-height: 40px; /* Larger touch target for mobile */
+            }
+            
+            .accessibility-nav button:hover {
+                background-color: #05D9E8;
+                color: #070718;
+                box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+            }
+            
+            .accessibility-nav button.active {
+                background-color: #05D9E8;
+                color: #070718;
+                box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+            }
+            
+            .text-size-controls {
+                display: flex;
+                gap: 5px;
+                justify-content: center;
+            }
+            
+            .text-size-controls button {
+                width: 40px;
+                height: 40px;
+            }
+            
+            /* Collapsed version of accessibility controls for mobile */
+            .accessibility-toggle {
+                position: fixed;
+                bottom: 16px;
+                right: 16px;
+                width: 50px;
+                height: 50px;
+                border-radius: 25px;
+                background-color: #070718;
+                border: 2px solid #05D9E8;
+                box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+                color: #05D9E8;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                z-index: 999;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .accessibility-toggle:hover {
+                transform: scale(1.05);
+            }
+            
+            /* When accessibility panel is expanded */
+            .accessibility-expanded {
+                display: flex !important;
+            }
+            
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border-width: 0;
+            }
+            
+            /* High Contrast Mode */
+            body.high-contrast {
+                background-color: #000000;
+                color: #ffffff;
+            }
+            
+            .high-contrast .navbar,
+            .high-contrast .footer {
+                background-color: #000000 !important;
+                border-color: #ffffff !important;
+            }
+            
+            .high-contrast a,
+            .high-contrast button {
+                color: #ffffff !important;
+                border-color: #ffffff !important;
+            }
+            
+            .high-contrast a:hover,
+            .high-contrast button:hover {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            
+            /* Text Size Adjustments */
+            body.text-size-small {
+                font-size: 0.9rem;
+            }
+            
+            body.text-size-medium {
+                font-size: 1rem;
+            }
+            
+            body.text-size-large {
+                font-size: 1.2rem;
+            }
+            
+            body.text-size-large h1 {
+                font-size: 2.5rem;
+            }
+            
+            body.text-size-large h2 {
+                font-size: 2rem;
+            }
+            
+            body.text-size-large h3 {
+                font-size: 1.75rem;
+            }
+            
+            /* Fix for the Profile navigation alignment issue */
+            .navbar-nav a {
+                display: flex;
+                align-items: center;
+                height: 100%;
+            }
+        </style>
     </head>
 
     <body class="font-body bg-cyber-dark">
-        <header class="cyber-navbar navbar navbar-expand-lg fixed-top navbar-dark">
-            <div class="container">
-                <!-- Logo -->
-                <a id="logo" class="logo flex items-center" href="/" aria-label="Home">
-                    <span class="logo-text font-cyber text-cyber-blue text-xl tracking-widest animate-glow" data-i18n="general.appName">PING PONG</span>
-                </a>
-                
-                <!-- Main Navigation - Always Visible on Desktop -->
-                <div class="hidden lg:flex flex-grow justify-center">
-                    <ul class="navbar-nav flex space-x-4">
-                        <li class="nav-item">
-                            <a href="/" class="cyber-link nav-link px-4 py-2 text-cyber-blue hover:text-cyber-pink" id="homeNavBtn" data-i18n="navigation.home">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/game" class="cyber-link nav-link px-4 py-2 text-cyber-green hover:text-cyber-pink" id="gameNavBtn" data-i18n="navigation.game">Game</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/profile" class="cyber-link nav-link px-4 py-2 text-cyber-purple hover:text-cyber-pink" id="profilePageBtn" data-i18n="navigation.profile">Profile</a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/login" class="cyber-link nav-link px-4 py-2 text-cyber-yellow hover:text-cyber-pink" id="loginNavBtn" data-i18n="navigation.login">Login</a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <!-- Mobile Menu Button -->
-                <button class="navbar-toggler border-cyber-blue focus:outline-none focus:ring-2 focus:ring-cyber-blue lg:hidden" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                
-                <!-- User Profile Dropdown -->
-                <div class="hidden lg:block">
-                    <div id="loginDropdown" class="nav-item dropdown profile-dropdown">
-                        <div class="user-profile flex items-center justify-center px-4 py-2 mx-1 cursor-pointer hover:bg-cyber-darker rounded" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img id="loggedInUserImg" class="header-avatar rounded-full w-8 h-8 border border-cyber-blue shadow-neon-blue mr-2" src="src/assets/icons/avatar.svg" alt="User">
-                            <span id="loggedInUsername" class="user-name text-white"></span>
-                        </div>
-                        <ul class="dropdown-menu border border-cyber-blue bg-cyber-darker rounded-md shadow-neon-blue dropdown-menu-end profile-dropdown-menu" aria-labelledby="userProfileDropdown">
+        <!-- Skip to Content Link (Initially Hidden, Visible on Tab) -->
+        <a href="#App" class="skip-to-content" data-i18n="accessibility.skipToContent">Skip to content</a>
+        
+        <header class="fixed top-0 w-full bg-cyber-darker bg-opacity-80 border-b border-cyber-blue z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <!-- Logo -->
+                    <a id="logo" class="flex items-center" href="/" aria-label="Home">
+                        <span class="font-cyber text-cyber-blue text-xl tracking-widest" data-i18n="general.appName">PING PONG</span>
+                    </a>
+                    
+                    <!-- Main Navigation - Always Visible on Desktop -->
+                    <div class="hidden lg:flex items-center justify-center flex-grow">
+                        <ul class="flex space-x-4">
                             <li>
-                                <a class="dropdown-item text-cyber-blue hover:bg-cyber-blue hover:text-cyber-darker transition-all duration-300 flex items-center py-2 px-4" href="/profile" id="profileNavBtn">
-                                    <i class="bi bi-person-circle mr-2" aria-hidden="true"></i>
-                                    <span data-i18n="navigation.profile">Profile</span>
-                                </a>
+                                <a href="/" class="px-4 py-2 text-cyber-blue hover:text-cyber-pink transition-colors duration-300 flex items-center" id="homeNavBtn" data-i18n="navigation.home">Home</a>
                             </li>
                             <li>
-                                <a class="dropdown-item text-cyber-pink hover:bg-cyber-pink hover:text-cyber-darker transition-all duration-300 flex items-center py-2 px-4" href="#" id="logoutBtn">
-                                    <i class="bi bi-box-arrow-right mr-2" aria-hidden="true"></i>
-                                    <span data-i18n="navigation.logout">Logout</span>
-                                </a>
+                                <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-center" id="gameNavBtn" data-i18n="navigation.game">Game</a>
+                            </li>
+                            <li>
+                                <a href="/profile" class="px-4 py-2 text-cyber-purple hover:text-cyber-pink transition-colors duration-300 flex items-center" id="profilePageBtn" data-i18n="navigation.profile">Profile</a>
+                            </li>
+                            <li>
+                                <a href="/login" class="px-4 py-2 text-cyber-yellow hover:text-cyber-pink transition-colors duration-300 flex items-center" id="loginNavBtn" data-i18n="navigation.login">Login</a>
                             </li>
                         </ul>
                     </div>
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="hidden lg:block">
+                        <div id="loginDropdown" class="relative">
+                            <div class="user-profile flex items-center justify-center px-4 py-2 mx-1 cursor-pointer hover:bg-cyber-darker rounded" id="userProfileDropdown">
+                                <img id="loggedInUserImg" class="rounded-full w-8 h-8 border border-cyber-blue shadow-neon-blue mr-2" src="src/assets/icons/avatar.svg" alt="User">
+                                <span id="loggedInUsername" class="text-white"></span>
+                            </div>
+                            <ul class="dropdown-menu hidden absolute right-0 mt-2 w-48 border border-cyber-blue bg-cyber-darker rounded-md shadow-neon-blue profile-dropdown-menu">
+                                <li>
+                                    <a class="block text-cyber-blue hover:bg-cyber-blue hover:text-cyber-darker transition-all duration-300 flex items-center py-2 px-4" href="/profile" id="profileNavBtn">
+                                        <i class="bi bi-person-circle mr-2" aria-hidden="true"></i>
+                                        <span data-i18n="navigation.profile">Profile</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="block text-cyber-pink hover:bg-cyber-pink hover:text-cyber-darker transition-all duration-300 flex items-center py-2 px-4" href="#" id="logoutBtn">
+                                        <i class="bi bi-box-arrow-right mr-2" aria-hidden="true"></i>
+                                        <span data-i18n="navigation.logout">Logout</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="lg:hidden flex items-center px-3 py-2 border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink" id="mobileMenuButton" aria-label="Toggle navigation">
+                        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                            <path d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"></path>
+                        </svg>
+                    </button>
                 </div>
                 
-                <!-- Mobile Navigation Menu - Shown when toggled -->
-                <div class="collapse navbar-collapse mt-2 lg:hidden w-full" id="navbarNav">
-                    <ul class="navbar-nav bg-cyber-darker bg-opacity-90 w-full rounded-md border border-cyber-blue p-4 space-y-2 shadow-neon-blue">
-                        <li class="nav-item">
-                            <a href="/" class="cyber-link nav-link flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-blue" id="homeNavBtnMobile">
+                <!-- Mobile Navigation Menu - Hidden by default -->
+                <div class="hidden mt-2 lg:hidden w-full" id="navbarNav">
+                    <ul class="bg-cyber-darker bg-opacity-90 w-full rounded-md border border-cyber-blue p-4 space-y-2 shadow-neon-blue">
+                        <li>
+                            <a href="/" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-blue" id="homeNavBtnMobile">
                                 <i class="bi bi-house-door mr-2 text-cyber-blue"></i>
                                 <span data-i18n="navigation.home">Home</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/game" class="cyber-link nav-link flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="gameNavBtnMobile">
+                        <li>
+                            <a href="/game" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="gameNavBtnMobile">
                                 <i class="bi bi-controller mr-2 text-cyber-green"></i>
                                 <span data-i18n="navigation.game">Game</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/profile" class="cyber-link nav-link flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-purple" id="profileNavBtnMobile">
+                        <li>
+                            <a href="/profile" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-purple" id="profileNavBtnMobile">
                                 <i class="bi bi-person mr-2 text-cyber-purple"></i>
                                 <span data-i18n="navigation.profile">Profile</span>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/login" class="cyber-link nav-link flex items-center p-3 text-white hover:text-cyber-yellow" id="loginNavBtnMobile">
+                        <li>
+                            <a href="/login" class="flex items-center p-3 text-white hover:text-cyber-yellow" id="loginNavBtnMobile">
                                 <i class="bi bi-box-arrow-in-right mr-2 text-cyber-yellow"></i>
                                 <span data-i18n="navigation.login">Login</span>
                             </a>
@@ -131,8 +322,42 @@
                     </ul>
                 </div>
             </div>
-        </header> 
+        </header>
         
+        <!-- Accessibility Toggle Button (Mobile) -->
+        <button class="accessibility-toggle" id="accessibilityToggle" aria-label="Accessibility Options">
+            <i class="bi bi-universal-access"></i>
+        </button>
+        
+        <!-- Accessibility Controls -->
+        <div id="accessibilityControls" class="accessibility-nav flex">
+            <div class="language-selector w-full relative">
+                <button id="languageToggle" class="w-full flex items-center justify-between" aria-expanded="false" aria-haspopup="true">
+                    <div class="flex items-center">
+                        <i class="bi bi-translate mr-2"></i>
+                        <span class="hidden sm:inline" data-i18n="accessibility.language">Language</span>
+                    </div>
+                    <span class="current-lang">EN</span>
+                </button>
+                <ul id="languageMenu" class="lang-dropdown hidden absolute right-0 mt-1 w-full border border-cyber-blue bg-cyber-darker rounded-md shadow-neon-blue z-10">
+                    <li><button class="lang-option w-full text-left px-3 py-2 hover:bg-cyber-blue hover:text-cyber-darker" data-lang="en">English</button></li>
+                    <li><button class="lang-option w-full text-left px-3 py-2 hover:bg-cyber-blue hover:text-cyber-darker" data-lang="ar">العربية</button></li>
+                </ul>
+            </div>
+            <button id="highContrastToggle" aria-pressed="false" data-i18n="accessibility.highContrast" class="w-full">
+                <i class="bi bi-circle-half mr-2"></i> <span class="hidden sm:inline">Contrast</span>
+            </button>
+            <div class="text-size-controls">
+                <span class="sr-only" data-i18n="accessibility.textSize">Text Size</span>
+                <button id="smallTextBtn" style="font-size: 0.8rem;" aria-label="Small Text" data-i18n-attr="aria-label:accessibility.textSizeSmall">A</button>
+                <button id="mediumTextBtn" style="font-size: 1rem;" aria-label="Medium Text" data-i18n-attr="aria-label:accessibility.textSizeMedium" class="active">A</button>
+                <button id="largeTextBtn" style="font-size: 1.2rem;" aria-label="Large Text" data-i18n-attr="aria-label:accessibility.textSizeLarge">A</button>
+            </div>
+         
+           
+        </div>
+        
+        <!-- Video Background -->
         <div class="video-background">
             <div class="video-overlay cyber-grid-bg"></div>
             <video autoplay muted loop preload="auto" style="background: #070718;"> 
@@ -141,34 +366,275 @@
             </video>
         </div>
         
+        <!-- Main Content Area -->
         <main id="App" class="main-container px-4">
+            <!-- Your main content will be loaded here -->
         </main>
         
-        <footer class="py-3 mt-5 bg-cyber-darker bg-opacity-80 border-t border-cyber-blue">
-            <div class="container text-center">
-                <p class="font-cyber text-cyber-blue text-sm tracking-wide mb-0">&copy; 2025 <span class="cyber-glitch">ft_transcendence</span>. All rights reserved.</p>
+        <!-- Footer -->
+        <footer class="py-0 mt-1 bg-cyber-darker bg-opacity-80 border-t border-cyber-blue">
+            <div class="container mx-auto text-center">
+                <p class="font-cyber text-cyber-blue text-sm tracking-wide mb-0">&copy; 2025 <span class="cyber-glitch">ft_transcendence</span>.</p>
             </div>
         </footer>
         
-        <div id="spinnerContainer" class="spinner-container d-none">
-            <div class="spinner-content">
-                <div class="spinner border-4 border-cyber-darker border-t-cyber-blue shadow-neon-blue w-12 h-12"></div>
+        <!-- Loading Spinner -->
+        <div id="spinnerContainer" class="hidden fixed inset-0 flex items-center justify-center z-50 bg-cyber-black bg-opacity-50">
+            <div class="p-6 rounded-lg">
+                <div class="w-12 h-12 border-4 border-cyber-darker border-t-cyber-blue shadow-neon-blue rounded-full animate-spin"></div>
             </div>
         </div>
         
-        <div id="toastComponent" class="toast-component d-none border-l-4 border-cyber-pink bg-cyber-darker bg-opacity-90 rounded-r shadow-neon-pink">
-            <div class="toast-icon-container text-cyber-pink">
-                <i class="bi bi-exclamation-triangle-fill toast-icon"></i>
-            </div>
-            <div class="toast-text">
-                <p class="toast-title font-cyber text-cyber-pink" id="toastTitle"></p>
-                <p class="toast-message text-white" id="toastMsg"></p>
+        <!-- Toast Notification -->
+        <div id="toastComponent" class="hidden fixed bottom-4 right-4 max-w-sm border-l-4 border-cyber-pink bg-cyber-darker bg-opacity-90 rounded-r shadow-neon-pink">
+            <div class="flex p-4">
+                <div class="flex-shrink-0 text-cyber-pink mr-4">
+                    <i class="bi bi-exclamation-triangle-fill text-2xl"></i>
+                </div>
+                <div>
+                    <p class="font-cyber text-cyber-pink text-lg" id="toastTitle"></p>
+                    <p class="text-white text-sm" id="toastMsg"></p>
+                </div>
             </div>
         </div>
 
+        <!-- JavaScript -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
+            // Accessibility Controls
+            // document.addEventListener('DOMContentLoaded', function() {
+            //     // Initialize accessibility options
+            //     let accessibilityOptions = localStorage.getItem('accessibility') 
+            //         ? JSON.parse(localStorage.getItem('accessibility'))
+            //         : {
+            //             highContrast: false,
+            //             textSize: 'medium'
+            //         };
+                
+            //     // Apply saved settings
+            //     applyAccessibilitySettings();
+                
+            //     // Mobile Menu Toggle
+            //     const mobileMenuButton = document.getElementById('mobileMenuButton');
+            //     const navbarNav = document.getElementById('navbarNav');
+                
+            //     mobileMenuButton.addEventListener('click', function() {
+            //         navbarNav.classList.toggle('hidden');
+            //     });
+                
+            //     // User profile dropdown toggle
+            //     const userProfileDropdown = document.getElementById('userProfileDropdown');
+            //     const dropdownMenu = document.querySelector('.dropdown-menu');
+                
+            //     if (userProfileDropdown && dropdownMenu) {
+            //         userProfileDropdown.addEventListener('click', function() {
+            //             dropdownMenu.classList.toggle('hidden');
+            //         });
+                    
+            //         // Hide dropdown when clicking outside
+            //         document.addEventListener('click', function(event) {
+            //             if (!dropdownMenu.contains(event.target) && !userProfileDropdown.contains(event.target)) {
+            //                 dropdownMenu.classList.add('hidden');
+            //             }
+            //         });
+            //     }
+                
+            //     // Accessibility Toggle for Mobile
+            //     const accessibilityToggle = document.getElementById('accessibilityToggle');
+            //     const accessibilityControls = document.getElementById('accessibilityControls');
+                
+            //     accessibilityToggle.addEventListener('click', function() {
+            //         accessibilityControls.classList.toggle('hidden');
+            //         accessibilityControls.classList.toggle('accessibility-expanded');
+            //     });
+                
+            //     // Hide accessibility controls when clicking elsewhere (mobile)
+            //     document.addEventListener('click', function(event) {
+            //         if (!accessibilityControls.contains(event.target) && 
+            //             !accessibilityToggle.contains(event.target) && 
+            //             accessibilityControls.classList.contains('accessibility-expanded')) {
+            //             accessibilityControls.classList.add('hidden');
+            //             accessibilityControls.classList.remove('accessibility-expanded');
+            //         }
+            //     });
+                
+            //     // Language selector functionality
+            //     const languageToggle = document.getElementById('languageToggle');
+            //     const languageMenu = document.getElementById('languageMenu');
+            //     const currentLang = document.querySelector('.current-lang');
+            //     const languageOptions = document.querySelectorAll('.lang-option');
+                
+            //     // Initialize with default language or saved preference
+            //     const savedLanguage = localStorage.getItem('selectedLanguage') || 'en';
+            //     currentLang.textContent = savedLanguage.toUpperCase();
+                
+            //     // Mark the currently active language
+            //     document.querySelector(`.lang-option[data-lang="${savedLanguage}"]`)?.classList.add('active');
+                
+            //     // Toggle language dropdown
+            //     languageToggle.addEventListener('click', function() {
+            //         languageMenu.classList.toggle('hidden');
+            //         languageMenu.classList.toggle('show');
+            //         languageToggle.setAttribute('aria-expanded', languageMenu.classList.contains('show').toString());
+            //     });
+                
+            //     // Handle language selection
+            //     languageOptions.forEach(option => {
+            //         option.addEventListener('click', function() {
+            //             const lang = this.getAttribute('data-lang');
+                        
+            //             // Update current language display
+            //             currentLang.textContent = lang.toUpperCase();
+                        
+            //             // Save preference
+            //             localStorage.setItem('selectedLanguage', lang);
+                        
+            //             // Update active state
+            //             languageOptions.forEach(opt => opt.classList.remove('active'));
+            //             this.classList.add('active');
+                        
+            //             // Hide dropdown
+            //             languageMenu.classList.add('hidden');
+            //             languageMenu.classList.remove('show');
+            //             languageToggle.setAttribute('aria-expanded', 'false');
+                        
+            //             // Trigger language change event for the i18n system
+            //             const event = new CustomEvent('languageChanged', { detail: { language: lang } });
+            //             document.dispatchEvent(event);
+            //         });
+            //     });
+                
+            //     // Close language dropdown when clicking outside
+            //     document.addEventListener('click', function(event) {
+            //         if (!languageMenu.contains(event.target) && 
+            //             !languageToggle.contains(event.target) && 
+            //             languageMenu.classList.contains('show')) {
+            //             languageMenu.classList.add('hidden');
+            //             languageMenu.classList.remove('show');
+            //             languageToggle.setAttribute('aria-expanded', 'false');
+            //         }
+            //     });
+                
+            //     // Adjust for responsive layouts
+            //     function handleResponsiveLayout() {
+            //         // if (window.innerWidth >= 768) { // md breakpoint
+            //         //     accessibilityControls.classList.remove('hidden');
+            //         //     accessibilityControls.classList.remove('accessibility-expanded');
+            //         // } else {
+            //         //     if (!accessibilityControls.classList.contains('accessibility-expanded')) {
+            //         //         accessibilityControls.classList.add('hidden');
+            //         //     }
+            //         // }
+
+            //         if (!accessibilityControls.classList.contains('accessibility-expanded')) {
+            //                 accessibilityControls.classList.add('hidden');
+            //             }
+            //     }
+                
+            //     // Initial call
+            //     handleResponsiveLayout();
+                
+            //     // Listen for window resize
+            //     window.addEventListener('resize', handleResponsiveLayout);
+                
+            //     // High Contrast Toggle
+            //     const highContrastToggle = document.getElementById('highContrastToggle');
+            //     highContrastToggle.addEventListener('click', function() {
+            //         accessibilityOptions.highContrast = !accessibilityOptions.highContrast;
+            //         highContrastToggle.setAttribute('aria-pressed', accessibilityOptions.highContrast.toString());
+            //         if (accessibilityOptions.highContrast) {
+            //             highContrastToggle.classList.add('active');
+            //         } else {
+            //             highContrastToggle.classList.remove('active');
+            //         }
+            //         applyAccessibilitySettings();
+            //         saveAccessibilitySettings();
+            //     });
+                
+            //     // Text Size Controls
+            //     const smallTextBtn = document.getElementById('smallTextBtn');
+            //     const mediumTextBtn = document.getElementById('mediumTextBtn');
+            //     const largeTextBtn = document.getElementById('largeTextBtn');
+                
+            //     smallTextBtn.addEventListener('click', function() {
+            //         accessibilityOptions.textSize = 'small';
+            //         updateTextSizeButtons(smallTextBtn);
+            //         applyAccessibilitySettings();
+            //         saveAccessibilitySettings();
+            //     });
+                
+            //     mediumTextBtn.addEventListener('click', function() {
+            //         accessibilityOptions.textSize = 'medium';
+            //         updateTextSizeButtons(mediumTextBtn);
+            //         applyAccessibilitySettings();
+            //         saveAccessibilitySettings();
+            //     });
+                
+            //     largeTextBtn.addEventListener('click', function() {
+            //         accessibilityOptions.textSize = 'large';
+            //         updateTextSizeButtons(largeTextBtn);
+            //         applyAccessibilitySettings();
+            //         saveAccessibilitySettings();
+            //     });
+                
+            //     // Initialize active states
+            //     if (accessibilityOptions.highContrast) {
+            //         highContrastToggle.classList.add('active');
+            //         highContrastToggle.setAttribute('aria-pressed', 'true');
+            //     }
+                
+            //     // Initialize text size active button
+            //     switch (accessibilityOptions.textSize) {
+            //         case 'small':
+            //             updateTextSizeButtons(smallTextBtn);
+            //             break;
+            //         case 'medium':
+            //             updateTextSizeButtons(mediumTextBtn);
+            //             break;
+            //         case 'large':
+            //             updateTextSizeButtons(largeTextBtn);
+            //             break;
+            //     }
+                
+            //     // Helper Functions
+            //     function updateTextSizeButtons(activeBtn) {
+            //         [smallTextBtn, mediumTextBtn, largeTextBtn].forEach(btn => {
+            //             btn.classList.remove('active');
+            //         });
+            //         activeBtn.classList.add('active');
+            //     }
+                
+            //     function applyAccessibilitySettings() {
+            //         // Apply high contrast mode
+            //         if (accessibilityOptions.highContrast) {
+            //             document.body.classList.add('high-contrast');
+            //         } else {
+            //             document.body.classList.remove('high-contrast');
+            //         }
+                    
+            //         // Apply text size
+            //         document.body.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+            //         document.body.classList.add(`text-size-${accessibilityOptions.textSize}`);
+            //     }
+                
+            //     function saveAccessibilitySettings() {
+            //         localStorage.setItem('accessibility', JSON.stringify(accessibilityOptions));
+            //     }
+                
+            //     // Add keyboard support for UI components
+            //     document.querySelectorAll('[role="button"]:not(button)').forEach(el => {
+            //         el.addEventListener('keydown', (e) => {
+            //             // Activate on Space or Enter key
+            //             if (e.key === ' ' || e.key === 'Enter') {
+            //                 e.preventDefault();
+            //                 el.click();
+            //             }
+            //         });
+            //     });
+            // });
+            
+            // WebSocket mock (from your original code)
             WebSocket = function() { 
                 return { 
                     send: function(){}, 
@@ -177,6 +643,316 @@
             };
         </script>
         
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <script>
+            // Accessibility Controls
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize accessibility options
+                let accessibilityOptions = localStorage.getItem('accessibility') 
+                    ? JSON.parse(localStorage.getItem('accessibility'))
+                    : {
+                        highContrast: false,
+                        textSize: 'medium'
+                    };
+                
+                // Apply saved settings
+                applyAccessibilitySettings();
+                
+                // Mobile Menu Toggle
+                const mobileMenuButton = document.getElementById('mobileMenuButton');
+                const navbarNav = document.getElementById('navbarNav');
+                
+                mobileMenuButton.addEventListener('click', function() {
+                    navbarNav.classList.toggle('hidden');
+                });
+                
+                // User profile dropdown toggle
+                const userProfileDropdown = document.getElementById('userProfileDropdown');
+                const dropdownMenu = document.querySelector('.dropdown-menu');
+                
+                if (userProfileDropdown && dropdownMenu) {
+                    userProfileDropdown.addEventListener('click', function() {
+                        dropdownMenu.classList.toggle('hidden');
+                    });
+                    
+                    // Hide dropdown when clicking outside
+                    document.addEventListener('click', function(event) {
+                        if (!dropdownMenu.contains(event.target) && !userProfileDropdown.contains(event.target)) {
+                            dropdownMenu.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Accessibility Toggle for Mobile
+                const accessibilityToggle = document.getElementById('accessibilityToggle');
+                const accessibilityControls = document.getElementById('accessibilityControls');
+                
+                accessibilityToggle.addEventListener('click', function() {
+                    accessibilityControls.classList.toggle('hidden');
+                    accessibilityControls.classList.toggle('accessibility-expanded');
+                });
+                
+                // Hide accessibility controls when clicking elsewhere (mobile)
+                document.addEventListener('click', function(event) {
+                    if (!accessibilityControls.contains(event.target) && 
+                        !accessibilityToggle.contains(event.target) && 
+                        accessibilityControls.classList.contains('accessibility-expanded')) {
+                        accessibilityControls.classList.add('hidden');
+                        accessibilityControls.classList.remove('accessibility-expanded');
+                    }
+                });
+                
+                // Language selector functionality 
+                const languageToggle = document.getElementById('languageToggle');
+                const languageMenu = document.getElementById('languageMenu');
+                const currentLang = document.querySelector('.current-lang');
+                const languageOptions = document.querySelectorAll('.lang-option');
+                
+                // Initialize with current language from localization service if available,
+                // otherwise use saved preference or default to 'en'
+                let initialLanguage = 'en';
+                
+                
+                // Try to get language from localization service
+                if (window.localization && window.localization.currentLanguage) {
+                    initialLanguage = window.localization.currentLanguage;
+                } else {
+                    // Fallback to localStorage
+                    initialLanguage = localStorage.getItem('selectedLanguage') || 
+                                      localStorage.getItem('language') || 'en';
+                }
+                
+                // Update the display
+                currentLang.textContent = initialLanguage.toUpperCase();
+                
+                // Mark the currently active language
+                document.querySelector(`.lang-option[data-lang="${initialLanguage}"]`)?.classList.add('active');
+                
+                // Toggle language dropdown
+                languageToggle.addEventListener('click', function() {
+                    languageMenu.classList.toggle('hidden');
+                    languageMenu.classList.toggle('show');
+                    languageToggle.setAttribute('aria-expanded', languageMenu.classList.contains('show').toString());
+                });
+                
+                // Handle language selection
+                languageOptions.forEach(option => {
+                    option.addEventListener('click', function() {
+                        const lang = this.getAttribute('data-lang');
+                        
+                        // Update current language display
+                        currentLang.textContent = lang.toUpperCase();
+                        
+                        // Update active state
+                        languageOptions.forEach(opt => opt.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Hide dropdown
+                        languageMenu.classList.add('hidden');
+                        languageMenu.classList.remove('show');
+                        languageToggle.setAttribute('aria-expanded', 'false');
+                        
+                        // Use the localization service if available
+                        if (window.localization && typeof window.localization.setLanguage === 'function') {
+                            window.localization.setLanguage(lang);
+                        } else {
+                            // Fallback: just save to localStorage and trigger event
+                            localStorage.setItem('selectedLanguage', lang);
+                            localStorage.setItem('language', lang); // for compatibility
+                            
+                            // Update document direction for RTL languages
+                            if (lang === 'ar') {
+                                document.documentElement.dir = 'rtl';
+                                document.documentElement.lang = lang;
+                                document.body.classList.add('rtl');
+                            } else {
+                                document.documentElement.dir = 'ltr';
+                                document.documentElement.lang = lang;
+                                document.body.classList.remove('rtl');
+                            }
+                            
+                            // Trigger language change event for the i18n system
+                            const event = new CustomEvent('languageChanged', { 
+                                detail: { 
+                                    language: lang,
+                                    isRTL: lang === 'ar'
+                                } 
+                            });
+                            document.dispatchEvent(event);
+
+                            //need to be checked
+                            location.reload();
+                            // localization.updatePageContent();
+                            // window.reload(); 
+                        }
+                    });
+                });
+                
+                // Close language dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!languageMenu.contains(event.target) && 
+                        !languageToggle.contains(event.target) && 
+                        languageMenu.classList.contains('show')) {
+                        languageMenu.classList.add('hidden');
+                        languageMenu.classList.remove('show');
+                        languageToggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Listen for language changes from other parts of the application
+                document.addEventListener('languageChanged', function(event) {
+                    if (event.detail && event.detail.language) {
+                        // Update language display
+                        currentLang.textContent = event.detail.language.toUpperCase();
+                        
+                        // Update active state
+                        languageOptions.forEach(option => {
+                            const lang = option.getAttribute('data-lang');
+                            option.classList.toggle('active', lang === event.detail.language);
+                        });
+                        
+                        // Apply RTL if needed
+                        if (event.detail.isRTL) {
+                            document.documentElement.dir = 'rtl';
+                            document.body.classList.add('rtl');
+                           
+                            
+                            // Adjust accessibility panel position for RTL
+                            if (window.innerWidth >= 768) { // md breakpoint
+                                accessibilityControls.style.right = 'auto';
+                                accessibilityControls.style.left = '16px';
+                            }
+                        } else {
+                            document.documentElement.dir = 'ltr';
+                            document.body.classList.remove('rtl');
+                            
+                            // Reset accessibility panel position
+                            if (window.innerWidth >= 768) { // md breakpoint
+                                accessibilityControls.style.left = 'auto';
+                                accessibilityControls.style.right = '16px';
+                            }
+                        }
+
+                                                                 
+                    }
+               
+                });
+                
+                // Adjust for responsive layouts
+                function handleResponsiveLayout() {
+                    // if (window.innerWidth >= 768) { // md breakpoint
+                    //     accessibilityControls.classList.remove('hidden');
+                    //     accessibilityControls.classList.remove('accessibility-expanded');
+                    // } else {
+                        if (!accessibilityControls.classList.contains('accessibility-expanded')) {
+                            accessibilityControls.classList.add('hidden');
+                        }
+                    // }
+                }
+                
+                // Initial call
+                handleResponsiveLayout();
+                
+                // Listen for window resize
+                window.addEventListener('resize', handleResponsiveLayout);
+                
+                // High Contrast Toggle
+                const highContrastToggle = document.getElementById('highContrastToggle');
+                highContrastToggle.addEventListener('click', function() {
+                    accessibilityOptions.highContrast = !accessibilityOptions.highContrast;
+                    highContrastToggle.setAttribute('aria-pressed', accessibilityOptions.highContrast.toString());
+                    if (accessibilityOptions.highContrast) {
+                        highContrastToggle.classList.add('active');
+                    } else {
+                        highContrastToggle.classList.remove('active');
+                    }
+                    applyAccessibilitySettings();
+                    saveAccessibilitySettings();
+                });
+                
+                // Text Size Controls
+                const smallTextBtn = document.getElementById('smallTextBtn');
+                const mediumTextBtn = document.getElementById('mediumTextBtn');
+                const largeTextBtn = document.getElementById('largeTextBtn');
+                
+                smallTextBtn.addEventListener('click', function() {
+                    accessibilityOptions.textSize = 'small';
+                    updateTextSizeButtons(smallTextBtn);
+                    applyAccessibilitySettings();
+                    saveAccessibilitySettings();
+                });
+                
+                mediumTextBtn.addEventListener('click', function() {
+                    accessibilityOptions.textSize = 'medium';
+                    updateTextSizeButtons(mediumTextBtn);
+                    applyAccessibilitySettings();
+                    saveAccessibilitySettings();
+                });
+                
+                largeTextBtn.addEventListener('click', function() {
+                    accessibilityOptions.textSize = 'large';
+                    updateTextSizeButtons(largeTextBtn);
+                    applyAccessibilitySettings();
+                    saveAccessibilitySettings();
+                });
+                
+                // Initialize active states
+                if (accessibilityOptions.highContrast) {
+                    highContrastToggle.classList.add('active');
+                    highContrastToggle.setAttribute('aria-pressed', 'true');
+                }
+                
+                // Initialize text size active button
+                switch (accessibilityOptions.textSize) {
+                    case 'small':
+                        updateTextSizeButtons(smallTextBtn);
+                        break;
+                    case 'medium':
+                        updateTextSizeButtons(mediumTextBtn);
+                        break;
+                    case 'large':
+                        updateTextSizeButtons(largeTextBtn);
+                        break;
+                }
+                
+                // Helper Functions
+                function updateTextSizeButtons(activeBtn) {
+                    [smallTextBtn, mediumTextBtn, largeTextBtn].forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    activeBtn.classList.add('active');
+                }
+                
+                function applyAccessibilitySettings() {
+                    // Apply high contrast mode
+                    if (accessibilityOptions.highContrast) {
+                        document.body.classList.add('high-contrast');
+                    } else {
+                        document.body.classList.remove('high-contrast');
+                    }
+                    
+                    // Apply text size
+                    document.body.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
+                    document.body.classList.add(`text-size-${accessibilityOptions.textSize}`);
+                }
+                
+                function saveAccessibilitySettings() {
+                    localStorage.setItem('accessibility', JSON.stringify(accessibilityOptions));
+                }
+                
+                // Add keyboard support for UI components
+                document.querySelectorAll('[role="button"]:not(button)').forEach(el => {
+                    el.addEventListener('keydown', (e) => {
+                        // Activate on Space or Enter key
+                        if (e.key === ' ' || e.key === 'Enter') {
+                            e.preventDefault();
+                            el.click();
+                        }
+                    });
+                });
+            });
+        </script>
         <script src="dist/bundle.js"></script>
     </body>
 </html>

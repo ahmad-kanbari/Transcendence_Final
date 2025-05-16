@@ -31,6 +31,6 @@ module.exports = {
       directory: path.join(__dirname, '/'),
     },
     historyApiFallback: true,
-    port: 3002,
+    port: 3003,
   },
 };
