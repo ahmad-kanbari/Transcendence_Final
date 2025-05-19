@@ -9,7 +9,7 @@ class Components {
     toastComponent: HTMLElement | null; 
     toastTitle: HTMLElement  | null;
     toastMessage: HTMLElement  | null;
-    toastIcon: HTMLElement  | null;
+    // toastIcon: HTMLElement  | null;
     toastTimeout: ReturnType<typeof setTimeout> | null;
     constructor() {
         this.appContainer = null;
@@ -17,7 +17,7 @@ class Components {
          this.toastComponent = null;
          this.toastTitle = null;
          this.toastMessage = null;
-         this.toastIcon = null;
+        //  this.toastIcon = null;
          this.toastTimeout = null;
     }
 
@@ -27,8 +27,9 @@ class Components {
         this.spinnerComponent = document.getElementById('spinnerComponent');
         this.toastTitle = document.getElementById('toastTitle');
         this.toastMessage = document.getElementById('toastMsg');
-        this.toastIcon = document.getElementById('toastIcon');
+        // this.toastIcon = document.getElementById('toastIcon');
         this.hideSpinner();
+        this.toastComponent?.classList.remove('hidden');
     }
     
     /**
@@ -39,13 +40,13 @@ class Components {
      * @param duration Duration in milliseconds
      */
     showToast(type: string, title: string, message: string, duration = 5000): void {
-        if (!this.toastComponent || !this.toastTitle || !this.toastMessage || !this.toastIcon) {
+        if (!this.toastComponent || !this.toastTitle || !this.toastMessage) {
             this.toastComponent = this.toastComponent || document.getElementById('toastComponent');
             this.toastTitle = this.toastTitle || document.getElementById('toastTitle');
             this.toastMessage = this.toastMessage || document.getElementById('toastMsg');
-            this.toastIcon = this.toastIcon || document.querySelector('.toast-icon');
+            // this.toastIcon = this.toastIcon || document.querySelector('.toast-icon');
 
-            if (!this.toastComponent || !this.toastTitle || !this.toastMessage || !this.toastIcon) {
+            if (!this.toastComponent || !this.toastTitle || !this.toastMessage) {
                 console.error('Toast component or its elements not found');
                 return;
             }
@@ -54,14 +55,14 @@ class Components {
         if (this.toastTimeout) {
             clearTimeout(this.toastTimeout);    
         }
-
         this.toastComponent.classList.remove('toast-error', 'toast-warning', 'toast-success', 'toast-info', 'hide');
         if (TOAST_TYPES.includes(type)) {
             this.toastComponent.classList.add(`toast-${type}`);
         } else {
             this.toastComponent.classList.add('toast-error');
         }
-
+        
+     
         let iconClass: string;
         switch (type) {
             case 'error':
@@ -83,17 +84,25 @@ class Components {
         // If title or message start with '@', treat them as translation keys
         const finalTitle = title.startsWith('@') ? t(title.slice(1)) : title;
         const finalMessage = message.startsWith('@') ? t(message.slice(1)) : message;
-        
-        this.toastIcon!.className = `bi ${iconClass} toast-icon`;
+      
+        // this.toastIcon!.className = `bi ${iconClass} toast-icon`;
         this.toastTitle!.textContent = finalTitle;
         this.toastMessage!.textContent = finalMessage;
-        this.toastComponent!.classList.remove('d-none');
+        this.toastComponent.classList.remove('d-none');
+        
+        this.toastComponent.classList.add('show');
+        this.toastComponent.classList.remove('hide');
+      
 
+ 
         this.toastTimeout = setTimeout(() => {
             this.hideToast();
+            console.log('hideToast');
+            this.toastComponent!.classList.add('hidden');
         }, duration); 
+        console.log('showToast', this.toastComponent ,type, title, message, duration);
     }
-    
+                                                                                                   
         hideToast() {
             if (!this.toastComponent) {
                 this.toastComponent = document.getElementById('toastComponent');

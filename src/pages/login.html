@@ -1,91 +1,312 @@
-<div class="flex justify-center items-center min-h-[70vh]">
-    <div class="w-full max-w-3xl">
-        <div class="cyber-container p-6 md:p-8">
-            <div class="text-center mb-8">
-                <h2 class="cyber-heading text-3xl mb-4 animate-glow">Access Terminal</h2>
-                <p class="cyber-text text-gray-300">Login or create a new account to track your scores and challenge friends</p>
-            </div>
-            
-            <div class="auth-tabs mb-6">
-                <div class="flex justify-center gap-4">
-                    <button class="cyber-btn relative px-8 py-3 border-2 active" id="loginTab">
-                        <span class="relative z-10">Login</span>
-                    </button>
-                    <button class="cyber-btn-pink relative px-8 py-3 border-2 opacity-70 hover:opacity-100" id="registerTab">
-                        <span class="relative z-10">Register</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="tab-content">
-                <!-- Login Form -->
-                <div id="loginFormContainer" class="tab-pane fade show active">
-                    <form id="loginForm" class="space-y-6">
-                        <div class="mb-4">
-                            <label for="loginUsername" class="font-cyber text-cyber-blue block mb-2">Username</label>
-                            <input type="text" class="cyber-input w-full rounded" id="loginUsername" required autocomplete="username">
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/25</small>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="loginPassword" class="font-cyber text-cyber-blue block mb-2">Password</label>
-                            <input type="password" class="cyber-input w-full rounded" id="loginPassword" required autocomplete="current-password">
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/25</small>
-                            </div>
-                        </div>
-                        <div class="flex justify-end mb-6">
-                            <button type="button" id="login42Link" class="cyber-btn-pink text-sm px-4 py-2">Login with 42</button>
-                        </div>
-                        <div class="w-full">
-                            <button id="loginBtn" type="submit" class="cyber-btn w-full py-4 text-lg font-cyber tracking-widest">
-                                <i class="bi bi-terminal mr-2"></i> Login
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Register Form -->
-                <div id="registerFormContainer" class="tab-pane fade">
-                    <form id="registerForm" class="space-y-6">
-                        <div class="mb-4">
-                            <label for="registerUsername" class="font-cyber text-cyber-pink block mb-2">Username</label>
-                            <input type="text" class="cyber-input w-full rounded" id="registerUsername" required autocomplete="username">
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/25</small>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="registerEmail" class="font-cyber text-cyber-pink block mb-2">Email</label>
-                            <input type="email" class="cyber-input w-full rounded" id="registerEmail" required autocomplete="email">
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/50</small>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <label for="registerPassword" class="font-cyber text-cyber-pink block mb-2">Password</label>
-                            <input type="password" class="cyber-input w-full rounded" id="registerPassword" required autocomplete="new-password">
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/25</small>
-                            </div>
-                        </div>
-                        <div class="mb-6">
-                            <label for="confirmPassword" class="font-cyber text-cyber-pink block mb-2">Confirm Password</label>
-                            <input type="password" class="cyber-input w-full rounded" id="confirmPassword" required autocomplete="new-password">
-                            <div id="passwordMatchStatus" class="text-sm mt-1"></div>
-                            <div class="flex justify-end mt-1">
-                                <small class="text-gray-400 char-count">0/25</small>
-                            </div>
-                        </div>
-                        <div class="w-full">
-                            <button id="registerFormButton" type="submit" class="cyber-btn-green w-full py-4 text-lg font-cyber tracking-widest">
-                                <i class="bi bi-person-plus mr-2"></i> Create Account
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<!-- Enhanced Login/Register Interface with Cyberpunk Theme -->
+<div class="flex justify-center items-center min-h-screen pt-20 pb-10 px-4">
+    <div class="w-full max-w-3xl relative">
+      <!-- Cyberpunk Background Effects -->
+      <div class="absolute inset-0 overflow-hidden rounded-lg">
+        <div class="cyber-grid-bg opacity-40"></div>
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-pink via-cyber-blue to-cyber-purple"></div>
+        <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-purple via-cyber-blue to-cyber-pink"></div>
+        <div class="absolute top-1 left-0 w-1 h-full bg-gradient-to-b from-cyber-pink via-cyber-blue to-cyber-purple"></div>
+        <div class="absolute top-1 right-0 w-1 h-full bg-gradient-to-b from-cyber-purple via-cyber-blue to-cyber-pink"></div>
+      </div>
+  
+      <!-- Main Container -->
+      <div class="cyber-container relative border-2 border-cyber-blue bg-cyber-darker bg-opacity-90 p-6 md:p-8 rounded-lg shadow-neon-blue overflow-hidden z-10">
+        <!-- Header -->
+        <div class="text-center mb-6">
+          <h2 class="font-cyber text-3xl mb-2 text-transparent bg-clip-text bg-gradient-to-r from-cyber-blue to-cyber-pink tracking-widest animate-pulse">ACCESS TERMINAL</h2>
+          <p class="text-gray-300 text-sm md:text-base">Login or create a new account to track your scores and challenge friends</p>
         </div>
+        
+        <!-- Enhanced Tab Navigation -->
+        <div class="auth-tabs mb-6">
+          <div class="flex justify-center gap-2 md:gap-4">
+            <button class="cyber-tab tab-active relative px-5 py-3 w-36 border-2 border-cyber-blue focus:outline-none focus:ring-2 focus:ring-cyber-blue" id="loginTab" aria-selected="true" role="tab">
+              <span class="relative z-10 font-cyber tracking-wider text-cyber-blue">LOGIN</span>
+              <div class="absolute bottom-0 left-0 w-full h-0.5 bg-cyber-blue"></div>
+            </button>
+            <button class="cyber-tab relative px-5 py-3 w-36 border-2 border-cyber-pink opacity-70 hover:opacity-100 transition-opacity duration-300 focus:outline-none focus:ring-2 focus:ring-cyber-pink" id="registerTab" aria-selected="false" role="tab">
+              <span class="relative z-10 font-cyber tracking-wider text-cyber-pink">REGISTER</span>
+              <div class="absolute bottom-0 left-0 w-0 h-0.5 bg-cyber-pink transition-all duration-300"></div>
+            </button>
+          </div>
+        </div>
+        
+        <div class="tab-content">
+          <!-- Login Form - Initially Visible -->
+          <div id="loginFormContainer" class="tab-pane active" role="tabpanel" aria-labelledby="loginTab">
+            <form id="loginForm" class="space-y-5">
+              <div class="relative">
+                <label for="loginUseremail" class="font-cyber text-cyber-blue block mb-2 text-sm uppercase tracking-wider">Email</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-blue"></div>
+                  <input 
+                    type="email" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-blue px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-blue focus:border-transparent" 
+                    id="loginUseremail" 
+                    required 
+                    autocomplete="email"
+                    placeholder="Enter your email"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-blue"></div>
+                </div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/25</small>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="loginPassword" class="font-cyber text-cyber-blue block mb-2 text-sm uppercase tracking-wider">Password</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-blue"></div>
+                  <input 
+                    type="password" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-blue px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-blue focus:border-transparent" 
+                    id="loginPassword" 
+                    required 
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-blue"></div>
+                </div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/25</small>
+                </div>
+              </div>
+              
+              <div class="flex justify-end mb-2">
+                <button 
+                  type="button" 
+                  id="login42Link" 
+                  class="flex items-center bg-cyber-dark border-2 border-cyber-pink text-cyber-pink hover:bg-cyber-pink hover:text-cyber-dark transition-colors duration-300 text-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-cyber-pink"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512" fill="currentColor" class="w-4 h-4 mr-2">
+                    <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/>
+                  </svg>
+                  Login with Google
+                </button>
+              </div>
+              
+              <div class="w-full relative mt-6">
+                <button 
+                  id="loginBtn" 
+                  type="submit" 
+                  class="cyber-btn w-full py-4 bg-cyber-dark border-2 border-cyber-blue text-lg font-cyber tracking-widest text-cyber-blue hover:bg-cyber-blue hover:text-cyber-dark transition-colors duration-300 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyber-blue"
+                >
+                  <span class="relative z-10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-5 h-5 mr-2">
+                      <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm5.5 10a.5.5 0 0 0 0-1H3V4.5a.5.5 0 0 0-1 0v7a.5.5 0 0 0 .5.5h3zm1-11a.5.5 0 0 0 0 1h2.5v2.5a.5.5 0 0 0 1 0v-3a.5.5 0 0 0-.5-.5h-3z"/>
+                    </svg>
+                    LOGIN
+                  </span>
+                  <!-- Glitch effect -->
+                  <span class="absolute inset-0 z-0 cyber-glitch-effect"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Register Form - Initially Hidden -->
+          <div id="registerFormContainer" class="tab-pane" role="tabpanel" aria-labelledby="registerTab">
+            <form id="registerForm" class="space-y-5">
+              <div class="relative">
+                <label for="registerUsername" class="font-cyber text-cyber-pink block mb-2 text-sm uppercase tracking-wider">Username</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                  <input 
+                    type="text" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-pink px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-pink focus:border-transparent" 
+                    id="registerUsername" 
+                    required 
+                    autocomplete="username"
+                    placeholder="Choose a username"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                </div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/25</small>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="registerEmail" class="font-cyber text-cyber-pink block mb-2 text-sm uppercase tracking-wider">Email</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                  <input 
+                    type="email" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-pink px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-pink focus:border-transparent" 
+                    id="registerEmail" 
+                    required 
+                    autocomplete="email"
+                    placeholder="Enter your email"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                </div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/50</small>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="registerPassword" class="font-cyber text-cyber-pink block mb-2 text-sm uppercase tracking-wider">Password</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                  <input 
+                    type="password" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-pink px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-pink focus:border-transparent" 
+                    id="registerPassword" 
+                    required 
+                    autocomplete="new-password"
+                    placeholder="Create a password"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                </div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/25</small>
+                </div>
+              </div>
+              
+              <div class="relative">
+                <label for="confirmPassword" class="font-cyber text-cyber-pink block mb-2 text-sm uppercase tracking-wider">Confirm Password</label>
+                <div class="relative">
+                  <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                  <input 
+                    type="password" 
+                    class="cyber-input w-full bg-cyber-dark border-2 border-cyber-pink px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyber-pink focus:border-transparent" 
+                    id="confirmPassword" 
+                    required 
+                    autocomplete="new-password"
+                    placeholder="Confirm your password"
+                  >
+                  <div class="absolute right-0 top-0 bottom-0 w-1 bg-cyber-pink"></div>
+                </div>
+                <div id="passwordMatchStatus" class="text-xs mt-1"></div>
+                <div class="flex justify-end mt-1">
+                  <small class="text-gray-400 char-count text-xs">0/25</small>
+                </div>
+              </div>
+              
+              <div class="w-full relative mt-6">
+                <button 
+                  id="registerFormButton" 
+                  type="submit" 
+                  class="cyber-btn-green w-full py-4 bg-cyber-dark border-2 border-cyber-green text-lg font-cyber tracking-widest text-cyber-green hover:bg-cyber-green hover:text-cyber-dark transition-colors duration-300 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyber-green"
+                >
+                  <span class="relative z-10 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-5 h-5 mr-2">
+                      <path d="M8 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0-7a3 3 0 0 0-3 3v1H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V5a3 3 0 0 0-3-3z"/>
+                    </svg>
+                    CREATE ACCOUNT
+                  </span>
+                  <!-- Glitch effect -->
+                  <span class="absolute inset-0 z-0 cyber-glitch-effect"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+  
+  <!-- Add a small script at the bottom to handle tab switching -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get all necessary DOM elements
+      const loginTab = document.getElementById('loginTab');
+      const registerTab = document.getElementById('registerTab');
+      const loginFormContainer = document.getElementById('loginFormContainer');
+      const registerFormContainer = document.getElementById('registerFormContainer');
+      
+      console.log('DOM fully loaded and parsed');
+      console.log('Elements found:', {
+        loginTab,
+        registerTab,
+        loginFormContainer,
+        registerFormContainer
+      });
+
+      // Handle tab switching - Login Tab
+      loginTab.addEventListener('click', function() {
+        console.log('Login tab clicked');
+        
+        // Update tab states
+        loginTab.classList.add('tab-active');
+        registerTab.classList.remove('tab-active');
+        loginTab.setAttribute('aria-selected', 'true');
+        registerTab.setAttribute('aria-selected', 'false');
+        
+        // Update form visibility - more direct approach
+        loginFormContainer.style.display = 'block';
+        registerFormContainer.style.display = 'none';
+        
+        // Also update classes for consistency
+        loginFormContainer.classList.remove('hidden');
+        registerFormContainer.classList.add('hidden');
+      });
+  
+      // Handle tab switching - Register Tab
+      registerTab.addEventListener('click', function() {
+        console.log('Register tab clicked');
+        
+        // Update tab states
+        registerTab.classList.add('tab-active');
+        loginTab.classList.remove('tab-active');
+        registerTab.setAttribute('aria-selected', 'true');
+        loginTab.setAttribute('aria-selected', 'false');
+        
+        // Update form visibility - more direct approach
+        loginFormContainer.style.display = 'none';
+        registerFormContainer.style.display = 'block';
+        
+        // Also update classes for consistency
+        registerFormContainer.classList.remove('hidden');
+        loginFormContainer.classList.add('hidden');
+      });
+      
+      // Character counter for input fields
+      document.querySelectorAll('input[type="text"], input[type="email"], input[type="password"]').forEach(input => {
+        const maxLength = input.id.includes('Email') ? 50 : 25;
+        const counter = input.parentElement.parentElement.querySelector('.char-count');
+        
+        // Set initial count
+        counter.textContent = `0/${maxLength}`;
+        
+        input.addEventListener('input', function() {
+          const length = this.value.length;
+          counter.textContent = `${length}/${maxLength}`;
+          
+          // Visual feedback when approaching limit
+          if (length > maxLength * 0.8) {
+            counter.classList.add('text-cyber-pink');
+          } else {
+            counter.classList.remove('text-cyber-pink');
+          }
+        });
+      });
+      
+      // Password match validation
+      const registerPassword = document.getElementById('registerPassword');
+      const confirmPassword = document.getElementById('confirmPassword');
+      const passwordMatchStatus = document.getElementById('passwordMatchStatus');
+      
+      function checkPasswordMatch() {
+        if (confirmPassword.value === '') {
+          passwordMatchStatus.textContent = '';
+          passwordMatchStatus.className = 'text-xs mt-1';
+        } else if (registerPassword.value === confirmPassword.value) {
+          passwordMatchStatus.textContent = 'Passwords match';
+          passwordMatchStatus.className = 'text-xs mt-1 text-cyber-green';
+        } else {
+          passwordMatchStatus.textContent = 'Passwords do not match';
+          passwordMatchStatus.className = 'text-xs mt-1 text-cyber-pink';
+        }
+      }
+      
+      // Add event listeners for password matching
+      if (registerPassword && confirmPassword) {
+        registerPassword.addEventListener('input', checkPasswordMatch);
+        confirmPassword.addEventListener('input', checkPasswordMatch);
+      }
+    });
+  </script>

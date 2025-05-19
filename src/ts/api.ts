@@ -1,6 +1,7 @@
 import utils from './utils';
 import { PAGES, ENDPOINTS } from './constants';
 import { User } from './app';
+import { baseURL } from './constants';
 // Define interfaces for API responses and data
 interface ApiResponse<T = any> {
   success: boolean;
@@ -11,7 +12,7 @@ interface ApiResponse<T = any> {
 }
 
 interface LoginData {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -19,7 +20,6 @@ interface RegisterData {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
 interface UserData {
@@ -53,6 +53,10 @@ interface MatchData {
 }
 
 class API {
+  generateDeviceId() {
+    return crypto.randomUUID();
+  }
+
   async fetchHtml(url: string, returnElement: boolean = true): Promise<HTMLElement | ChildNode | null> {
     try {
       const response = await fetch(url);
@@ -94,6 +98,7 @@ class API {
 
   async login(loginData: LoginData): Promise<ApiResponse> {
     try {
+      console.log('entering the api',ENDPOINTS.auth.login, loginData);
       const response = await fetch(ENDPOINTS.auth.login, {
         method: 'POST',
         headers: {
@@ -103,7 +108,7 @@ class API {
       });
 
       const result = await response.json();
-
+      console.log('Loggin result: in apis', result);
       if (!response.ok) {
         return { success: false, error: result.error || 'Login failed' };
       }
@@ -123,6 +128,7 @@ class API {
 
   async register(registerData: RegisterData): Promise<ApiResponse> {
     try {
+      console.log('entering the api',ENDPOINTS.auth.register, registerData);
       const response = await fetch(ENDPOINTS.auth.register, {
         method: 'POST',
         headers: {
@@ -132,7 +138,7 @@ class API {
       });
 
       const result = await response.json();
-
+      // console.log('Registration result: in apis', result);
       if (!response.ok) {
         const err = result.error || result.email || result.username || result.password || result.confirmPassword || 'Registration failed';
         return { success: false, error: err };
@@ -164,19 +170,27 @@ class API {
     }
   }
 
-  async get42AuthUrl(): Promise<AuthUrlResponse> {
+  async getGoogleAuthUrl(): Promise<AuthUrlResponse> {
     try {
-      const response = await fetch(ENDPOINTS.auth.auth42, {
-        method: 'GET',
+
+  
+      // Get or generate deviceId
+  
+      // console.log('State:', state);
+      const response = await fetch(ENDPOINTS.auth.googleAuth, {
+        method: 'POST',
         headers: {
           'Accept': 'application/json'
         },
       });
 
+
+      console.log('Response: of googlue auth', response);
+
       if (!response.ok) {
-        console.error('API: 42 auth URL request failed with status:', response.status, response.statusText);
+        console.error('API: google auth URL request failed with status:', response.status, response.statusText);
         const errorText = await response.text();
-        console.error('API: 42 auth error details:', errorText);
+        console.error('API: google auth error details:', errorText);
         utils.cleanUp();
         return { success: false };
       }
@@ -189,7 +203,7 @@ class API {
       
       return { success: true, auth_url: data.auth_url };
     } catch (error: any) {
-      console.error('42 OAuth Error:', error);
+      console.error('google OAuth Error:', error);
       return { success: false, error: error.message };
     }
   }
@@ -505,3 +519,4 @@ class API {
 const api = new API();
 
 export default api;
+export { ApiResponse}

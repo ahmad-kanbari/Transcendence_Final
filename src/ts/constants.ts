@@ -1,5 +1,6 @@
 export const AVAILABLE_PAGES = ['home', 'game', 'login', 'profile', 'notFound', 'twoFA'];
 
+
 export const PAGES = {
     home: 'src/pages/home.html',
     login: 'src/pages/login.html',
@@ -11,16 +12,17 @@ export const PAGES = {
 
 export const TOAST_TYPES = ['error', 'warning', 'success', 'info'];
 
+export const baseURL = "http://localhost:3000/api/v1";
 export const ENDPOINTS = {
     auth: {
-        auth42: '/api/users/oauth/42/',
-        login: '/api/users/login/',
-        register: '/api/users/register/',
-        logout: '/api/users/logout/',
-        setup2FA: '/api/users/2fa/setup/',
+        googleAuth: "http://localhost:3000/api/v1/auth/google/login",
+        login: `${baseURL}/auth/login`,
+        register: `${baseURL}/auth/register`,
+        logout: `${baseURL}/auth/logout`,
+        setup2FA: `${baseURL}/api/users/2fa/setup/`,
         verify2FA: '/api/users/2fa/verify/',
         disable2FA: '/api/users/2fa/disable/',
-        refreshToken: '/api/users/token/refresh/',
+        refreshToken: `${baseURL}/auth/refresh`,
     },
     user: {
         me: '/api/users/me/',

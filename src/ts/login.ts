@@ -4,6 +4,7 @@ import utils from './utils';
 import router from './router';
 import register from './register';
 import components from './components';
+import { baseURL } from './constants';
 
 // Define interface for the login form elements
 interface LoginForm {
@@ -12,14 +13,15 @@ interface LoginForm {
   form: HTMLFormElement | null;
   submitBtn: HTMLButtonElement | null;
   login42Link: HTMLElement | null;
-  usernameField: HTMLInputElement | null;
+  emailField: HTMLInputElement | null;
   passwordField: HTMLInputElement | null;
 }
 
 // Login data interface
 interface LoginData {
-  username: string;
+  email: string;
   password: string;
+  deviceId: string | null;
 }
 
 class Login {
@@ -59,7 +61,7 @@ class Login {
       form: document.getElementById('loginForm') as HTMLFormElement | null,
       submitBtn: document.getElementById('loginBtn') as HTMLButtonElement | null,
       login42Link: document.getElementById('login42Link'),
-      usernameField: document.getElementById('loginUsername') as HTMLInputElement | null,
+      emailField: document.getElementById('loginemail') as HTMLInputElement | null,
       passwordField: document.getElementById('loginPassword') as HTMLInputElement | null
     };
   }
@@ -68,11 +70,11 @@ class Login {
     this.loginForm = this.getLoginForm();
     
     if (this.loginForm.login42Link)
-      this.loginForm.login42Link.onclick = this.handle42LoginBtnClick.bind(this);
+      this.loginForm.login42Link.onclick = this.handleGoogleLoginBtnClick.bind(this);
     
     if (this.loginForm.form) {
-      if (this.loginForm.usernameField) 
-        utils.setupInputField(this.loginForm.usernameField, 'username', components);
+      if (this.loginForm.emailField) 
+        utils.setupInputField(this.loginForm.emailField, 'email', components);
       
       if (this.loginForm.passwordField) 
         utils.setupInputField(this.loginForm.passwordField, 'password', components);
@@ -120,40 +122,46 @@ class Login {
     if (event) 
       event.preventDefault();
     
-    const usernameElement = document.getElementById('loginUsername') as HTMLInputElement | null;
+    const emailiElement = document.getElementById('loginUseremail') as HTMLInputElement | null;
     const passwordElement = document.getElementById('loginPassword') as HTMLInputElement | null;
-    
-    if (!usernameElement || !passwordElement) {
+    let deviceId = localStorage.getItem("deviceId")?? null;
+		if (!deviceId) {
+			deviceId = api.generateDeviceId();
+			localStorage.setItem("deviceId", deviceId);
+		}
+    if (!emailiElement || !passwordElement) {
       components.showToast('error', 'Login Error', 'Login form elements not found.');
       return;
     }
     
-    const username = usernameElement.value;
+    const email = emailiElement.value;
     const password = passwordElement.value;
     
-    if (!username || !password) {
-      components.showToast('error', 'Login Error', 'Please enter both username and password.');
+    if (!email || !password) {
+      components.showToast('error', 'Login Error', 'Please enter both email and password.', 21);
       return;
     }
     
-    if (username.length < utils.VALIDATION_INPUTS.username.minLength!) {
-      components.showToast('error', 'Login Error', `Username must be at least ${utils.VALIDATION_INPUTS.username.minLength} characters.`);
+    if (email.length < utils.VALIDATION_INPUTS.email.minLength!) {
+      components.showToast('error', 'Login Error', `email must be at least ${utils.VALIDATION_INPUTS.email.minLength} characters.`, 402);
       return;
     }
     
     if (password.length < utils.VALIDATION_INPUTS.password.minLength!) {
-      components.showToast('error', 'Login Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`);
+      components.showToast('error', 'Login Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`, 402);
       return;
     }
     
     utils.setFormLoading(this.loginForm.submitBtn, true);
     
     const loginData: LoginData = {
-      username,
-      password
+      email,
+      password,
+      deviceId
     };
     
     try {
+      console.log('Login data:', loginData);
       const result = await api.login(loginData);
       if (result.success) {
         if (passwordElement) {
@@ -172,17 +180,17 @@ class Login {
         localStorage.setItem('user', JSON.stringify(userData));
         
         this.updateUIAuthState();
-        components.showToast('success', 'Login Successful', 'You have been logged in successfully.');
+        components.showToast('success', 'Login Successful', 'You have been logged in successfully.', 200);
         
         router.navigate('/');
       } else {
-        components.showToast('error', 'Login Failed', result.error || 'Invalid username or password.');
+        components.showToast('error', 'Login Failed', result.error || 'Invalid email or password.', 200);
       }
       
       utils.setFormLoading(this.loginForm.submitBtn, false);
     } catch (error: any) {
       console.error('Login submission error:', error);
-      components.showToast('error', 'System Error', 'An unexpected error occurred. Please try again later.');
+      components.showToast('error', 'System Error', 'An unexpected error occurred. Please try again later.', 200);
       utils.setFormLoading(this.loginForm.submitBtn, false);
     }
   }
@@ -192,7 +200,7 @@ class Login {
     const loginBtn = document.getElementById('loginBtn');
     const loginDropdown = document.getElementById('loginDropdown');
     const loggedInUserImg = document.getElementById('loggedInUserImg') as HTMLImageElement | null;
-    const loggedInUsername = document.getElementById('loggedInUsername');
+    const loggedInemail = document.getElementById('loggedInemail');
     
     if (app.state?.user) {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'none';
@@ -207,11 +215,11 @@ class Login {
           loggedInUserImg.style.display = 'none';
         }
       } else {
-        if (typeof app.getUsername === 'function' && app.getUsername() && loggedInUsername) {
-          loggedInUsername.textContent = app.getUsername();
-          loggedInUsername.style.display = 'inline';
-        } else if (loggedInUsername) {
-          loggedInUsername.style.display = 'none';
+        if (typeof app.getEmail === 'function' && app.getEmail() && loggedInemail) {
+          loggedInemail.textContent = app.getEmail();
+          loggedInemail.style.display = 'inline';
+        } else if (loggedInemail) {
+          loggedInemail.style.display = 'none';
         }
       }
     } else {
@@ -224,23 +232,33 @@ class Login {
   // Methods merged from login with 42
   // =================================
 
-  async handle42LoginBtnClick(event: MouseEvent): Promise<void> {
+  async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
     if (event)
       event.preventDefault();
     
-    components.showToast('info', 'Connecting', 'Initializing 42 authentication...');
+    components.showToast('info', 'Connecting', 'Initializing google authentication...');
     
     try {
-      const result = await api.get42AuthUrl();
-      
+    let deviceId = localStorage.getItem("deviceId")?? null;
+      if (!deviceId) {
+        deviceId = api.generateDeviceId();
+        localStorage.setItem("deviceId", deviceId);
+      }
+      console.log('Device ID:', deviceId);
+  
+      // Create JSON and base64 encode it
+      const state = encodeURIComponent(btoa(JSON.stringify({ deviceId })));
+      console.log('State:', state);
+      const result = await api.getGoogleAuthUrl();
+      console.log('Google Auth URL in handle function:', result);
       if (!result.success || !result.auth_url)
         throw new Error(result.error || 'No authorization URL received');
       
-      components.showToast('success', 'Connected', 'Redirecting to 42 login page...');
+      components.showToast('success', 'Connected', 'Redirecting to google login page...', 20);
       
-      window.location.href = result.auth_url;
+      window.location.href = `${baseURL}/auth/google/login?state=${state}`;
     } catch (error: any) {
-      components.showToast('error', '42 Login Failed', error.message || 'Could not connect to 42 authentication service.');
+      components.showToast('error', 'google Login Failed', error.message || 'Could not connect to google authentication service.', 2000);
     }
   }
 

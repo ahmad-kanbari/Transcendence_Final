@@ -12,6 +12,7 @@ import register from './register';
 import components from './components';
 import localization, { t } from './localization';
 import accessibility from './accessibility';
+import { ApiResponse } from './api';
 
 // Define interfaces for state and user
 interface User {
@@ -122,48 +123,49 @@ class App {
   registerRoutes(): void {
     router.registerRoutes({
       '/': () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+        if (this.get2FAState() && !this.getIsAuthenticated()) {
+          pages.showPage('twoFA');
+          login.updateUIAuthState();
+          return;
+        }
         pages.showPage('home');
         login.updateUIAuthState();
       },
       
       '/home': () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+        if (this.get2FAState() && !this.getIsAuthenticated()) {
+          pages.showPage('twoFA');
+          login.updateUIAuthState();
+          return;
+        }
         pages.showPage('home');
         login.updateUIAuthState();
       },
       
       '/login': async () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+        if (this.get2FAState() && !this.getIsAuthenticated()) {
+          pages.showPage('twoFA');
+          login.updateUIAuthState();
+          return;
+        }
 
         components.showSpinner();
         
         try {
           if (this.state.user) {
-            components.showToast('info', 'Already Logged In', 'You are already logged in.');
+            components.showToast('info', 'Already Logged In', 'You are already logged in.',5000);
             router.navigate('/profile');
             return;
           }
           
-          const result = await api.GetFakeUserData();
-          
+          const result = await api.getUserData();
+           console.log('after', result.userData);
+           
           if (result.success && result.userData) {
             this.state.user = result.userData;
             this.state.isAuthenticated = result.isAuthenticated;
             login.updateUIAuthState();
-            components.showToast('info', 'Session Restored', 'Your session has been restored.');
+            components.showToast('info', 'Session Restored', 'Your session has been restored.', 5000);
             router.navigate('/profile');
             return;
           } else {
@@ -187,27 +189,27 @@ class App {
       },
       
       '/game': async () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+        if (this.get2FAState() && !this.getIsAuthenticated()) {
+          pages.showPage('twoFA');
+          login.updateUIAuthState();
+          return;
+        }
 
         components.showSpinner();
         
         try {
-          // if (this.state.user) {
-          //   pages.showPage('game');
-          //   // login.updateUIAuthState();
-          //   game.init(
-          //     this.getUsername(),
-          //     this.setMatch.bind(this),
-          //     this.setTournament.bind(this)
-          //   );
-          //   return;
-          // }
+          if (this.state.user) {
+            pages.showPage('game');
+            // login.updateUIAuthState();
+            game.init(
+              this.getUsername(),
+              this.setMatch.bind(this),
+              this.setTournament.bind(this)
+            );
+            return;
+          }
           
-          const result = api.GetFakeUserData();
+          const result = await api.getUserData();
           console.log('before', result.userData);
           if (result.success && result.userData) {
             console.log('User data:', result.userData);
@@ -221,11 +223,11 @@ class App {
               this.setTournament.bind(this)
             );
           } else {
-            components.showToast('warning', 'Authentication Required', 'Please log in to play the game.');
+            components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
             router.navigate('/login');
           }
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.');
+          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -233,11 +235,11 @@ class App {
       },
       
       '/profile': async () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+        if (this.get2FAState() && !this.getIsAuthenticated()) {
+          pages.showPage('twoFA');
+          login.updateUIAuthState();
+          return;
+        }
         
         components.showSpinner();
         
@@ -248,7 +250,7 @@ class App {
           //     return;
           // }
           
-          const result = await api.GetFakeUserData();
+          const result = await api.getUserData();
           
           if (result.success && result.userData) {
             this.state.user = result.userData;
@@ -256,11 +258,11 @@ class App {
             login.updateUIAuthState();
             pages.showPage('profile');
           } else {
-            components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.');
+            components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.', 5000);
             router.navigate('/login');
           }
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.');
+          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -272,13 +274,13 @@ class App {
         
         try {
           if (this.state.isAuthenticated) {
-            components.showToast('info', 'Already Authenticated', 'You are already verified.');
+            components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
             router.navigate('/');
             return;
           }
           
           if (!this.state.user) {
-            const result = await api.GetFakeUserData();
+            const result = await api.getUserData();
             
             if (result.success && result.userData) {
               this.state.user = result.userData;
@@ -286,12 +288,12 @@ class App {
               login.updateUIAuthState();
               
               if (this.state.isAuthenticated) {
-                components.showToast('info', 'Already Authenticated', 'You are already verified.');
+                components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
                 router.navigate('/');
                 return;
               }
             } else {
-              components.showToast('warning', 'Authentication Required', 'Please log in to set up 2FA.');
+              components.showToast('warning', 'Authentication Required', 'Please log in to set up 2FA.', 5000);
               router.navigate('/login');
               return;
             }
@@ -300,7 +302,7 @@ class App {
           pages.showPage('twoFA');
           login.updateUIAuthState();
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.');
+          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -316,7 +318,7 @@ class App {
   
   async checkAuthState(): Promise<void> {
     try {
-      const result = await api.GetFakeUserData();
+      const result = await api.getUserData();
       
       if (result.success && result.userData) {
         this.state.user = result.userData;
@@ -344,7 +346,7 @@ class App {
       
       login.updateUIAuthState();
       
-      components.showToast('success', 'Logged Out', 'You have been successfully logged out.');
+      components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
       
       setTimeout(() => {
         window.location.href = '/';
@@ -356,7 +358,7 @@ class App {
       this.state.user = null;
       login.updateUIAuthState();
       
-      components.showToast('warning', 'Logout Status', 'You have been logged out, but there was an issue with the server.');
+      components.showToast('warning', 'Logout Status', 'You have been logged out, but there was an issue with the server.', 5000);
  
       setTimeout(() => {
         window.location.href = '/';
@@ -444,7 +446,7 @@ class App {
     const result = await api.submitMatch(matchObj);
 
     if (!result.success) {
-      components.showToast('error', 'Match Submission Error', 'An error occurred while submitting the match.');
+      components.showToast('error', 'Match Submission Error', 'An error occurred while submitting the match.', 5000);
       return;
     }
 

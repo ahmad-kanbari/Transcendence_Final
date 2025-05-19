@@ -22,7 +22,6 @@ interface RegisterData {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
 class Register {
@@ -159,13 +158,12 @@ class Register {
     const registerData: RegisterData = {
       username,
       email,
-      password,
-      confirmPassword
+      password
     };
     
     try {
       const result = await api.register(registerData);
-      
+      console.log('Registration result:', result);
       if (result.success) {
         components.showToast('success', 'Registration Successful', 'Your account has been created. Please log in.');
         
