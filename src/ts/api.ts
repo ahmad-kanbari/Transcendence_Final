@@ -31,6 +31,7 @@ interface AuthUrlResponse {
   success: boolean;
   auth_url?: string;
   error?: string;
+  [key: string]: any; // Allow additional properties
 }
 
 interface PageFetchResult {
@@ -170,42 +171,33 @@ class API {
     }
   }
 
-  async getGoogleAuthUrl(): Promise<AuthUrlResponse> {
+  getGoogleAuthUrl(): AuthUrlResponse{
     try {
 
-  
-      // Get or generate deviceId
-  
-      // console.log('State:', state);
-      const response = await fetch(ENDPOINTS.auth.googleAuth, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json'
-        },
-      });
-
-
-      console.log('Response: of googlue auth', response);
-
-      if (!response.ok) {
-        console.error('API: google auth URL request failed with status:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('API: google auth error details:', errorText);
-        utils.cleanUp();
-        return { success: false };
+      let deviceId = localStorage.getItem("deviceId")?? null;
+      if (!deviceId) {
+        deviceId = api.generateDeviceId();
+        localStorage.setItem("deviceId", deviceId);
       }
-      
-      const data = await response.json();
-      
-      if (!data || !data.auth_url) {
-        throw new Error('No authorization URL received from server');
-      }
-      
-      return { success: true, auth_url: data.auth_url };
+      console.log('Device ID:', deviceId);
+  
+      // Create JSON and base64 encode it
+      const state = encodeURIComponent(btoa(JSON.stringify({ deviceId })));
+      console.log('State:', state);
+      const authUrl = `${baseURL}/auth/google/login?state=${state}`;
+
+    
+      // Return the auth URL directly
+      return { 
+        success: true, 
+        auth_url: authUrl 
+      };
     } catch (error: any) {
-      console.error('google OAuth Error:', error);
+      utils.cleanUp();
+      console.error('Google OAuth Error:', error);
       return { success: false, error: error.message };
     }
+
   }
 
   async getUserData(retryCount: number = 0): Promise<ApiResponse<UserData>> {

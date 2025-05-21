@@ -123,31 +123,43 @@ class App {
   registerRoutes(): void {
     router.registerRoutes({
       '/': () => {
-        if (this.get2FAState() && !this.getIsAuthenticated()) {
-          pages.showPage('twoFA');
-          login.updateUIAuthState();
-          return;
-        }
+        // if (this.get2FAState() && !this.getIsAuthenticated()) {
+        //   pages.showPage('twoFA');
+        //   login.updateUIAuthState();
+        //   return;
+        // }
         pages.showPage('home');
         login.updateUIAuthState();
       },
       
       '/home': () => {
-        if (this.get2FAState() && !this.getIsAuthenticated()) {
-          pages.showPage('twoFA');
-          login.updateUIAuthState();
-          return;
-        }
+        // if (this.get2FAState() && !this.getIsAuthenticated()) {
+        //   pages.showPage('twoFA');
+        //   login.updateUIAuthState();
+        //   return;
+        // }
         pages.showPage('home');
         login.updateUIAuthState();
       },
+      '/auth/callback': (path) => {
+    // This route will be handled by handleURL() which calls handleGoogleCallback
+    //     console.log('Auth callback route activated');
+    //     if (this.get2FAState() && !this.getIsAuthenticated()) {
+
+    //     pages.showPage('home');
+    //     login.updateUIAuthState();
+    //     return;
+    // }
+      pages.showPage('home');
+      login.updateUIAuthState();
+  },
       
       '/login': async () => {
-        if (this.get2FAState() && !this.getIsAuthenticated()) {
-          pages.showPage('twoFA');
-          login.updateUIAuthState();
-          return;
-        }
+        // if (this.get2FAState() && !this.getIsAuthenticated()) {
+        //   pages.showPage('twoFA');
+        //   login.updateUIAuthState();
+        //   return;
+        // }
 
         components.showSpinner();
         
@@ -189,11 +201,11 @@ class App {
       },
       
       '/game': async () => {
-        if (this.get2FAState() && !this.getIsAuthenticated()) {
-          pages.showPage('twoFA');
-          login.updateUIAuthState();
-          return;
-        }
+        // if (this.get2FAState() && !this.getIsAuthenticated()) {
+        //   pages.showPage('twoFA');
+        //   login.updateUIAuthState();
+        //   return;
+        // }
 
         components.showSpinner();
         
@@ -235,11 +247,11 @@ class App {
       },
       
       '/profile': async () => {
-        if (this.get2FAState() && !this.getIsAuthenticated()) {
-          pages.showPage('twoFA');
-          login.updateUIAuthState();
-          return;
-        }
+        // if (this.get2FAState() && !this.getIsAuthenticated()) {
+        //   pages.showPage('twoFA');
+        //   login.updateUIAuthState();
+        //   return;
+        // }
         
         components.showSpinner();
         
@@ -268,6 +280,7 @@ class App {
           components.hideSpinner();
         }
       },
+      
 
       '/twoFA': async () => {
         components.showSpinner();

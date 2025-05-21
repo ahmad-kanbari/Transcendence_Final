@@ -61,7 +61,7 @@ class Login {
       form: document.getElementById('loginForm') as HTMLFormElement | null,
       submitBtn: document.getElementById('loginBtn') as HTMLButtonElement | null,
       login42Link: document.getElementById('login42Link'),
-      emailField: document.getElementById('loginemail') as HTMLInputElement | null,
+      emailField: document.getElementById('loginUseremail') as HTMLInputElement | null,
       passwordField: document.getElementById('loginPassword') as HTMLInputElement | null
     };
   }
@@ -229,134 +229,128 @@ class Login {
     }
   }
 
-  // Methods merged from login with 42
+  // Methods merged from login with google
+ /* You cannot use fetch here because Google OAuth requires a browser redirect to Google's authentication page, not an API call.
+Simple explanation:
+
+OAuth authentication flow works by redirecting the user's browser to the provider's login page (Google's page in this case)
+The user then logs in directly on Google's website
+After successful login, Google redirects the browser back to your callback URL
+
+A fetch request:
+
+Makes an HTTP request in the background
+Doesn't change the user's current page
+Cannot display Google's login UI to the user
+Cannot handle Google's authentication cookies
+
+What you need instead is:*/
   // =================================
+  generateDeviceId() {
+    return crypto.randomUUID();
+  }
+  // async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
+  //   if (event)
+  //     event.preventDefault();
+    
+  //   components.showToast('info', 'Connecting', 'Initializing google authentication...');
+    
+  //   try {
+  //     const result = api.getGoogleAuthUrl();
+  //     if (!result.success)
+  //       throw new Error(result.error || 'No authorization URL received');
+      
+  //     components.showToast('success', 'Connected', 'Redirecting to google login page...', 3000);
+      
+  //     // MISSING: The actual redirect should be here!
+  //     if (result.auth_url) {
+  //       const data = await fetch(result.auth_url, {
+  //               method: 'POST',
+  //               credentials: 'include',
+  //               headers: {
+  //                 'Content-Type': 'application/json'
+  //               },
+  //             });
+
+  //       if(data) {
+  //         console.log('Google Auth data result:', data);
+  //         // window.location.href = data.userPapyload;
+  //         router.navigate('/home');
+  //       }
+  //     } else {
+  //       throw new Error('Authorization URL is undefined');
+  //     }
+  //   } catch (error: any) {
+  //     components.showToast('error', 'google Login Failed', error.message || 'Could not connect to google authentication service.', 2000);
+  //   }
+  // }
 
   async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
-    if (event)
+    if (event) {
       event.preventDefault();
+    }
     
-    components.showToast('info', 'Connecting', 'Initializing google authentication...');
+    // Disable button to prevent multiple clicks
+    const googleBtn = event.currentTarget as HTMLButtonElement;
+    if (googleBtn) {
+      googleBtn.disabled = true;
+    }
+    
+    components.showToast('info', 'Connecting', 'Initializing Google authentication...');
     
     try {
-    let deviceId = localStorage.getItem("deviceId")?? null;
+      // Get or generate deviceId
+      let deviceId = localStorage.getItem("deviceId");
       if (!deviceId) {
-        deviceId = api.generateDeviceId();
+        deviceId = this.generateDeviceId();
         localStorage.setItem("deviceId", deviceId);
       }
-      console.log('Device ID:', deviceId);
-  
-      // Create JSON and base64 encode it
+      
+      // Create state parameter with deviceId
       const state = encodeURIComponent(btoa(JSON.stringify({ deviceId })));
-      console.log('State:', state);
-      const result = await api.getGoogleAuthUrl();
-      console.log('Google Auth URL in handle function:', result);
-      if (!result.success || !result.auth_url)
-        throw new Error(result.error || 'No authorization URL received');
       
-      components.showToast('success', 'Connected', 'Redirecting to google login page...', 20);
+      // Construct Google auth URL
+      const authUrl = `${baseURL}/auth/google/login?state=${state}`;
       
-      window.location.href = `${baseURL}/auth/google/login?state=${state}`;
+      components.showToast('success', 'Connected', 'Redirecting to Google login page...', 1000);
+      
+      // IMPORTANT: This will redirect the user to Google's login page
+      window.location.href = authUrl;
     } catch (error: any) {
-      components.showToast('error', 'google Login Failed', error.message || 'Could not connect to google authentication service.', 2000);
-    }
-  }
-
-  handleOAuthCallback(router: any): void {
-    const accessToken = utils.getCookie('access_token');
-    
-    const pageSection = utils.getPageSection();
-
-    if (!pageSection) {
-      console.error('OAuth Callback: pageSection not found');
-      return;
-    }
-    
-    if (accessToken) {
-      utils.setCookie('access_token', accessToken);
-      
-      this.handleSuccessfulOAuth(pageSection, router);
-    } else {
-      console.error('OAuth Callback: No access token found in callback URL');
-      this.handleFailedAuth(pageSection, router);
-    }
-  }
-
-  async handleSuccessfulOAuth(pageSection: HTMLElement, router: any): Promise<void> {
-    pageSection.innerHTML = `
-      <div class="auth-container text-center p-5">
-        <h2 class="text-gold mb-4">Authentication Successful</h2>
-        <div class="mb-4">
-          <div class="progress">
-            <div id="authProgress" class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
-          </div>
-        </div>
-        <p class="text-white">Verifying account...</p>
-      </div>
-    `;
-    
-    try {
-      const result = await api.getUserData();
-      
-      if (!result.success || !result.userData) 
-        throw new Error('Could not retrieve user data');
-      
-      const userData = result.userData;
-      
-      this.completeOAuthLogin(pageSection, userData);
-    } catch (error) {
-      console.error('OAuth user data error:', error);
-      this.handleFailedAuth(pageSection, router);
-    }
-  }
-  
-  completeOAuthLogin(pageSection: HTMLElement, userData: any): void {
-    if (app.state) {
-      app.state.user = userData;
-    }
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    pageSection.innerHTML = `
-      <div class="auth-container text-center p-5">
-        <h2 class="text-gold mb-4">Authentication Successful</h2>
-        <div class="mb-4">
-          <div class="progress">
-            <div id="authProgress" class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
-          </div>
-        </div>
-        <p class="text-white">You have been successfully authenticated.</p>
-        <p class="text-white">Redirecting you to the homepage...</p>
-      </div>
-    `;
-    
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 2000);
-  }
-  
-  handleFailedAuth(pageSection: HTMLElement, router: any): void {
-    pageSection.innerHTML = `
-      <div class="auth-container text-center p-5">
-        <h2 class="text-danger mb-4">Authentication Failed</h2>
-        <p class="text-white">We couldn't complete the authentication process.</p>
-        <p class="text-white">Please try again.</p>
-        <button id="retryAuthBtn" class="btn btn-gold mt-3">Return to Login</button>
-      </div>
-    `;
-    
-    setTimeout(() => {
-      const retryBtn = document.getElementById('retryAuthBtn');
-      if (retryBtn) {
-        retryBtn.addEventListener('click', () => {
-          if (router && typeof router.navigate === 'function') {
-            router.navigate('/login');
-          } else {
-            window.location.href = '/login';
-          }
-        });
+      // Re-enable button on error
+      if (googleBtn) {
+        googleBtn.disabled = false;
       }
-    }, 100);
+      
+      components.showToast('error', 'Google Login Failed', 
+        error.message || 'Could not connect to Google authentication service.', 2000);
+    }
   }
+  //origianl
+  // handleOAuthCallback(router: any): void {
+  //   const accessToken = utils.getCookie('access_token');
+    
+  //   const pageSection = utils.getPageSection();
+
+  //   if (!pageSection) {
+  //     console.error('OAuth Callback: pageSection not found');
+  //     return;
+  //   }
+    
+  //   if (accessToken) {
+  //     utils.setCookie('access_token', accessToken);
+      
+  //     this.handleSuccessfulOAuth(pageSection, router);
+  //   } else {
+  //     console.error('OAuth Callback: No access token found in callback URL');
+  //     this.handleFailedAuth(pageSection, router);
+  //   }
+  // }
+  // In your login.ts file
+
+  
+
+
 }
 
 const login = new Login();
