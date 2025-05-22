@@ -122,37 +122,131 @@ class App {
   
   registerRoutes(): void {
     router.registerRoutes({
-      '/': () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+
+      '/': async () => {
+        // Check if user has accessToken cookie (from Google OAuth)
+        const accessToken = utils.getCookie("accessToken");
+        
+        if (accessToken) {
+          // User has token, try to get their data
+          components.showSpinner();
+          try {
+            const result = await api.getCurrentUser(); // This uses /showUser endpoint
+            
+            if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+              
+              components.showToast('success', 'Welcome Back!', `Hello ${this.getUsername()}!`, 3000);
+              login.updateUIAuthState();
+              
+              // Check if 2FA is required
+              if (this.get2FAState() && !this.getIsAuthenticated()) {
+                pages.showPage('twoFA');
+                return;
+              }
+              
+              pages.showPage('home');
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching user data after OAuth:', error);
+            // Clear invalid token
+            utils.deleteCookie('accessToken');
+          } finally {
+            components.hideSpinner();
+          }
+        }
+        
+        // No token or failed to get user data - show home page
         pages.showPage('home');
         login.updateUIAuthState();
       },
       
-      '/home': () => {
-        // if (this.get2FAState() && !this.getIsAuthenticated()) {
-        //   pages.showPage('twoFA');
-        //   login.updateUIAuthState();
-        //   return;
-        // }
+      '/home': async () => {
+        // Check if user has accessToken cookie
+        const accessToken = utils.getCookie("accessToken");
+        
+        if (accessToken && !this.state.user) {
+          // User has token but no user data loaded yet
+          components.showSpinner();
+          try {
+            const result = await api.getCurrentUser(); // Use /showUser endpoint
+            
+            if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+              
+              login.updateUIAuthState();
+              
+              // Check if 2FA is required
+              if (this.get2FAState() && !this.getIsAuthenticated()) {
+                pages.showPage('twoFA');
+                return;
+              }
+            } else {
+              // Token is invalid, clear it
+              utils.deleteCookie('accessToken');
+              components.showToast('warning', 'Session Expired', 'Please log in again.', 5000);
+            }
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            utils.deleteCookie('accessToken');
+            this.state.user = null;
+            this.state.isAuthenticated = false;
+          } finally {
+            components.hideSpinner();
+          }
+        }
+        
         pages.showPage('home');
         login.updateUIAuthState();
       },
-      '/auth/callback': (path) => {
-    // This route will be handled by handleURL() which calls handleGoogleCallback
-    //     console.log('Auth callback route activated');
-    //     if (this.get2FAState() && !this.getIsAuthenticated()) {
-
-    //     pages.showPage('home');
-    //     login.updateUIAuthState();
-    //     return;
-    // }
-      pages.showPage('home');
-      login.updateUIAuthState();
-  },
+      
+      '/auth/callback': async () => {
+        // This route handles the redirect from Google OAuth
+        components.showSpinner();
+        
+        try {
+          // Check if we have the accessToken cookie
+          const accessToken = utils.getCookie("accessToken");
+          
+          if (accessToken) {
+            // Fetch user data using the token
+            const result = await api.getCurrentUser();
+            
+            if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+              
+              components.showToast('success', 'Login Successful!', `Welcome ${this.getUsername()}!`, 3000);
+              login.updateUIAuthState();
+              
+              // Check if 2FA is required
+              if (this.get2FAState() && !this.getIsAuthenticated()) {
+                router.navigate('/twoFA');
+                return;
+              }
+              
+              // Redirect to profile or home
+              router.navigate('/profile');
+              return;
+            }
+          }
+          
+          // No token or failed to get user data
+          components.showToast('error', 'Login Failed', 'Authentication was unsuccessful.', 5000);
+          router.navigate('/login');
+          
+        } catch (error) {
+          console.error('OAuth callback error:', error);
+          components.showToast('error', 'Login Error', 'An error occurred during login.', 5000);
+          router.navigate('/login');
+        } finally {
+          components.hideSpinner();
+        }
+      },
+      
       
       '/login': async () => {
         // if (this.get2FAState() && !this.getIsAuthenticated()) {
@@ -170,7 +264,7 @@ class App {
             return;
           }
           
-          const result = await api.getUserData();
+          const result = await api.getCurrentUser();
            console.log('after', result.userData);
            
           if (result.success && result.userData) {
@@ -221,7 +315,7 @@ class App {
             return;
           }
           
-          const result = await api.getUserData();
+          const result = await api.getCurrentUser();
           console.log('before', result.userData);
           if (result.success && result.userData) {
             console.log('User data:', result.userData);
@@ -256,13 +350,13 @@ class App {
         components.showSpinner();
         
         try {
-          // if (this.state.user) {
-          //     pages.showPage('profile');
-          //     login.updateUIAuthState();
-          //     return;
-          // }
+          if (this.state.user) {
+              pages.showPage('profile');
+              login.updateUIAuthState();
+              return;
+          }
           
-          const result = await api.getUserData();
+          const result = await api.getCurrentUser();
           
           if (result.success && result.userData) {
             this.state.user = result.userData;
@@ -293,7 +387,7 @@ class App {
           }
           
           if (!this.state.user) {
-            const result = await api.getUserData();
+            const result = await api.getCurrentUser();
             
             if (result.success && result.userData) {
               this.state.user = result.userData;
@@ -331,7 +425,7 @@ class App {
   
   async checkAuthState(): Promise<void> {
     try {
-      const result = await api.getUserData();
+      const result = await api.getCurrentUser();
       
       if (result.success && result.userData) {
         this.state.user = result.userData;

@@ -200,46 +200,190 @@ class API {
 
   }
 
-  async getUserData(retryCount: number = 0): Promise<ApiResponse<UserData>> {
-    try {
-      const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  // async getUserData(retryCount: number = 0): Promise<ApiResponse<UserData>> {
+  //   try {
+  //     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
-      const response = await fetch(ENDPOINTS.user.me, {
-        method: 'GET',
-        credentials: 'include'
-      });
+  //     const response = await fetch(ENDPOINTS.user.me, {
+  //       method: 'GET',
+  //       credentials: 'include'
+  //     });
 
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
+  //     if (response.status === 401 && retryCount < 1) {
+  //       const refreshResult = await this.refreshToken();
         
-        if (refreshResult.success) {
-          return await this.getUserData(retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp(); 
-          return { 
-            success: false, 
-            error: 'Authentication expired. Please log in again.',
-            authExpired: true 
-          };
-        }
-      }
+  //       if (refreshResult.success) {
+  //         return await this.getUserData(retryCount + 1);
+  //       } else {
+  //         console.error('Token refresh failed:', refreshResult.error);
+  //         utils.cleanUp(); 
+  //         return { 
+  //           success: false, 
+  //           error: 'Authentication expired. Please log in again.',
+  //           authExpired: true 
+  //         };
+  //       }
+  //     }
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user data: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch user data: ${response.status}`);
+  //     }
       
-      const userData = await response.json();
+  //     const userData = await response.json();
 
-      localStorage.setItem('user', JSON.stringify(userData));
+  //     localStorage.setItem('user', JSON.stringify(userData));
 
-      return { success: true, userData: userData.user, isAuthenticated };
-    } catch (error: any) {
-      console.error(`Error in getUserData (attempt ${retryCount + 1}):`, error);
-      return { success: false, error: error.message };
-    }
-  }
+  //     return { success: true, userData: userData.user, isAuthenticated };
+  //   } catch (error: any) {
+  //     console.error(`Error in getUserData (attempt ${retryCount + 1}):`, error);
+  //     return { success: false, error: error.message };
+  //   }
+  // }
  
+    async getCurrentUser(retryCount: number = 0): Promise<ApiResponse<UserData>> {
+      try {
+          const response = await fetch(ENDPOINTS.user.showUser, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          if (response.status === 401 && retryCount < 1) {
+              const refreshResult = await this.refreshToken();
+              
+              if (refreshResult.success) {
+                  return await this.getCurrentUser(retryCount + 1);
+              } else {
+                  console.error('Token refresh failed:', refreshResult.error);
+                  utils.cleanUp(); 
+                  return { 
+                      success: false, 
+                      error: 'Authentication expired. Please log in again.',
+                      authExpired: true 
+                  };
+              }
+          }
+          
+          if (!response.ok) {
+              throw new Error(`Failed to fetch current user: ${response.status}`);
+          }
+          
+          const userData = await response.json();
+          
+          // Store user data locally
+          localStorage.setItem('user', JSON.stringify(userData.user));
+          localStorage.setItem('isAuthenticated', 'true');
+
+          return { 
+              success: true, 
+              data: { user: userData.user, isAuthenticated: true }
+          };
+      } catch (error: any) {
+          console.error(`Error in getCurrentUser (attempt ${retryCount + 1}):`, error);
+          return { success: false, error: error.message };
+      }
+  }
+
+  /**
+   * Fetch all users (requires authentication)
+   */
+  async getAllUsers(retryCount: number = 0): Promise<ApiResponse> {
+      try {
+          const response = await fetch(ENDPOINTS.user.allUsers, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          if (response.status === 401 && retryCount < 1) {
+              const refreshResult = await this.refreshToken();
+              
+              if (refreshResult.success) {
+                  return await this.getAllUsers(retryCount + 1);
+              } else {
+                  console.error('Token refresh failed:', refreshResult.error);
+                  utils.cleanUp(); 
+                  return { 
+                      success: false, 
+                      error: 'Authentication expired. Please log in again.',
+                      authExpired: true 
+                  };
+              }
+          }
+          
+          if (!response.ok) {
+              const errorData = await response.json();
+              return { 
+                  success: false, 
+                  error: errorData.error || `Failed to fetch users: ${response.status}` 
+              };
+          }
+          
+          const usersData = await response.json();
+          
+          return { 
+              success: true, 
+              data: usersData 
+          };
+      } catch (error: any) {
+          console.error(`Error in getAllUsers (attempt ${retryCount + 1}):`, error);
+          return { success: false, error: error.message };
+      }
+  }
+
+  /**
+   * Fetch a specific user by ID
+   */
+  async getUserById(userId: string, retryCount: number = 0): Promise<ApiResponse> {
+      try {
+          const response = await fetch(`${ENDPOINTS.user.singleUser}${userId}`, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                  'Content-Type': 'application/json'
+              }
+          });
+
+          if (response.status === 401 && retryCount < 1) {
+              const refreshResult = await this.refreshToken();
+              
+              if (refreshResult.success) {
+                  return await this.getUserById(userId, retryCount + 1);
+              } else {
+                  console.error('Token refresh failed:', refreshResult.error);
+                  utils.cleanUp(); 
+                  return { 
+                      success: false, 
+                      error: 'Authentication expired. Please log in again.',
+                      authExpired: true 
+                  };
+              }
+          }
+          
+          if (!response.ok) {
+              const errorData = await response.json();
+              return { 
+                  success: false, 
+                  error: errorData.error || `Failed to fetch user: ${response.status}` 
+              };
+          }
+          
+          const userData = await response.json();
+          
+          return { 
+              success: true, 
+              data: userData 
+          };
+      } catch (error: any) {
+          console.error(`Error in getUserById (attempt ${retryCount + 1}):`, error);
+          return { success: false, error: error.message };
+      }
+  }
+
   async refreshToken(): Promise<ApiResponse> {
     try {
       const refreshEndpoint = ENDPOINTS.auth.refreshToken;

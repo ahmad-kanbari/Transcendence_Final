@@ -25,12 +25,15 @@ export const ENDPOINTS = {
         refreshToken: `${baseURL}/auth/refresh`,
     },
     user: {
-        me: '/api/users/me/',
+        me: '/users/me',
+        showUser: '/users/showUser',
+        allUsers: '/users',
+        singleUser: 'users/', // This will be used with userId appended
     },
     game: {
-        tournament: '/api/tournaments/tournament/',
-        // match_history: '/api/tournaments/match_history/',
-        match: '/api/tournaments/match/',
+        tournament: '/tournaments/tournament/',
+        match_history: '/tournaments/match_history/',
+        match: '/tournaments/match/',
     },
 }; 
 
