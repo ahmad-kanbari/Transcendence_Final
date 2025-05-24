@@ -340,6 +340,37 @@ class App {
         }
       },
       
+      '/chat' : async () => {
+        console.log('Chat route accessed');
+        components.showSpinner();
+
+     
+        try {
+          if (this.state.user) {
+            console.log('User already authenticated, showing chat page');
+            pages.showPage('chat');
+            login.updateUIAuthState();
+            return;
+        }
+          const result = await api.getCurrentUser();
+          
+          if (result.success && result.userData) {
+            this.state.user = result.userData;
+            this.state.isAuthenticated = result.isAuthenticated;
+            login.updateUIAuthState();
+            pages.showPage('chat');
+          } else {
+            components.showToast('warning', 'Authentication Required', 'Please log in to access chat.', 5000);
+            router.navigate('/login');
+          }
+        } catch (error) {
+          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          router.navigate('/login');
+        } finally {
+          components.hideSpinner();
+        }
+       },
+      
       '/profile': async () => {
         // if (this.get2FAState() && !this.getIsAuthenticated()) {
         //   pages.showPage('twoFA');

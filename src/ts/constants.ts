@@ -1,4 +1,4 @@
-export const AVAILABLE_PAGES = ['home', 'game', 'login', 'profile', 'notFound', 'twoFA'];
+export const AVAILABLE_PAGES = ['home', 'game', 'login', 'profile', 'notFound', 'twoFA', 'chat'];
 
 
 export const PAGES = {
@@ -6,8 +6,9 @@ export const PAGES = {
     login: 'src/pages/login.html',
     game: 'src/pages/game.html',
     notFound: 'src/pages/notFound.html',
+    chat:'src/pages/chat.html',
     profile: 'src/pages/profile.html',
-    twoFA: 'src/pages/twoFA.html'
+    twoFA: 'src/pages/twoFA.html',
 };
 
 export const TOAST_TYPES = ['error', 'warning', 'success', 'info'];

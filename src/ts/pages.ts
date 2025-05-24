@@ -39,12 +39,13 @@ class Pages {
     
     try {
       const htmlPages = await api.fetchAllPages();
-      
+      console.log('Fetched HTML pages:', htmlPages);
       Object.entries(htmlPages as Record<string, HTMLElement>).forEach(([pageName, element]) => {
         if (element) {
           this.pages[pageName] = element.innerHTML;
         }
       });
+      console.log('All pages loaded successfully:', this.pages);
       
     } catch (error) {
       components.showToast(

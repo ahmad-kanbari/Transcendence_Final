@@ -12,7 +12,8 @@
     "game": "Game",
     "login": "Login",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "chat": "Chat"
   },
   "game": {
     "title": "Pong Game",

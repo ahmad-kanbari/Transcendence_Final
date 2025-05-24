@@ -43,7 +43,109 @@
         <link rel="stylesheet" href="src/css/login.css">
         <link rel="stylesheet" href="src/css/profile.css">
         <link rel="stylesheet" href="src/css/accessibility.css">
+        <link rel="stylesheet" href="src/css/chat.css">
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
         
+            
+        <style>
+            /* Matrix Background Effect */
+            .matrix-bg::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(180deg, transparent, rgba(5, 217, 232, 0.1) 50%, transparent);
+                background-size: 2px 100px;
+                animation: matrix 20s linear infinite;
+                pointer-events: none;
+                z-index: -1;
+            }
+    
+            /* Grid Background */
+            .cyber-grid-bg {
+                background-image: 
+                    linear-gradient(rgba(5, 217, 232, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(5, 217, 232, 0.1) 1px, transparent 1px);
+                background-size: 20px 20px;
+            }
+    
+            /* Glitch Effect */
+            .cyber-glitch {
+                position: relative;
+            }
+    
+            .cyber-glitch::before,
+            .cyber-glitch::after {
+                content: attr(data-text);
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+            }
+    
+            .cyber-glitch::before {
+                animation: glitch 0.3s infinite;
+                color: #FF2A6D;
+                z-index: -1;
+            }
+    
+            .cyber-glitch::after {
+                animation: glitch 0.3s infinite reverse;
+                color: #05D9E8;
+                z-index: -2;
+            }
+    
+            /* Custom Scrollbar */
+            ::-webkit-scrollbar {
+                width: 8px;
+            }
+    
+            ::-webkit-scrollbar-track {
+                background: #070718;
+                border-radius: 4px;
+            }
+    
+            ::-webkit-scrollbar-thumb {
+                background: linear-gradient(45deg, #FF2A6D, #05D9E8);
+                border-radius: 4px;
+            }
+    
+            ::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(45deg, #05D9E8, #FF2A6D);
+            }
+    
+            /* Notification Badge Animation */
+            .notification-badge {
+                animation: glow 1s ease-in-out infinite alternate;
+            }
+    
+            /* Hide body until authenticated */
+            body.pre-auth {
+                visibility: hidden;
+                opacity: 0;
+            }
+    
+            body.authenticated {
+                visibility: visible;
+                opacity: 1;
+                transition: opacity 0.5s ease-in-out;
+            }
+    
+            /* Search Results Dropdown */
+            #userSearchResults {
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(5, 217, 232, 0.3);
+            }
+    
+            /* Toast Notification Enhancement */
+            .toast-notification {
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(5, 217, 232, 0.3);
+            }
+        </style>
         <style>
             /* Accessibility Cyberpunk Styling */
             .skip-to-content {
@@ -252,11 +354,15 @@
                                 <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-center" id="gameNavBtn" data-i18n="navigation.game">Game</a>
                             </li>
                             <li>
+                                <a href="/chat" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-center" id="chatNavBtn" data-i18n="navigation.chat">Chat</a>
+                            </li>
+                            <li>
                                 <a href="/profile" class="px-4 py-2 text-cyber-purple hover:text-cyber-pink transition-colors duration-300 flex items-center" id="profilePageBtn" data-i18n="navigation.profile">Profile</a>
                             </li>
                             <li>
                                 <a href="/login" class="px-4 py-2 text-cyber-yellow hover:text-cyber-pink transition-colors duration-300 flex items-center" id="loginNavBtn" data-i18n="navigation.login">Login</a>
                             </li>
+                          
                         </ul>
                     </div>
                     
@@ -305,6 +411,12 @@
                             <a href="/game" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="gameNavBtnMobile">
                                 <i class="bi bi-controller mr-2 text-cyber-green"></i>
                                 <span data-i18n="navigation.game">Game</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/chat" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="chatNavBtnMobile">
+                                <i class="bi bi-controller mr-2 text-cyber-green"></i>
+                                <span data-i18n="navigation.chat">Chat</span>
                             </a>
                         </li>
                         <li>
@@ -402,239 +514,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
         
         <script>
-            // Accessibility Controls
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     // Initialize accessibility options
-            //     let accessibilityOptions = localStorage.getItem('accessibility') 
-            //         ? JSON.parse(localStorage.getItem('accessibility'))
-            //         : {
-            //             highContrast: false,
-            //             textSize: 'medium'
-            //         };
-                
-            //     // Apply saved settings
-            //     applyAccessibilitySettings();
-                
-            //     // Mobile Menu Toggle
-            //     const mobileMenuButton = document.getElementById('mobileMenuButton');
-            //     const navbarNav = document.getElementById('navbarNav');
-                
-            //     mobileMenuButton.addEventListener('click', function() {
-            //         navbarNav.classList.toggle('hidden');
-            //     });
-                
-            //     // User profile dropdown toggle
-            //     const userProfileDropdown = document.getElementById('userProfileDropdown');
-            //     const dropdownMenu = document.querySelector('.dropdown-menu');
-                
-            //     if (userProfileDropdown && dropdownMenu) {
-            //         userProfileDropdown.addEventListener('click', function() {
-            //             dropdownMenu.classList.toggle('hidden');
-            //         });
-                    
-            //         // Hide dropdown when clicking outside
-            //         document.addEventListener('click', function(event) {
-            //             if (!dropdownMenu.contains(event.target) && !userProfileDropdown.contains(event.target)) {
-            //                 dropdownMenu.classList.add('hidden');
-            //             }
-            //         });
-            //     }
-                
-            //     // Accessibility Toggle for Mobile
-            //     const accessibilityToggle = document.getElementById('accessibilityToggle');
-            //     const accessibilityControls = document.getElementById('accessibilityControls');
-                
-            //     accessibilityToggle.addEventListener('click', function() {
-            //         accessibilityControls.classList.toggle('hidden');
-            //         accessibilityControls.classList.toggle('accessibility-expanded');
-            //     });
-                
-            //     // Hide accessibility controls when clicking elsewhere (mobile)
-            //     document.addEventListener('click', function(event) {
-            //         if (!accessibilityControls.contains(event.target) && 
-            //             !accessibilityToggle.contains(event.target) && 
-            //             accessibilityControls.classList.contains('accessibility-expanded')) {
-            //             accessibilityControls.classList.add('hidden');
-            //             accessibilityControls.classList.remove('accessibility-expanded');
-            //         }
-            //     });
-                
-            //     // Language selector functionality
-            //     const languageToggle = document.getElementById('languageToggle');
-            //     const languageMenu = document.getElementById('languageMenu');
-            //     const currentLang = document.querySelector('.current-lang');
-            //     const languageOptions = document.querySelectorAll('.lang-option');
-                
-            //     // Initialize with default language or saved preference
-            //     const savedLanguage = localStorage.getItem('selectedLanguage') || 'en';
-            //     currentLang.textContent = savedLanguage.toUpperCase();
-                
-            //     // Mark the currently active language
-            //     document.querySelector(`.lang-option[data-lang="${savedLanguage}"]`)?.classList.add('active');
-                
-            //     // Toggle language dropdown
-            //     languageToggle.addEventListener('click', function() {
-            //         languageMenu.classList.toggle('hidden');
-            //         languageMenu.classList.toggle('show');
-            //         languageToggle.setAttribute('aria-expanded', languageMenu.classList.contains('show').toString());
-            //     });
-                
-            //     // Handle language selection
-            //     languageOptions.forEach(option => {
-            //         option.addEventListener('click', function() {
-            //             const lang = this.getAttribute('data-lang');
-                        
-            //             // Update current language display
-            //             currentLang.textContent = lang.toUpperCase();
-                        
-            //             // Save preference
-            //             localStorage.setItem('selectedLanguage', lang);
-                        
-            //             // Update active state
-            //             languageOptions.forEach(opt => opt.classList.remove('active'));
-            //             this.classList.add('active');
-                        
-            //             // Hide dropdown
-            //             languageMenu.classList.add('hidden');
-            //             languageMenu.classList.remove('show');
-            //             languageToggle.setAttribute('aria-expanded', 'false');
-                        
-            //             // Trigger language change event for the i18n system
-            //             const event = new CustomEvent('languageChanged', { detail: { language: lang } });
-            //             document.dispatchEvent(event);
-            //         });
-            //     });
-                
-            //     // Close language dropdown when clicking outside
-            //     document.addEventListener('click', function(event) {
-            //         if (!languageMenu.contains(event.target) && 
-            //             !languageToggle.contains(event.target) && 
-            //             languageMenu.classList.contains('show')) {
-            //             languageMenu.classList.add('hidden');
-            //             languageMenu.classList.remove('show');
-            //             languageToggle.setAttribute('aria-expanded', 'false');
-            //         }
-            //     });
-                
-            //     // Adjust for responsive layouts
-            //     function handleResponsiveLayout() {
-            //         // if (window.innerWidth >= 768) { // md breakpoint
-            //         //     accessibilityControls.classList.remove('hidden');
-            //         //     accessibilityControls.classList.remove('accessibility-expanded');
-            //         // } else {
-            //         //     if (!accessibilityControls.classList.contains('accessibility-expanded')) {
-            //         //         accessibilityControls.classList.add('hidden');
-            //         //     }
-            //         // }
-
-            //         if (!accessibilityControls.classList.contains('accessibility-expanded')) {
-            //                 accessibilityControls.classList.add('hidden');
-            //             }
-            //     }
-                
-            //     // Initial call
-            //     handleResponsiveLayout();
-                
-            //     // Listen for window resize
-            //     window.addEventListener('resize', handleResponsiveLayout);
-                
-            //     // High Contrast Toggle
-            //     const highContrastToggle = document.getElementById('highContrastToggle');
-            //     highContrastToggle.addEventListener('click', function() {
-            //         accessibilityOptions.highContrast = !accessibilityOptions.highContrast;
-            //         highContrastToggle.setAttribute('aria-pressed', accessibilityOptions.highContrast.toString());
-            //         if (accessibilityOptions.highContrast) {
-            //             highContrastToggle.classList.add('active');
-            //         } else {
-            //             highContrastToggle.classList.remove('active');
-            //         }
-            //         applyAccessibilitySettings();
-            //         saveAccessibilitySettings();
-            //     });
-                
-            //     // Text Size Controls
-            //     const smallTextBtn = document.getElementById('smallTextBtn');
-            //     const mediumTextBtn = document.getElementById('mediumTextBtn');
-            //     const largeTextBtn = document.getElementById('largeTextBtn');
-                
-            //     smallTextBtn.addEventListener('click', function() {
-            //         accessibilityOptions.textSize = 'small';
-            //         updateTextSizeButtons(smallTextBtn);
-            //         applyAccessibilitySettings();
-            //         saveAccessibilitySettings();
-            //     });
-                
-            //     mediumTextBtn.addEventListener('click', function() {
-            //         accessibilityOptions.textSize = 'medium';
-            //         updateTextSizeButtons(mediumTextBtn);
-            //         applyAccessibilitySettings();
-            //         saveAccessibilitySettings();
-            //     });
-                
-            //     largeTextBtn.addEventListener('click', function() {
-            //         accessibilityOptions.textSize = 'large';
-            //         updateTextSizeButtons(largeTextBtn);
-            //         applyAccessibilitySettings();
-            //         saveAccessibilitySettings();
-            //     });
-                
-            //     // Initialize active states
-            //     if (accessibilityOptions.highContrast) {
-            //         highContrastToggle.classList.add('active');
-            //         highContrastToggle.setAttribute('aria-pressed', 'true');
-            //     }
-                
-            //     // Initialize text size active button
-            //     switch (accessibilityOptions.textSize) {
-            //         case 'small':
-            //             updateTextSizeButtons(smallTextBtn);
-            //             break;
-            //         case 'medium':
-            //             updateTextSizeButtons(mediumTextBtn);
-            //             break;
-            //         case 'large':
-            //             updateTextSizeButtons(largeTextBtn);
-            //             break;
-            //     }
-                
-            //     // Helper Functions
-            //     function updateTextSizeButtons(activeBtn) {
-            //         [smallTextBtn, mediumTextBtn, largeTextBtn].forEach(btn => {
-            //             btn.classList.remove('active');
-            //         });
-            //         activeBtn.classList.add('active');
-            //     }
-                
-            //     function applyAccessibilitySettings() {
-            //         // Apply high contrast mode
-            //         if (accessibilityOptions.highContrast) {
-            //             document.body.classList.add('high-contrast');
-            //         } else {
-            //             document.body.classList.remove('high-contrast');
-            //         }
-                    
-            //         // Apply text size
-            //         document.body.classList.remove('text-size-small', 'text-size-medium', 'text-size-large');
-            //         document.body.classList.add(`text-size-${accessibilityOptions.textSize}`);
-            //     }
-                
-            //     function saveAccessibilitySettings() {
-            //         localStorage.setItem('accessibility', JSON.stringify(accessibilityOptions));
-            //     }
-                
-            //     // Add keyboard support for UI components
-            //     document.querySelectorAll('[role="button"]:not(button)').forEach(el => {
-            //         el.addEventListener('keydown', (e) => {
-            //             // Activate on Space or Enter key
-            //             if (e.key === ' ' || e.key === 'Enter') {
-            //                 e.preventDefault();
-            //                 el.click();
-            //             }
-            //         });
-            //     });
-            // });
-            
-            // WebSocket mock (from your original code)
+   
             WebSocket = function() { 
                 return { 
                     send: function(){}, 
@@ -953,6 +833,628 @@
                 });
             });
         </script>
+            <script>
+                // Enhanced chat functionality with TypeScript-like structure
+                class CyberChatDashboard {
+                    constructor() {
+                        this.currentChatId = null;
+                        this.users = new Map();
+                        this.messages = new Map();
+                        this.initializeEventListeners();
+                        this.setupAccessibility();
+                    }
+        
+                    initializeEventListeners() {
+                        // Notification bell toggles
+                        document.getElementById('bellBtn')?.addEventListener('click', () => {
+                            this.toggleNotifications('generalNotifications', 'messageNotifications');
+                        });
+        
+                        document.getElementById('mailboxBtn')?.addEventListener('click', () => {
+                            this.toggleNotifications('messageNotifications', 'generalNotifications');
+                        });
+        
+                        // Search functionality
+                        const searchInput = document.getElementById('userSearchInput');
+                        searchInput?.addEventListener('input', (e) => {
+                            this.handleUserSearch(e.target.value);
+                        });
+        
+                        // Message sending
+                        const messageInput = document.getElementById('messageInput');
+                        const sendBtn = document.getElementById('sendBtn');
+        
+                        messageInput?.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                this.sendMessage();
+                            }
+                        });
+        
+                        sendBtn?.addEventListener('click', () => {
+                            this.sendMessage();
+                        });
+        
+                        // Close notifications when clicking outside
+                        document.addEventListener('click', (e) => {
+                            const target = e.target;
+                            if (!target.closest('#bellBtn') && !target.closest('#generalNotifications')) {
+                                document.getElementById('generalNotifications')?.classList.add('hidden');
+                            }
+                            if (!target.closest('#mailboxBtn') && !target.closest('#messageNotifications')) {
+                                document.getElementById('messageNotifications')?.classList.add('hidden');
+                            }
+                        });
+        
+                        // Keyboard navigation for search results
+                        const userSearchResults = document.getElementById('userSearchResults');
+                        userSearchResults?.addEventListener('keydown', (e) => {
+                            this.handleSearchResultsKeyboard(e);
+                        });
+                    }
+        
+                    setupAccessibility() {
+                        // Enhance keyboard navigation
+                        document.querySelectorAll('button, input, [tabindex]').forEach(el => {
+                            if (!el.hasAttribute('tabindex')) {
+                                el.setAttribute('tabindex', '0');
+                            }
+                        });
+        
+                        // Add keyboard handlers for custom components
+                        document.querySelectorAll('[role="button"]:not(button)').forEach(el => {
+                            el.addEventListener('keydown', (e) => {
+                                if (e.key === ' ' || e.key === 'Enter') {
+                                    e.preventDefault();
+                                    el.click();
+                                }
+                            });
+                        });
+        
+                        // Announce page changes for screen readers
+                        this.announceForScreenReader('Chat interface loaded and ready');
+                    }
+        
+                    toggleNotifications(showId, hideId) {
+                        const showElement = document.getElementById(showId);
+                        const hideElement = document.getElementById(hideId);
+                        
+                        const isVisible = !showElement?.classList.contains('hidden');
+                        
+                        showElement?.classList.toggle('hidden');
+                        hideElement?.classList.add('hidden');
+        
+                        // Update ARIA attributes
+                        const button = showId === 'generalNotifications' ? 
+                            document.getElementById('bellBtn') : 
+                            document.getElementById('mailboxBtn');
+                        
+                        button?.setAttribute('aria-expanded', (!isVisible).toString());
+                    }
+        
+                    handleUserSearch(query) {
+                        const results = document.getElementById('userSearchResults');
+                        if (!results) return;
+        
+                        if (query.length === 0) {
+                            results.classList.add('hidden');
+                            results.setAttribute('aria-hidden', 'true');
+                            return;
+                        }
+        
+                        // Mock search results
+                        const mockUsers = [
+                            { id: '1', username: 'Neo_Matrix', status: 'online' },
+                            { id: '2', username: 'Trinity_Code', status: 'offline' },
+                            { id: '3', username: 'Morpheus_Red', status: 'online' }
+                        ].filter(user => user.username.toLowerCase().includes(query.toLowerCase()));
+        
+                        this.renderSearchResults(mockUsers, results);
+                        results.classList.remove('hidden');
+                        results.setAttribute('aria-hidden', 'false');
+                        
+                        // Announce results for screen readers
+                        this.announceForScreenReader(`${mockUsers.length} search results found`);
+                    }
+        
+                    renderSearchResults(users, container) {
+                        container.innerHTML = users.map((user, index) => `
+                            <div class="p-3 hover:bg-cyber-blue/20 cursor-pointer border-b border-cyber-green/30 last:border-b-0 transition-all duration-300 focus:bg-cyber-blue/20 focus:outline-none" 
+                                 onclick="cyberChat.startChat('${user.id}', '${user.username}', '${user.status}')"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();cyberChat.startChat('${user.id}', '${user.username}', '${user.status}')}"
+                                 tabindex="0"
+                                 role="option"
+                                 aria-selected="false"
+                                 data-user-id="${user.id}">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-cyber-pink/20 rounded-full flex items-center justify-center status-indicator status-${user.status}">
+                                        <i class="bi bi-person text-cyber-pink text-sm" aria-hidden="true"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-cyber text-white text-sm">${user.username}</div>
+                                        <div class="text-xs text-gray-400">${user.status === 'online' ? 'Online' : 'Offline'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+        
+                    handleSearchResultsKeyboard(e) {
+                        const results = e.currentTarget.querySelectorAll('[role="option"]');
+                        const currentIndex = Array.from(results).findIndex(el => el === document.activeElement);
+                        
+                        switch(e.key) {
+                            case 'ArrowDown':
+                                e.preventDefault();
+                                const nextIndex = (currentIndex + 1) % results.length;
+                                results[nextIndex]?.focus();
+                                break;
+                            case 'ArrowUp':
+                                e.preventDefault();
+                                const prevIndex = currentIndex > 0 ? currentIndex - 1 : results.length - 1;
+                                results[prevIndex]?.focus();
+                                break;
+                            case 'Escape':
+                                document.getElementById('userSearchInput')?.focus();
+                                document.getElementById('userSearchResults')?.classList.add('hidden');
+                                break;
+                        }
+                    }
+        
+                    startChat(userId, username, status) {
+                        this.currentChatId = userId;
+                        
+                        // Update chat header
+                        const chatHeader = document.getElementById('chatHeader');
+                        if (chatHeader) {
+                            chatHeader.innerHTML = `
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-cyber-blue/20 rounded-full flex items-center justify-center status-indicator status-${status}">
+                                        <i class="bi bi-person text-cyber-blue" aria-hidden="true"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-cyber text-cyber-blue">${username}</h3>
+                                        <p class="text-gray-400 text-sm">${status === 'online' ? 'Online' : 'Last seen recently'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2" role="toolbar" aria-label="Chat actions">
+                                    <button class="text-cyber-green hover:text-cyber-pink transition-colors duration-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-cyber-green"
+                                            aria-label="Voice call with ${username}"
+                                            tabindex="0">
+                                        <i class="bi bi-telephone text-xl"></i>
+                                    </button>
+                                    <button class="text-cyber-yellow hover:text-cyber-pink transition-colors duration-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-cyber-yellow"
+                                            aria-label="Video call with ${username}"
+                                            tabindex="0">
+                                        <i class="bi bi-camera-video text-xl"></i>
+                                    </button>
+                                    <button class="text-cyber-pink hover:text-cyber-blue transition-colors duration-300 p-2 rounded focus:outline-none focus:ring-2 focus:ring-cyber-pink"
+                                            aria-label="More options for ${username}"
+                                            tabindex="0">
+                                        <i class="bi bi-three-dots-vertical text-xl"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+        
+                        // Enable message input
+                        const messageInput = document.getElementById('messageInput');
+                        const sendBtn = document.getElementById('sendBtn');
+                        
+                        if (messageInput && sendBtn) {
+                            messageInput.disabled = false;
+                            sendBtn.disabled = false;
+                            messageInput.placeholder = `Message ${username}...`;
+                            messageInput.setAttribute('aria-label', `Type message to ${username}`);
+                        }
+        
+                        // Clear messages and show chat started message
+                        this.renderMessages([]);
+                        this.addSystemMessage(`Secure connection established with ${username}`);
+        
+                        // Hide search results
+                        document.getElementById('userSearchResults')?.classList.add('hidden');
+                        
+                        // Clear search input
+                        const searchInput = document.getElementById('userSearchInput');
+                        if (searchInput) searchInput.value = '';
+        
+                        // Add to chat list if not already there
+                        this.addToChatList(userId, username, status);
+        
+                        // Announce for screen readers
+                        this.announceForScreenReader(`Started chat with ${username}`);
+                    }
+        
+                    addToChatList(userId, username, status) {
+                        const chatRows = document.getElementById('chatRows');
+                        if (!chatRows) return;
+        
+                        // Check if already exists
+                        if (document.getElementById(`chat-${userId}`)) return;
+        
+                        // Remove "no chats" message
+                        const noChatsMsg = chatRows.querySelector('.text-center');
+                        if (noChatsMsg) noChatsMsg.remove();
+        
+                        const chatRow = document.createElement('div');
+                        chatRow.id = `chat-${userId}`;
+                        chatRow.className = 'p-4 border-b border-cyber-blue/30 hover:bg-cyber-blue/10 cursor-pointer transition-all duration-300 focus:bg-cyber-blue/10 focus:outline-none';
+                        chatRow.setAttribute('role', 'listitem');
+                        chatRow.setAttribute('tabindex', '0');
+                        chatRow.setAttribute('aria-label', `Chat with ${username}`);
+                        
+                        chatRow.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-cyber-pink/20 rounded-full flex items-center justify-center status-indicator status-${status}">
+                                    <i class="bi bi-person text-cyber-pink" aria-hidden="true"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-cyber text-white text-sm">${username}</div>
+                                    <div class="text-xs text-gray-400">Click to connect</div>
+                                </div>
+                                <div class="text-xs text-cyber-blue">Now</div>
+                            </div>
+                        `;
+                        
+                        chatRow.addEventListener('click', () => {
+                            this.startChat(userId, username, status);
+                        });
+        
+                        chatRow.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                this.startChat(userId, username, status);
+                            }
+                        });
+        
+                        chatRows.appendChild(chatRow);
+                    }
+        
+                    sendMessage() {
+                        const messageInput = document.getElementById('messageInput');
+                        if (!messageInput || !this.currentChatId) return;
+        
+                        const content = messageInput.value.trim();
+                        if (!content) return;
+        
+                        const message = {
+                            id: Date.now().toString(),
+                            senderId: 'current-user',
+                            content,
+                            timestamp: new Date(),
+                            type: 'text'
+                        };
+        
+                        this.addMessage(message, true);
+                        messageInput.value = '';
+        
+                        // Announce message sent for screen readers
+                        this.announceForScreenReader('Message sent');
+        
+                        // Simulate response after delay
+                        setTimeout(() => {
+                            this.simulateResponse();
+                        }, 1000 + Math.random() * 2000);
+                    }
+        
+                    simulateResponse() {
+                        const responses = [
+                            "Roger that, transmission received.",
+                            "Neural link established. Processing data...",
+                            "Acknowledged. Standing by for further instructions.",
+                            "Connection stable. Ready for next sequence.",
+                            "Data packet received and decrypted successfully."
+                        ];
+        
+                        const response = {
+                            id: Date.now().toString(),
+                            senderId: this.currentChatId || 'unknown',
+                            content: responses[Math.floor(Math.random() * responses.length)],
+                            timestamp: new Date(),
+                            type: 'text'
+                        };
+        
+                        this.addMessage(response, false);
+                    }
+        
+                    addMessage(message, isOwnMessage) {
+                        const messagesContainer = document.getElementById('messages');
+                        if (!messagesContainer) return;
+        
+                        // Clear welcome message if it exists
+                        const welcomeMsg = messagesContainer.querySelector('.text-center');
+                        if (welcomeMsg) welcomeMsg.remove();
+        
+                        const messageEl = document.createElement('div');
+                        messageEl.className = `message-bubble ${isOwnMessage ? 'ml-auto' : 'mr-auto'} max-w-xs lg:max-w-md`;
+                        messageEl.setAttribute('role', 'article');
+                        messageEl.setAttribute('aria-label', `${isOwnMessage ? 'You' : 'Contact'} said: ${message.content}`);
+                        
+                        const timestamp = new Date(message.timestamp).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+        
+                        messageEl.innerHTML = `
+                            <div class="${isOwnMessage ? 
+                                'bg-cyber-blue/20 border border-cyber-blue text-white' : 
+                                'bg-cyber-pink/20 border border-cyber-pink text-white'
+                            } rounded-lg p-3 shadow-${isOwnMessage ? 'neon-blue' : 'neon-pink'}">
+                                <div class="text-sm">${this.escapeHtml(message.content)}</div>
+                                <div class="text-xs text-gray-400 mt-1 text-right">
+                                    ${timestamp}
+                                </div>
+                            </div>
+                        `;
+        
+                        messagesContainer.appendChild(messageEl);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+                        // Announce new message for screen readers (only for incoming messages)
+                        if (!isOwnMessage) {
+                            this.announceForScreenReader(`New message: ${message.content}`);
+                        }
+                    }
+        
+                    addSystemMessage(content) {
+                        const messagesContainer = document.getElementById('messages');
+                        if (!messagesContainer) return;
+        
+                        // Clear welcome message if it exists
+                        const welcomeMsg = messagesContainer.querySelector('.text-center');
+                        if (welcomeMsg) welcomeMsg.remove();
+        
+                        const systemEl = document.createElement('div');
+                        systemEl.className = 'text-center my-4';
+                        systemEl.setAttribute('role', 'status');
+                        systemEl.setAttribute('aria-live', 'polite');
+                        
+                        systemEl.innerHTML = `
+                            <div class="bg-cyber-green/10 border border-cyber-green/30 rounded-lg px-4 py-2 inline-block">
+                                <div class="text-cyber-green text-sm font-cyber">
+                                    <i class="bi bi-shield-check mr-2" aria-hidden="true"></i>
+                                    ${this.escapeHtml(content)}
+                                </div>
+                            </div>
+                        `;
+        
+                        messagesContainer.appendChild(systemEl);
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+        
+                    renderMessages(messages) {
+                        const messagesContainer = document.getElementById('messages');
+                        if (!messagesContainer) return;
+        
+                        messagesContainer.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="w-20 h-20 bg-cyber-blue/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="bi bi-chat-square-dots text-3xl text-cyber-blue" aria-hidden="true"></i>
+                                </div>
+                                <h3 class="font-cyber text-xl text-cyber-blue mb-2">NEURAL CHAT INTERFACE</h3>
+                                <p class="text-gray-400">Messages will appear here</p>
+                            </div>
+                        `;
+                    }
+        
+                    updateNotificationBadge(elementId, count) {
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            element.setAttribute('data-count', count.toString());
+                            element.setAttribute('aria-label', 
+                                elementId === 'bellBtn' ? 
+                                `System notifications (${count})` : 
+                                `Message notifications (${count})`
+                            );
+                        }
+                    }
+        
+                    showToast(header, message) {
+                        const toast = document.querySelector('.toast-notification');
+                        const headerEl = toast.querySelector('.header');
+                        const messageEl = toast.querySelector('.message');
+                        
+                        headerEl.textContent = header;
+                        messageEl.textContent = message;
+                        
+                        toast.classList.remove('opacity-0', '-translate-x-5', 'pointer-events-none');
+                        toast.classList.add('opacity-100', 'translate-x-0', 'pointer-events-auto');
+                        
+                        // Announce toast for screen readers
+                        this.announceForScreenReader(`${header}: ${message}`);
+                        
+                        setTimeout(() => {
+                            toast.classList.add('opacity-0', '-translate-x-5', 'pointer-events-none');
+                            toast.classList.remove('opacity-100', 'translate-x-0', 'pointer-events-auto');
+                        }, 3000);
+                    }
+        
+                    announceForScreenReader(message) {
+                        // Create a temporary element for screen reader announcements
+                        const announcement = document.createElement('div');
+                        announcement.setAttribute('aria-live', 'assertive');
+                        announcement.setAttribute('aria-atomic', 'true');
+                        announcement.className = 'sr-only';
+                        announcement.textContent = message;
+                        
+                        document.body.appendChild(announcement);
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(announcement);
+                        }, 1000);
+                    }
+        
+                    escapeHtml(text) {
+                        const div = document.createElement('div');
+                        div.textContent = text;
+                        return div.innerHTML;
+                    }
+                }
+        
+                // Initialize chat dashboard when DOM is loaded
+                document.addEventListener('DOMContentLoaded', () => {
+                    window.cyberChat = new CyberChatDashboard();
+                    
+                    // Show initial toast
+                    setTimeout(() => {
+                        window.cyberChat.showToast('NEURAL INTERFACE', 'Chat matrix initialized successfully');
+                    }, 500);
+                });
+        
+                // Add screen reader only class
+                const style = document.createElement('style');
+                style.textContent = `
+                    .sr-only {
+                        position: absolute;
+                        width: 1px;
+                        height: 1px;
+                        padding: 0;
+                        margin: -1px;
+                        overflow: hidden;
+                        clip: rect(0, 0, 0, 0);
+                        white-space: nowrap;
+                        border: 0;
+                    }
+                `;
+                document.head.appendChild(style);
+            </script>
+
+                
+    <style>
+        /* Skip to content link for accessibility */
+        .skip-to-content {
+            position: absolute;
+            top: -50px;
+            left: 0;
+            padding: 8px 16px;
+            background-color: #05D9E8;
+            color: #070718;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            z-index: 9999;
+            transition: top 0.3s;
+            border: 1px solid #05D9E8;
+            box-shadow: 0 0 5px #05D9E8, 0 0 10px #05D9E8;
+            clip: rect(0, 0, 0, 0);
+        }
+        .skip-to-content:focus {
+            top: 0;
+            clip: auto;
+            outline: none;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #070718; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(45deg, #FF2A6D, #05D9E8); 
+            border-radius: 4px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: linear-gradient(45deg, #05D9E8, #FF2A6D); 
+        }
+
+        /* Matrix background effect */
+        .matrix-bg::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, transparent, rgba(5, 217, 232, 0.05) 50%, transparent);
+            background-size: 2px 100px;
+            animation: matrix 20s linear infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Notification badge */
+        #bellBtn::after, #mailboxBtn::after {
+            content: attr(data-count);
+            position: absolute;
+            top: -4px; right: -4px;
+            background: #FF2A6D;
+            color: white;
+            border-radius: 50%;
+            width: 18px; height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            visibility: hidden;
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+
+        #bellBtn[data-count]:not([data-count="0"])::after,
+        #mailboxBtn[data-count]:not([data-count="0"])::after {
+            visibility: visible;
+        }
+
+        /* Message bubble animations */
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .typing-dot {
+            width: 4px; height: 4px;
+            background: #05D9E8;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Online status indicator */
+        .status-indicator {
+            position: relative;
+        }
+        .status-indicator::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            border: 2px solid #070718;
+        }
+        .status-online::after {
+            background: #2DE2E6;
+            box-shadow: 0 0 5px #2DE2E6;
+        }
+        .status-offline::after {
+            background: #666;
+        }
+
+        /* High contrast mode for accessibility */
+        body.high-contrast {
+            background-color: #000000;
+            color: #ffffff;
+        }
+        .high-contrast .bg-cyber-darker { background-color: #000000 !important; }
+        .high-contrast .bg-cyber-dark { background-color: #222222 !important; }
+        .high-contrast .border-cyber-blue { border-color: #ffffff !important; }
+        .high-contrast .text-cyber-blue { color: #ffffff !important; }
+
+        /* Text size adjustments for accessibility */
+        body.text-size-small { font-size: 0.9rem; }
+        body.text-size-medium { font-size: 1rem; }
+        body.text-size-large { font-size: 1.2rem; }
+        body.text-size-large h1 { font-size: 2.5rem; }
+        body.text-size-large h2 { font-size: 2rem; }
+        body.text-size-large h3 { font-size: 1.75rem; }
+
+        /* Focus indicators for keyboard navigation */
+        button:focus, input:focus, [tabindex]:focus {
+            outline: 2px solid #05D9E8;
+            outline-offset: 2px;
+        }
+    </style>
         <script src="dist/bundle.js"></script>
     </body>
 </html>

@@ -32,14 +32,45 @@ module.exports = {
       backgroundSize: {
         'grid': '30px 30px',
       },
+      boxShadow: {
+        'neon-pink': '0 0 5px #FF2A6D, 0 0 10px #FF2A6D',
+        'neon-blue': '0 0 5px #05D9E8, 0 0 10px #05D9E8',
+        'neon-purple': '0 0 5px #9D4EDD, 0 0 10px #9D4EDD',
+        'neon-yellow': '0 0 5px #F9C80E, 0 0 10px #F9C80E',
+        'neon-green': '0 0 5px #2DE2E6, 0 0 10px #2DE2E6',
+    },
       animation: {
-        'glow': 'glow 1.5s ease-in-out infinite alternate',
+        'glow': 'glow 2s ease-in-out infinite alternate',
+        'glitch': 'glitch 0.3s infinite',
+        'matrix': 'matrix 20s linear infinite',
+        'typing': 'typing 1s ease-in-out infinite',
+        'slideIn': 'slideIn 0.3s ease-out',
       },
       keyframes: {
         glow: {
-          'from': { 'text-shadow': '0 0 5px #fff, 0 0 10px #fff, 0 0 15px #05D9E8, 0 0 20px #05D9E8' },
-          'to': { 'text-shadow': '0 0 10px #fff, 0 0 20px #fff, 0 0 30px #05D9E8, 0 0 40px #05D9E8' },
-        }
+          '0%': { textShadow: '0 0 5px currentColor' },
+          '100%': { textShadow: '0 0 20px currentColor, 0 0 30px currentColor' }
+        },
+        glitch: {
+          '0%': { transform: 'translate(0)' },
+          '20%': { transform: 'translate(-2px, 2px)' },
+          '40%': { transform: 'translate(2px, -2px)' },
+          '60%': { transform: 'translate(-2px, -2px)' },
+          '80%': { transform: 'translate(2px, 2px)' },
+          '100%': { transform: 'translate(0)' }
+      },
+      matrix: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(100vh)' }
+      },
+      typing: {
+        '0%, 50%': { opacity: '1' },
+        '51%, 100%': { opacity: '0' }
+    },
+    slideIn: {
+        'from': { opacity: '0', transform: 'translateY(20px)' },
+        'to': { opacity: '1', transform: 'translateY(0)' }
+    }
       },
     },
   },

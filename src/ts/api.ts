@@ -199,46 +199,6 @@ class API {
     }
 
   }
-
-  // async getUserData(retryCount: number = 0): Promise<ApiResponse<UserData>> {
-  //   try {
-  //     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-
-  //     const response = await fetch(ENDPOINTS.user.me, {
-  //       method: 'GET',
-  //       credentials: 'include'
-  //     });
-
-  //     if (response.status === 401 && retryCount < 1) {
-  //       const refreshResult = await this.refreshToken();
-        
-  //       if (refreshResult.success) {
-  //         return await this.getUserData(retryCount + 1);
-  //       } else {
-  //         console.error('Token refresh failed:', refreshResult.error);
-  //         utils.cleanUp(); 
-  //         return { 
-  //           success: false, 
-  //           error: 'Authentication expired. Please log in again.',
-  //           authExpired: true 
-  //         };
-  //       }
-  //     }
-      
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch user data: ${response.status}`);
-  //     }
-      
-  //     const userData = await response.json();
-
-  //     localStorage.setItem('user', JSON.stringify(userData));
-
-  //     return { success: true, userData: userData.user, isAuthenticated };
-  //   } catch (error: any) {
-  //     console.error(`Error in getUserData (attempt ${retryCount + 1}):`, error);
-  //     return { success: false, error: error.message };
-  //   }
-  // }
  
     async getCurrentUser(retryCount: number = 0): Promise<ApiResponse<UserData>> {
       try {

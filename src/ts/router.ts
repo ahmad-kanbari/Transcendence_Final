@@ -92,6 +92,7 @@ isCallbackUrl(path: string): boolean {
         else if (id.includes('game')) targetPath = '/game';
         else if (id.includes('login')) targetPath = '/login';
         else if (id.includes('profile')) targetPath = '/profile';
+        else if (id.includes('chat')) targetPath = '/chat';
         
         if (navBtn.getAttribute('href') && navBtn.getAttribute('href') !== '#') {
           targetPath = navBtn.getAttribute('href') || '/';
