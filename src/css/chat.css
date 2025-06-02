@@ -135,6 +135,7 @@ body::after {
         inset -1px 0 0 rgba(5, 217, 232, 0.1);
     backdrop-filter: blur(10px);
     position: relative;
+
 }
 
 .sidebar::before {
@@ -189,6 +190,7 @@ body::after {
     margin-bottom: 25px;
     position: relative;
     overflow: hidden;
+    overflow-y: auto;
     transition: all 0.4s ease;
     backdrop-filter: blur(5px);
 }
@@ -540,6 +542,8 @@ li:hover {
 .chat-container {
     flex: 1;
     display: flex;
+    height: 80vh;
+
 }
 
 /* Enhanced Chat List */
@@ -592,6 +596,16 @@ li:hover {
     transition: left 0.6s ease;
 }
 
+#messageBox {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, 
+        rgba(15, 15, 27, 0.9) 0%, 
+        rgba(7, 7, 24, 0.95) 100%);
+    /* position: relative; */
+}
+
 .chat-row:hover::before {
     left: 100%;
 }
@@ -620,6 +634,7 @@ li:hover {
     flex-direction: column;
     background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%);
     position: relative;
+   
 }
 
 .chatPanel::before {
@@ -660,6 +675,7 @@ li:hover {
         rgba(15, 15, 27, 0.9) 0%, 
         rgba(7, 7, 24, 0.95) 100%);
     position: relative;
+    overflow-y: auto;
 }
 
 .message {
@@ -671,6 +687,7 @@ li:hover {
     position: relative;
     backdrop-filter: blur(5px);
     animation: messageSlide 0.3s ease-out;
+    overflow-y: auto;
 }
 
 @keyframes messageSlide {

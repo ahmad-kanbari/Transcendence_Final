@@ -269,7 +269,7 @@ class Chat {
         
         // Update chat header
         if (this.elements.chatHeader) {
-            this.elements.chatHeader.textContent = 'Loading chat...';
+            this.elements.chatHeader.textContent = 'Online chat...';
         }
         
         // Mark notifications as read
@@ -531,13 +531,25 @@ class Chat {
             }
 
             requests.forEach((request: any) => {
-                const li = document.createElement('li');
-                li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
+                // const li = document.createElement('li');
+                // li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
                 
-                li.innerHTML = `
-                    <span>${request.senderUsername}</span>
-                    <button onclick="window.chat.cancelFriendRequest('${request.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Cancel</button>
-                `;
+                // li.innerHTML = `
+                //     <span>${request.senderUsername}</span>
+                //     <button onclick="window.chat.cancelFriendRequest('${request.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Cancel</button>
+                // `;
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${request.senderUsername}</span>`;
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.style = 'padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;';
+                cancelBtn.addEventListener('click', () => {
+                    window.chat.cancelFriendRequest(request.friendshipId);
+                });
+
+                li.appendChild(cancelBtn);
+
                 
                 this.elements.outgoingRequests!.appendChild(li);
             });
