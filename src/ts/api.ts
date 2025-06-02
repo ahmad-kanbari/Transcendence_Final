@@ -2,6 +2,7 @@ import utils from './utils';
 import { PAGES, ENDPOINTS } from './constants';
 import { User } from './app';
 import { baseURL } from './constants';
+import { CONFIG } from './constants';
 // Define interfaces for API responses and data
 interface ApiResponse<T = any> {
   success: boolean;
@@ -153,7 +154,7 @@ class API {
 
   async logout(): Promise<ApiResponse> {
     try {
-      await fetch(ENDPOINTS.auth.logout, {
+      await this.fetchWithAutoRefresh(ENDPOINTS.auth.logout, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -609,6 +610,147 @@ class API {
       };
     }
   }
+
+  
+
+async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
+	const deviceId = localStorage.getItem("deviceId");
+	if (!deviceId) {
+		throw new Error("Missing deviceId in localStorage. Ensure it's set during login.");
+	}
+
+	const addDeviceIdToBody = (opts : any) => {
+		const headers = { ...opts.headers, "Content-Type": "application/json" };
+		const originalBody = opts.body ? JSON.parse(opts.body) : {};
+		const body = JSON.stringify({ ...originalBody, deviceId });
+		return { ...opts, headers, body };
+	};
+
+  let finalOptions = { ...options, credentials: 'include' as RequestCredentials };
+  if (finalOptions.method && finalOptions.method.toUpperCase() !== "GET") {
+    finalOptions = addDeviceIdToBody(finalOptions);
+  }
+
+  let res = await fetch(url, finalOptions);
+
+	if (res.status === 401) {
+		const refreshRes = await fetch(`${baseURL}/auth/refresh`, {
+			method: "POST",
+			credentials: "include",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ deviceId }),
+		});
+
+		if (refreshRes.ok) {
+      let retryOptions = { ...options, credentials: 'include' as RequestCredentials };
+      if (retryOptions.method && retryOptions.method.toUpperCase() !== "GET") {
+        retryOptions = addDeviceIdToBody(retryOptions);
+      }
+      res = await fetch(url, retryOptions);
+		}
+	}
+
+	return res;
+}
+
+
+  //New APIs 
+  // async getCurrentUser() {
+  //       const res = await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/users/showUser`);
+  //       return res.ok ? await res.json() : null;
+  //   }
+
+    async searchUsers(query : any, page = 1, limit = 5) {
+      console.log('searching users with query:', query, 'page:', page, 'limit:', limit);
+        const res = await this.fetchWithAutoRefresh(
+            `${CONFIG.baseURL}/users?search=${query}&page=${page}&limit=${limit}`
+        );
+        return res.ok ? await res.json() : [];
+    }
+
+    // async getUserById(userId : string) {
+    //     const res = await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/users/${userId}`);
+    //     return res.ok ? await res.json() : null;
+    // }
+
+    // Chat endpoints
+    async getChats() {
+        const res = await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/chats`);
+        return res.ok ? await res.json() : [];
+    }
+
+    async getChatMessages(chatId : string) {
+        const res = await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/chats/${chatId}/messages`);
+        return res.ok ? await res.json() : [];
+    }
+
+    async sendMessage(chatId : string, content : any) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId, content })
+        });
+    }
+
+    // Notification endpoints
+    async getNotifications(type = 'others', page = 1, limit = 5) {
+        const res = await this.fetchWithAutoRefresh(
+            `${CONFIG.baseURL}/notifications/${type}?page=${page}&limit=${limit}`
+        );
+        return res.ok ? await res.json() : [];
+    }
+
+    async markNotificationsAsOpened(type = 'others') {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/${type}`, {
+            method: 'PATCH'
+        });
+    }
+
+    async markNotificationAsRead(notificationId : string) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/others/${notificationId}`, {
+            method: 'PATCH'
+        });
+    }
+
+    async markChatNotificationsAsRead(chatId : string) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
+            method: 'PATCH'
+        });
+    }
+
+    // Friendship endpoints
+    async getFriendships(status : string | null = null, direction : string | null = null) {
+        let url = `${CONFIG.baseURL}/friendships`;
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (direction) params.append('direction', direction);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await this.fetchWithAutoRefresh(url);
+        return res.ok ? await res.json() : [];
+    }
+
+    async sendFriendRequest(friendId : string) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ friendId })
+        });
+    }
+
+    async updateFriendship(friendshipId : string, action : string) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships/${friendshipId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+        });
+    }
+
+    async deleteFriendship(friendshipId : string) {
+        return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships/${friendshipId}`, {
+            method: 'DELETE'
+        });
+    }
   
 }
 

@@ -1,5 +1,5 @@
 // Tailwind CSS is now loaded via CDN
-
+import socketService from './socketService';
 import api from './api';
 import utils from './utils';
 import login from './login';
@@ -13,7 +13,10 @@ import components from './components';
 import localization, { t } from './localization';
 import accessibility from './accessibility';
 import { ApiResponse } from './api';
-
+import chat from './chat';
+import friends from './friend';
+import { io } from 'socket.io-client';
+import { CONFIG } from './constants';
 // Define interfaces for state and user
 interface User {
   profile_image?: string;
@@ -55,10 +58,14 @@ class App {
     this.initialized = false;
     this.logoutInitialized = false;
 
+
+
     this.state = {
       user: null,
       isAuthenticated: false,
     };
+
+    
   }
   
   async init(): Promise<boolean> {
@@ -70,11 +77,12 @@ class App {
     }
     
     try {
-      this.resetAppContainer();
+      // this.resetAppContainer();
       
       components.showSpinner();
       components.init(this.appContainer);
-      
+
+      this.initializeSocket();
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
@@ -83,7 +91,8 @@ class App {
       register.init();
     //   twoFA.init();
       profile.init();
-      
+      chat.init();
+      friends.init();
       this.registerRoutes();
       
       await router.init();
@@ -609,6 +618,91 @@ class App {
       localStorage.setItem('user', JSON.stringify(this.state.user));
     }
   }
+  destroy(): void {
+        socketService.destroy();
+        chat.destroy();
+        console.log('App destroyed');
+
+    }
+
+    // private initializeSocket(): void {
+    //     // Check if Socket.IO is available
+    //     if (typeof io === 'undefined') {
+    //         console.warn('Socket.IO not loaded. Some features may not work.');
+    //         return;
+    //     }
+
+    //     try {
+    //         // Initialize socket service
+    //         socketService.initialize();
+            
+    //         // Make it available globally for backward compatibility
+    //         window.socketService = socketService;
+    //         window.chatSocket = socketService.getSocket();
+            
+    //         // Listen for socket events
+    //         this.setupSocketEventListeners();
+            
+    //     } catch (error) {
+    //         console.error('Failed to initialize socket:', error);
+    //         components.showToast(
+    //             'warning',
+    //             'Connection Issue',
+    //             'Real-time features may not work properly.',
+    //             3000
+    //         );
+    //     }
+    // }
+
+    /**
+     * Setup app-level socket event listeners
+     */
+    // private setupSocketEventListeners(): void {
+    //     // Listen for connection events
+    //     document.addEventListener('socketConnected', (event: Event) => {
+    //         const customEvent = event as CustomEvent;
+    //         console.log('App detected socket connection:', customEvent.detail.socketId);
+    //         components.showToast('success', 'Connected', 'Real-time features are now active!', 2000);
+    //     });
+
+    //     document.addEventListener('socketDisconnected', (event: Event) => {
+    //         const customEvent = event as CustomEvent;
+    //         console.log('App detected socket disconnection:', customEvent.detail.reason);
+    //         components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
+    //     });
+
+    //     document.addEventListener('socketReconnected', (event: Event) => {
+    //         const customEvent = event as CustomEvent;
+    //         console.log('App detected socket reconnection after', customEvent.detail.attempts, 'attempts');
+    //         components.showToast('success', 'Reconnected', 'Real-time features restored!', 2000);
+    //     });
+
+    //     document.addEventListener('socketConnectionFailed', (event: Event) => {
+    //         const customEvent = event as CustomEvent;
+    //         console.error('App detected socket connection failure:', customEvent.detail.error);
+    //         components.showToast('error', 'Connection Failed', 'Unable to connect to server. Please refresh the page.', 5000);
+    //     });
+    // }
+    private initializeSocket(): void {
+        if (typeof io !== 'undefined') {
+            window.chatSocket = io(CONFIG.socketURL, {
+                withCredentials: true,
+                autoConnect: true,
+                reconnection: true,
+            });
+            
+            window.chatSocket.on('connect', () => {
+                console.log('Socket connected');
+                components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+            });
+            
+            window.chatSocket.on('disconnect', () => {
+                console.log('Socket disconnected');
+                components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
+            });
+        }
+    }
+
 }
 
 const app = new App();
@@ -628,6 +722,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         isRTL: localization.isRTL 
       }
     }));
+
+           // Add cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+            app.destroy();
+        });
   } catch (error) {
     if (components && components.hideSpinner) {
       components.hideSpinner();

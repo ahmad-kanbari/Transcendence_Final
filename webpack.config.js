@@ -27,10 +27,19 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
-    static: {
-      directory: path.join(__dirname, '/'),
+  proxy: [
+    {
+      context: ['/api'],
+      target: 'http://localhost:3000/',
+      secure: false,
+      changeOrigin: true,
     },
-    historyApiFallback: true,
-    port: 3003,
+  ],
+  static: {
+    directory: path.join(__dirname, '/'),
   },
+  historyApiFallback: true,
+  port: 3003,
+}
+
 };

@@ -1454,7 +1454,47 @@
             outline: 2px solid #05D9E8;
             outline-offset: 2px;
         }
+
+        .connection-status {
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                background: rgba(7, 7, 24, 0.9);
+                border: 1px solid #05D9E8;
+                border-radius: 20px;
+                padding: 8px 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                z-index: 1000;
+                font-size: 12px;
+                color: white;
+            }
+
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #f44336;
+                animation: pulse 1.5s infinite;
+            }
+
+            .status-dot.connected {
+                background: #4CAF50;
+                animation: none;
+            }
+
+            @keyframes pulse {
+                0% { opacity: 1; }
+                50% { opacity: 0.5; }
+                100% { opacity: 1; }
+            }
     </style>
+        <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
         <script src="dist/bundle.js"></script>
     </body>
+    <div id="connectionStatus" class="connection-status hidden">
+        <span class="status-dot"></span>
+    <span class="status-text">Connecting...</span>
+</div>
 </html>

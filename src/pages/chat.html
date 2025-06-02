@@ -73,7 +73,7 @@
                     </button>
                     <div 
                         class="notification-bell" 
-                        id="bellBtn" 
+                        id="notificationBell" 
                         role="button" 
                         tabindex="0"
                         aria-label="General notifications"
@@ -91,10 +91,10 @@
             </div>
 
             <!-- Notification Dropdowns -->
-            <div id="generalNotifications" role="region" aria-label="General notifications">
+            <div id="generalNotifications" role="region" aria-label="General notifications" style="display: none;">
                 <em>No notifications yet.</em>
             </div>
-            <div id="messageNotifications" role="region" aria-label="Message notifications">
+            <div id="messageNotifications" role="region" aria-label="Message notifications" style="display: none;">
                 <em>No message notifications yet.</em>
             </div>
 
@@ -109,25 +109,11 @@
                             placeholder="Start chat with..."
                             aria-label="Search users to start chat"
                         />
-                        <div id="userSearchResults" role="listbox" aria-label="User search results"></div>
+                        <div id="userSearchResultsChat" role="listbox" aria-label="User search results" style="display: none;"></div>
                     </div>
                     <h3>Your Chats</h3>
                     <div id="chatRows" role="list" aria-label="Active chats">
-                        <!-- Example chat rows with enhanced styling -->
-                        <div class="chat-row" role="listitem">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="online-status"></span>
-                                <span>Alice Johnson</span>
-                            </div>
-                            <div style="font-size: 12px; color: #999; margin-top: 5px;">Last seen 2 minutes ago</div>
-                        </div>
-                        <div class="chat-row" role="listitem">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span class="offline-status"></span>
-                                <span>Bob Smith</span>
-                            </div>
-                            <div style="font-size: 12px; color: #999; margin-top: 5px;">Last seen 1 hour ago</div>
-                        </div>
+                        <!-- Chat rows will be populated by JavaScript -->
                     </div>
                 </div>
 
@@ -136,20 +122,8 @@
                     <div id="chatHeader" role="banner">
                         Select a chat to start messaging
                     </div>
-                    <div id="messages" role="log" aria-live="polite" aria-label="Chat messages">
-                        <!-- Example messages with enhanced styling -->
-                        <div class="message received">
-                            <div>Hey! How are you doing?</div>
-                            <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">2:30 PM</div>
-                        </div>
-                        <div class="message sent">
-                            <div>I'm doing great! Thanks for asking. How about you?</div>
-                            <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">2:32 PM</div>
-                        </div>
-                        <div class="message received">
-                            <div>Same here! Want to catch up later?</div>
-                            <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">2:35 PM</div>
-                        </div>
+                    <div id="messageBox" role="log" aria-live="polite" aria-label="Chat messages">
+                        <!-- Messages will be populated by JavaScript -->
                     </div>
                     <div class="messageInputArea">
                         <input
@@ -169,232 +143,4 @@
 
     <!-- Toast Container -->
     <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script>
-        // Initialize floating particles
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 20;
-            
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 10 + 's';
-                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-                
-                // Random colors
-                const colors = ['var(--cyber-blue)', 'var(--cyber-pink)', 'var(--cyber-purple)', 'var(--cyber-green)'];
-                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-                
-                particlesContainer.appendChild(particle);
-            }
-        }
-
-        // Enhanced toast notification function
-        function showToast(title, message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification show';
-            
-            let icon = '💬';
-            if (type === 'success') icon = '✅';
-            if (type === 'error') icon = '❌';
-            if (type === 'warning') icon = '⚠️';
-            
-            toast.innerHTML = `
-                <div class="header">${icon} ${title}</div>
-                <div class="message">${message}</div>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
-        }
-
-        // Dashboard functionality
-        function updateDashboardStats() {
-            // Mock data - replace with real data
-            document.getElementById('totalFriends').textContent = Math.floor(Math.random() * 50) + 10;
-            document.getElementById('activeChats').textContent = Math.floor(Math.random() * 15) + 3;
-            document.getElementById('messagesToday').textContent = Math.floor(Math.random() * 200) + 50;
-            document.getElementById('onlineFriends').textContent = Math.floor(Math.random() * 20) + 5;
-        }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Create floating particles
-            createParticles();
-            
-            // Simulate authentication
-            setTimeout(() => {
-                document.body.classList.add('authenticated');
-                showToast('Welcome!', 'Connected to Cyber Chat successfully', 'success');
-            }, 500);
-
-            // Skip to content functionality
-            document.querySelector('.skip-to-content').addEventListener('focus', function() {
-                this.style.top = '0';
-            });
-
-            document.querySelector('.skip-to-content').addEventListener('blur', function() {
-                this.style.top = '-50px';
-            });
-
-            // Dashboard toggle
-            document.getElementById('showDashboard').addEventListener('click', function() {
-                document.getElementById('dashboardView').classList.add('active');
-                updateDashboardStats();
-            });
-
-            document.getElementById('closeDashboard').addEventListener('click', function() {
-                document.getElementById('dashboardView').classList.remove('active');
-            });
-
-            // Close dashboard with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    document.getElementById('dashboardView').classList.remove('active');
-                }
-            });
-
-            // Notification bells
-            document.getElementById('bellBtn').addEventListener('click', function() {
-                const notifications = document.getElementById('generalNotifications');
-                const isVisible = notifications.style.display === 'block';
-                notifications.style.display = isVisible ? 'none' : 'block';
-                document.getElementById('messageNotifications').style.display = 'none';
-                
-                if (!isVisible) {
-                    // Add some sample notifications
-                    notifications.innerHTML = `
-                        <div class="notification">
-                            <strong>System Update</strong><br>
-                            New features available in chat system
-                        </div>
-                        <div class="notification">
-                            <strong>Friend Request</strong><br>
-                            Alex wants to be your friend
-                        </div>
-                    `;
-                }
-            });
-
-            document.getElementById('mailboxBtn').addEventListener('click', function() {
-                const notifications = document.getElementById('messageNotifications');
-                const isVisible = notifications.style.display === 'block';
-                notifications.style.display = isVisible ? 'none' : 'block';
-                document.getElementById('generalNotifications').style.display = 'none';
-                
-                if (!isVisible) {
-                    // Add some sample message notifications
-                    notifications.innerHTML = `
-                        <div class="notification">
-                            <strong>New Message from Alice</strong><br>
-                            Hey, are you free for a call?
-                        </div>
-                        <div class="notification">
-                            <strong>New Message from Bob</strong><br>
-                            Thanks for the help earlier!
-                        </div>
-                    `;
-                }
-            });
-
-            // Close notifications when clicking outside
-            document.addEventListener('click', function(event) {
-                const bellBtn = document.getElementById('bellBtn');
-                const mailboxBtn = document.getElementById('mailboxBtn');
-                const generalNotifications = document.getElementById('generalNotifications');
-                const messageNotifications = document.getElementById('messageNotifications');
-
-                if (!bellBtn.contains(event.target) && !generalNotifications.contains(event.target)) {
-                    generalNotifications.style.display = 'none';
-                }
-
-                if (!mailboxBtn.contains(event.target) && !messageNotifications.contains(event.target)) {
-                    messageNotifications.style.display = 'none';
-                }
-            });
-
-            // Keyboard accessibility
-            ['bellBtn', 'mailboxBtn'].forEach(id => {
-                document.getElementById(id).addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        this.click();
-                    }
-                });
-            });
-
-            // Chat functionality
-            document.getElementById('sendBtn').addEventListener('click', function() {
-                const input = document.getElementById('messageInput');
-                const message = input.value.trim();
-                
-                if (message) {
-                    // Add message to chat
-                    const messagesContainer = document.getElementById('messages');
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message sent';
-                    messageDiv.innerHTML = `
-                        <div>${message}</div>
-                        <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                    `;
-                    messagesContainer.appendChild(messageDiv);
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    
-                    input.value = '';
-                    showToast('Message Sent', 'Your message has been delivered', 'success');
-                }
-            });
-
-            // Send message with Enter key
-            document.getElementById('messageInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('sendBtn').click();
-                }
-            });
-
-            // Simulate some notifications
-            setTimeout(() => {
-                document.getElementById('bellBtn').setAttribute('data-count', '2');
-                document.getElementById('mailboxBtn').setAttribute('data-count', '3');
-            }, 3000);
-
-            // Add some sample friends to the list
-            const friendsList = document.getElementById('friendsList');
-            friendsList.innerHTML = `
-                <li style="display: flex; align-items: center; gap: 10px;">
-                    <span class="online-status"></span>
-                    Alice Johnson
-                </li>
-                <li style="display: flex; align-items: center; gap: 10px;">
-                    <span class="offline-status"></span>
-                    Bob Smith
-                </li>
-                <li style="display: flex; align-items: center; gap: 10px;">
-                    <span class="online-status"></span>
-                    Carol Davis
-                </li>
-            `;
-
-            console.log('Enhanced Cyberpunk Dashboard initialized successfully');
-        });
-    </script>
-
-    <!-- Placeholder for external scripts -->
-    <!-- <script src="utils.js"></script> -->
-    <!-- <script src="js/socket.js"></script> -->
-    <!-- <script src="js/auth.js"></script> -->
-    <!-- <script src="js/toast.js"></script> -->
-    <!-- <script src="js/notifications.js"></script> -->
-    <!-- <script src="js/messages.js"></script> -->
-    <!-- <script src="js/chatUI.js"></script> -->
-    <!-- <script src="js/search.js"></script> -->
-    <!-- <script src="js/main.js"></script> -->
-</page>
+</div>

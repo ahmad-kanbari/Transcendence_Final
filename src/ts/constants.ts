@@ -13,23 +13,38 @@ export const PAGES = {
 
 export const TOAST_TYPES = ['error', 'warning', 'success', 'info'];
 
-export const baseURL = "http://localhost:3000/api/v1";
+export const baseURL = "/api/v1";
+// config.js
+export const CONFIG = {
+    baseURL: "/api/v1",
+    socketURL: 'http://localhost:3000',
+    pagination: {
+        defaultLimit: 5,
+        maxLimit: 50
+    },
+    toast: {
+        duration: 2000,
+        fadeOutDuration: 300
+    }
+};
+
 export const ENDPOINTS = {
     auth: {
-        googleAuth: "http://localhost:3000/api/v1/auth/google/login",
+        googleAuth:`${baseURL}/auth/google/login`,
         login: `${baseURL}/auth/login`,
         register: `${baseURL}/auth/register`,
         logout: `${baseURL}/auth/logout`,
-        setup2FA: `${baseURL}/api/users/2fa/setup/`,
-        verify2FA: '/api/users/2fa/verify/',
-        disable2FA: '/api/users/2fa/disable/',
+        setup2FA: `${baseURL}/users/2fa/setup/`,
+        verify2FA: `${baseURL}/users/2fa/verify/`,
+        disable2FA: `${baseURL}/users/2fa/disable/`,
         refreshToken: `${baseURL}/auth/refresh`,
     },
     user: {
-        me: '/users/me',
-        showUser: '/users/showUser',
-        allUsers: '/users',
-        singleUser: 'users/', // This will be used with userId appended
+        me:  `${baseURL}/users/me`,
+        showUser:  `${baseURL}/users/showUser`,
+        allUsers: `${baseURL}/users`,
+        singleUser: `${baseURL}/users/`, 
+        // This will be used with userId appended
     },
     game: {
         tournament: '/tournaments/tournament/',
