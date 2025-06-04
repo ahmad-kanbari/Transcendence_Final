@@ -138,12 +138,21 @@ class Chat {
     private setupEventListeners(): void {
         // Send message
         if (this.elements.sendBtn) {
-            this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
+            
+
+
+            this.elements.sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.sendMessage()
+            }
+        
+        );
         }
 
         if (this.elements.messageInput) {
             this.elements.messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
+                    e.preventDefault();
                     this.sendMessage();
                 }
             });

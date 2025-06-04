@@ -14,7 +14,7 @@ import localization, { t } from './localization';
 import accessibility from './accessibility';
 import { ApiResponse } from './api';
 import chat from './chat';
-import friends from './friend';
+// import friends from './friend';
 import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
 // Define interfaces for state and user
@@ -92,14 +92,15 @@ class App {
     //   twoFA.init();
       profile.init();
       chat.init();
-      friends.init();
+      // friends.init();
       this.registerRoutes();
       
       await router.init();
       
       this.initialized = true;
       
-    //   await this.checkAuthState();
+      // Restore authentication state from localStorage
+      await this.restoreAuthState();
       
       utils.initLogoutButton(this);
       
@@ -463,23 +464,90 @@ class App {
     });
   }
   
+  async restoreAuthState(): Promise<void> {
+    try {
+      // First, try to restore from localStorage
+      const storedUser = localStorage.getItem('user');
+      const storedAuth = localStorage.getItem('isAuthenticated');
+      
+      if (storedUser) {
+        try {
+          this.state.user = JSON.parse(storedUser);
+          this.state.isAuthenticated = storedAuth === 'true';
+          
+          // Verify the stored auth state with the server
+          const result = await api.getCurrentUser();
+          
+          if (result.success && result.data) {
+            // Update with fresh data from server
+            this.state.user = result.data.user;
+            this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+            
+            // Update localStorage with fresh data
+            localStorage.setItem('user', JSON.stringify(result.data.user));
+            localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+          } else {
+            // Server says user is not authenticated, clear local storage
+            this.clearAuthState();
+          }
+        } catch (parseError) {
+          console.error('Error parsing stored user data:', parseError);
+          this.clearAuthState();
+        }
+      } else {
+        // No stored user, check if server has valid session
+        const result = await api.getCurrentUser();
+        
+        if (result.success && result.data) {
+          this.state.user = result.data.user;
+          this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+          
+          // Store in localStorage
+          localStorage.setItem('user', JSON.stringify(result.data.user));
+          localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+        }
+      }
+      
+      // Update UI to reflect current auth state
+      login.updateUIAuthState();
+      
+    } catch (error) {
+      console.error('Error restoring auth state:', error);
+      this.clearAuthState();
+    }
+  }
+
+  clearAuthState(): void {
+    this.state.user = null;
+    this.state.isAuthenticated = false;
+    localStorage.removeItem('user');
+    localStorage.removeItem('isAuthenticated');
+    utils.deleteCookie('accessToken');
+  }
+
   async checkAuthState(): Promise<void> {
     try {
       const result = await api.getCurrentUser();
       
-      if (result.success && result.userData) {
-        this.state.user = result.userData;
-        this.state.isAuthenticated = result.isAuthenticated;
+      if (result.success && result.data) {
+        this.state.user = result.data.user;
+        this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+        
+        // Update localStorage
+        localStorage.setItem('user', JSON.stringify(result.data.user));
+        localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+        
         login.updateUIAuthState();
         utils.initLogoutButton(this);
 
         if (this.get2FAState() && !this.getIsAuthenticated()) 
           router.navigate('/twoFA');
       } else {
-        this.state.user = null;
+        this.clearAuthState();
       }
     } catch (error) {
-      this.state.user = null;
+      console.error('Error checking auth state:', error);
+      this.clearAuthState();
     }
   }
 
@@ -522,19 +590,8 @@ class App {
   }
 
   getUser(): User | null {
-    if (this.state.user)
-      return this.state.user;
-    
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) 
-      return null;
-    
-    try {
-      return JSON.parse(storedUser);
-    } catch (err) {
-      console.error('Error parsing stored user from localStorage:', err);
-      return null;
-    }
+    // Always return the current state user, which should be properly restored on init
+    return this.state.user;
   }
 
   getUserImg(): string {
