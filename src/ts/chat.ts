@@ -2,6 +2,8 @@ import api from './api';
 import components from './components';
 import utils from './utils';
 import { CONFIG } from './constants';
+import toastManager from './toastManager';
+// import notificationManager from './NotificationManager';
 
 // Declare socket.io global
 declare const io: any;
@@ -28,6 +30,8 @@ interface ChatElements {
     notificationBadge: HTMLElement | null;
     generalNotifications: HTMLElement | null;
     messageNotifications: HTMLElement | null;
+    bellBtn: HTMLElement | null;
+    mailboxBtn: HTMLElement | null;
     
     // Dashboard elements
     showDashboard: HTMLElement | null;
@@ -46,7 +50,10 @@ class Chat {
     private currentUserId: number | null = null;
     private initialized: boolean = false;
     private notificationCount: number = 0;
+    private mailboxNotificationCount: number = 0;
     private messagesCount: number = 0;
+    private baseURL: string = CONFIG.baseURL || '';
+    private chatReloadTimeout: any = null;
 
     constructor() {
         // Initialize socket connection
@@ -123,6 +130,8 @@ class Chat {
             notificationBadge: document.getElementById('notificationBadge'),
             generalNotifications: document.getElementById('generalNotifications'),
             messageNotifications: document.getElementById('messageNotifications'),
+            bellBtn: document.getElementById('bellBtn'),
+            mailboxBtn: document.getElementById('mailboxBtn'),
             
             // Dashboard elements
             showDashboard: document.getElementById('showDashboard'),
@@ -142,6 +151,20 @@ class Chat {
 
 
             this.elements.sendBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.sendMessage()
+            }
+        
+        );
+        }
+
+        if (this.elements.sendBtn) {
+            
+
+
+            this.elements.sendBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 e.preventDefault();
                 this.sendMessage()
             }
@@ -179,7 +202,8 @@ class Chat {
 
         // Notifications
         if (this.elements.notificationBell) {
-            this.elements.notificationBell.addEventListener('click', () => this.toggleNotifications());
+            this.elements.notificationBell.addEventListener('click', (e) =>
+                 this.toggleNotifications());
         }
 
         // Escape key for dashboard
@@ -205,18 +229,21 @@ class Chat {
 
         // Handle message notifications
         this.socketService.on('messageReceivedInform', (data: any) => {
-            this.showToastNotification(data.username, data.message);
+            // Only show toast if not in the current chat
+            if (!this.currentChatId || this.currentChatId.toString() !== data.chatId?.toString()) {
+                toastManager.addToQueue(data.username, data.message);
+            }
             this.updateNotificationCount();
         });
 
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
-            components.showToast('info', 'Friend Request', data.message, 3000);
+            toastManager.addToQueue('Friend Request', data.message);
             this.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
-            components.showToast('success', 'Friend Request Accepted', data.message, 3000);
+            toastManager.addToQueue('Friend Request', data.message);
             this.loadFriendData();
         });
     }
@@ -769,7 +796,7 @@ class Chat {
     }
 
     private showToastNotification(username: string, message: string): void {
-        components.showToast('info', `New message from ${username}`, message.slice(0, 50) + '...', 3000);
+        toastManager.addToQueue(username, message);
     }
 
     private initializeParticles(): void {
@@ -844,430 +871,3 @@ declare global {
 window.chat = chat;
 
 export default chat;
-
-
-
-// import api from './api';
-// import components from './components';
-// import utils from './utils';
-// import { CONFIG } from './constants';
-
-// // Declare socket.io global
-// declare const io: any;
-
-// interface ChatElements {
-//     chatListDiv: HTMLElement | null;
-//     messageBox: HTMLElement | null;
-//     messageInput: HTMLInputElement | null;
-//     sendBtn: HTMLElement | null;
-//     userSearchInput: HTMLInputElement | null;
-//     userSearchResults: HTMLElement | null;
-//     notificationBell: HTMLElement | null;
-//     notificationBadge: HTMLElement | null;
-// }
-
-// class Chat {
-//     private socketService: any = null;
-//     private elements: ChatElements = {} as ChatElements;
-//     private currentChatId: number | null = null;
-//     private currentUserId: number | null = null;
-//     private initialized: boolean = false;
-//     private notificationCount: number = 0;
-
-//     constructor() {
-//         // Initialize socket connection
-//         if (typeof io !== 'undefined') {
-//             this.socketService = io(CONFIG.socketURL, { withCredentials: true });
-//             this.setupBaseSocketHandlers();
-//         }
-//     }
-
-//     init(): void {
-//         if (this.initialized) return;
-
-//         // Listen for page changes
-//         document.addEventListener('pageShown', (event: Event) => {
-//             const customEvent = event as CustomEvent;
-//             if (customEvent.detail.page === 'chat') {
-//                 this.initializeChatPage();
-//             }
-//         });
-
-//         this.initialized = true;
-//     }
-
-//     private setupBaseSocketHandlers(): void {
-//         if (!this.socketService) return;
-
-//         this.socketService.on('connect', () => {
-//             console.log('Chat socket connected');
-//             if (this.elements.chatListDiv) {
-//                 this.loadChats();
-//                 this.handleURLChatId();
-//             }
-//         });
-
-//         this.socketService.on('disconnect', () => {
-//             console.log('Chat socket disconnected');
-//         });
-//     }
-
-//     private initializeChatPage(): void {
-//         setTimeout(() => {
-//             this.getElements();
-//             this.setupEventListeners();
-//             this.setupSocketHandlers();
-//             this.loadChats();
-//             this.initializeNotifications();
-//         }, 100); // Small delay to ensure DOM is ready
-//     }
-
-//     private getElements(): void {
-//         this.elements = {
-//             chatListDiv: document.getElementById('chatList'),
-//             messageBox: document.getElementById('messageBox'),
-//             messageInput: document.getElementById('messageInput') as HTMLInputElement,
-//             sendBtn: document.getElementById('sendBtn'),
-//             userSearchInput: document.getElementById('userSearch') as HTMLInputElement,
-//             userSearchResults: document.getElementById('userSearchResults'),
-//             notificationBell: document.getElementById('notificationBell'),
-//             notificationBadge: document.getElementById('notificationBadge'),
-//         };
-//     }
-
-//     private setupEventListeners(): void {
-//         // Send message
-//         if (this.elements.sendBtn) {
-//             this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
-//         }
-
-//         if (this.elements.messageInput) {
-//             this.elements.messageInput.addEventListener('keypress', (e) => {
-//                 if (e.key === 'Enter') {
-//                     this.sendMessage();
-//                 }
-//             });
-//         }
-
-//         // User search
-//         if (this.elements.userSearchInput) {
-//             this.elements.userSearchInput.addEventListener('input', () => this.handleUserSearch());
-//         }
-
-//         // Notification bell
-//         if (this.elements.notificationBell) {
-//             this.elements.notificationBell.addEventListener('click', () => this.toggleNotifications());
-//         }
-//     }
-
-//     private setupSocketHandlers(): void {
-//         if (!this.socketService) return;
-
-//         // Handle new messages
-//         this.socketService.on('newMessage', (message: any) => {
-//             if (message.chat_id === this.currentChatId) {
-//                 this.appendMessage(message);
-//             }
-//             this.loadChats(); // Refresh chat list
-//         });
-
-//         // Handle message notifications
-//         this.socketService.on('messageReceivedInform', (data: any) => {
-//             this.showToastNotification(data.username, data.message);
-//             this.updateNotificationCount();
-//         });
-
-//         // Handle friend requests
-//         this.socketService.on('friendRequestInform', (data: any) => {
-//             components.showToast('info', 'Friend Request', data.message, 3000);
-//         });
-
-//         this.socketService.on('friendRequestAccept', (data: any) => {
-//             components.showToast('success', 'Friend Request Accepted', data.message, 3000);
-//         });
-//     }
-
-//     private async loadChats(): Promise<void> {
-//         if (!this.elements.chatListDiv) return;
-
-//         try {
-//             const chats = await api.getChats();
-//             this.renderChatList(chats);
-//         } catch (error) {
-//             console.error('Error loading chats:', error);
-//             if (this.elements.chatListDiv) {
-//                 this.elements.chatListDiv.innerHTML = '<div class="text-center text-red-400 py-4">Error loading chats</div>';
-//             }
-//         }
-//     }
-
-//     private async renderChatList(chats: any[]): Promise<void> {
-//         if (!this.elements.chatListDiv) return;
-
-//         this.elements.chatListDiv.innerHTML = '';
-
-//         if (chats.length === 0) {
-//             this.elements.chatListDiv.innerHTML = '<div class="text-center text-gray-400 py-4">No chats yet</div>';
-//             return;
-//         }
-
-//         for (const chat of chats) {
-//             try {
-//                 const user = await api.getUserById(chat.participantId.toString());
-//                 if (!user || !user.success) continue;
-
-//                 const chatRow = document.createElement('div');
-//                 chatRow.className = 'chat-row p-3 border border-cyber-blue rounded cursor-pointer hover:bg-cyber-blue hover:bg-opacity-10 transition-all mb-2';
-//                 chatRow.dataset.chatId = chat.chat_id.toString();
-//                 chatRow.textContent = user.data?.username || 'Unknown User';
-
-//                 if (this.currentChatId === chat.chat_id) {
-//                     chatRow.classList.add('bg-cyber-blue', 'bg-opacity-20', 'border-cyber-pink');
-//                 }
-
-//                 chatRow.addEventListener('click', () => this.selectChat(chat.chat_id));
-//                 this.elements.chatListDiv.appendChild(chatRow);
-//             } catch (error) {
-//                 console.error('Error rendering chat:', error);
-//             }
-//         }
-//     }
-
-//     private async selectChat(chatId: number): Promise<void> {
-//         await this.joinRoom(chatId);
-        
-//         // Mark notifications as read
-//         try {
-//             await api.markChatNotificationsAsRead(chatId.toString());
-//         } catch (error) {
-//             console.error('Error marking notifications as read:', error);
-//         }
-        
-//         // Update URL
-//         const url = new URL(window.location.href);
-//         url.searchParams.set('chatId', chatId.toString());
-//         window.history.pushState({}, '', url);
-//     }
-
-//     private async joinRoom(chatId: number): Promise<void> {
-//         // Get current user if not set
-//         if (this.currentUserId === null) {
-//             await this.loadCurrentUser();
-//         }
-
-//         // Leave current room
-//         if (this.currentChatId !== null && this.socketService) {
-//             this.socketService.emit('leaveRoom', this.currentChatId);
-//         }
-
-//         this.currentChatId = chatId;
-
-//         // Update UI
-//         document.querySelectorAll('.chat-row').forEach(row => {
-//             row.classList.remove('bg-cyber-blue', 'bg-opacity-20', 'border-cyber-pink');
-//         });
-
-//         const activeRow = document.querySelector(`[data-chat-id="${chatId}"]`);
-//         if (activeRow) {
-//             activeRow.classList.add('bg-cyber-blue', 'bg-opacity-20', 'border-cyber-pink');
-//         }
-
-//         // Clear and load messages
-//         this.clearMessages();
-        
-//         if (this.socketService) {
-//             this.socketService.emit('joinRoom', chatId);
-//         }
-
-//         try {
-//             const messages = await api.getChatMessages(chatId.toString());
-//             messages.forEach((message: any) => this.appendMessage(message));
-//         } catch (error) {
-//             console.error('Error loading messages:', error);
-//         }
-//     }
-
-//     private async sendMessage(): Promise<void> {
-//         if (!this.elements.messageInput || !this.currentChatId) return;
-
-//         const content = this.elements.messageInput.value.trim();
-//         if (!content) return;
-
-//         try {
-//             const result = await api.sendMessage(this.currentChatId.toString(), content);
-            
-//             if (result.ok) {
-//                 this.elements.messageInput.value = '';
-//             } else {
-//                 components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
-//             }
-//         } catch (error) {
-//             console.error('Error sending message:', error);
-//             components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
-//         }
-//     }
-
-//     private appendMessage(message: any): void {
-//         if (!this.elements.messageBox) return;
-
-//         const messageDiv = document.createElement('div');
-//         messageDiv.className = `message p-3 rounded-lg mb-2 max-w-xs ${
-//             message.sender_id === this.currentUserId 
-//                 ? 'bg-cyber-blue text-cyber-dark ml-auto text-right' 
-//                 : 'bg-cyber-dark border border-cyber-blue text-white'
-//         }`;
-//         messageDiv.textContent = message.content;
-
-//         this.elements.messageBox.appendChild(messageDiv);
-//         this.elements.messageBox.scrollTop = this.elements.messageBox.scrollHeight;
-//     }
-
-//     private clearMessages(): void {
-//         if (this.elements.messageBox) {
-//             this.elements.messageBox.innerHTML = '';
-//         }
-//     }
-
-//     private async handleUserSearch(): Promise<void> {
-//         if (!this.elements.userSearchInput || !this.elements.userSearchResults) return;
-
-//         const query = this.elements.userSearchInput.value.trim();
-        
-//         if (!query) {
-//             this.elements.userSearchResults.style.display = 'none';
-//             return;
-//         }
-
-//         try {
-//             const users = await api.searchUsers(query);
-//             this.renderUserSearchResults(users);
-//         } catch (error) {
-//             console.error('Error searching users:', error);
-//         }
-//     }
-
-//     private renderUserSearchResults(users: any[]): void {
-//         if (!this.elements.userSearchResults) return;
-
-//         this.elements.userSearchResults.innerHTML = '';
-
-//         if (users.length === 0) {
-//             this.elements.userSearchResults.style.display = 'none';
-//             return;
-//         }
-
-//         users.forEach(user => {
-//             const userDiv = document.createElement('div');
-//             userDiv.className = 'user-result p-2 cursor-pointer hover:bg-cyber-blue hover:bg-opacity-10 border-b border-cyber-blue';
-//             userDiv.textContent = user.username;
-//             userDiv.addEventListener('click', () => this.startChatWithUser(user));
-//             this.elements.userSearchResults!.appendChild(userDiv);
-//         });
-
-//         this.elements.userSearchResults.style.display = 'block';
-//     }
-
-//     private async startChatWithUser(user: any): Promise<void> {
-//         // For now, just send a friend request
-//         try {
-//             const result = await api.sendFriendRequest(user.id.toString());
-//             if (result.ok) {
-//                 components.showToast('success', 'Friend Request Sent', `Friend request sent to ${user.username}`, 3000);
-//             } else {
-//                 components.showToast('error', 'Request Failed', 'Failed to send friend request', 3000);
-//             }
-//         } catch (error) {
-//             console.error('Error sending friend request:', error);
-//             components.showToast('error', 'Request Failed', 'Failed to send friend request', 3000);
-//         }
-        
-//         // Clear search
-//         if (this.elements.userSearchInput && this.elements.userSearchResults) {
-//             this.elements.userSearchInput.value = '';
-//             this.elements.userSearchResults.style.display = 'none';
-//         }
-//     }
-
-//     private async initializeNotifications(): Promise<void> {
-//         try {
-//             const notifications = await api.getNotifications('messages');
-//             this.notificationCount = notifications.filter((n: any) => !n.is_read).length;
-//             this.updateNotificationBadge();
-//         } catch (error) {
-//             console.error('Error initializing notifications:', error);
-//         }
-//     }
-
-//     private updateNotificationCount(): void {
-//         this.notificationCount++;
-//         this.updateNotificationBadge();
-//     }
-
-//     private updateNotificationBadge(): void {
-//         if (this.elements.notificationBadge) {
-//             this.elements.notificationBadge.textContent = this.notificationCount.toString();
-//             this.elements.notificationBadge.style.display = this.notificationCount > 0 ? 'block' : 'none';
-//         }
-//     }
-
-//     private showToastNotification(username: string, message: string): void {
-//         components.showToast('info', `New message from ${username}`, message.slice(0, 50) + '...', 3000);
-//     }
-
-//     private async toggleNotifications(): Promise<void> {
-//         // Simple notification toggle - you can expand this
-//         console.log('Toggle notifications - count:', this.notificationCount);
-        
-//         if (this.notificationCount > 0) {
-//             try {
-//                 await api.markNotificationsAsOpened('messages');
-//                 this.notificationCount = 0;
-//                 this.updateNotificationBadge();
-//                 components.showToast('info', 'Notifications', 'All notifications marked as read', 2000);
-//             } catch (error) {
-//                 console.error('Error marking notifications as read:', error);
-//             }
-//         }
-//     }
-
-//     private handleURLChatId(): void {
-//         const params = new URLSearchParams(window.location.search);
-//         const chatIdString = params.get('chatId');
-        
-//         if (chatIdString) {
-//             const chatId = parseInt(chatIdString);
-//             setTimeout(() => {
-//                 this.joinRoom(chatId);
-//             }, 500);
-//         }
-//     }
-
-//     private async loadCurrentUser(): Promise<void> {
-//         try {
-//             const result = await api.getCurrentUser();
-//             if (result.success && result.data) {
-//                 this.currentUserId = result.data.user.id || result.data.user.user?.id;
-//             }
-//         } catch (error) {
-//             console.error('Error loading current user:', error);
-//         }
-//     }
-
-//     // Cleanup method
-//     destroy(): void {
-//         if (this.socketService) {
-//             if (this.currentChatId) {
-//                 this.socketService.emit('leaveRoom', this.currentChatId);
-//             }
-//             this.socketService.disconnect();
-//         }
-//     }
-
-//     // Getter for current chat ID (used by other components)
-//     getCurrentChatId(): number | null {
-//         return this.currentChatId;
-//     }
-// }
-
-// const chat = new Chat();
-// export default chat;
