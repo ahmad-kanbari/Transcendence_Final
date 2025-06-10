@@ -193,6 +193,8 @@ class Chat {
                 this.hideDashboard();
             }
         });
+
+        
     }
 
     private setupSocketHandlers(): void {
@@ -774,8 +776,13 @@ class Chat {
         try {
             const page = 1;
             const limit = 5;
-            const notifications = await api.getNotifications('others', page, limit);
-            
+            // const notifications = await api.getNotifications('others', page, limit);
+            const res = await api.fetchWithAutoRefresh(
+			`${this.baseURL}/notifications/others?page=${page}&limit=${limit}`,
+			{ credentials: "include" }
+		);
+            if (!res .ok) throw new Error("Failed to fetch notifications");
+            const notifications = await res.json();
             this.notificationCount = notifications.filter((n: any) => n.is_opened === 0).length;
             if (this.elements.bellBtn) {
                 this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
@@ -789,8 +796,15 @@ class Chat {
         try {
             const page = 1;
             const limit = 5;
-            const notifications = await api.getNotifications('messages', page, limit);
-            
+            // const notifications = await api.getNotifications('messages', page, limit);
+            const res = await api.fetchWithAutoRefresh(
+			`${this.baseURL}/notifications/messages?page=${page}&limit=${limit}`,
+			{ credentials: "include" }, 
+        
+		);
+		if (!res.ok) throw new Error("Failed to fetch mailbox notifications");
+
+		const notifications = await res.json();
             this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
             if (this.elements.mailboxBtn) {
                 this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
@@ -834,7 +848,9 @@ class Chat {
     private async setupNotificationEventListeners(): Promise<void> {
         // Bell button event listener
         if (this.elements.bellBtn) {
-            this.elements.bellBtn.addEventListener('click', async () => {
+            this.elements.bellBtn.addEventListener('click', async (e) => {
+                 e.preventDefault();
+                 e.stopPropagation();
                 const visible = this.elements.generalNotifications?.style.display === 'block';
                 
                 if (this.elements.generalNotifications) {
@@ -849,6 +865,11 @@ class Chat {
                     try {
                         // Mark notifications as opened
                         await api.markNotificationsAsOpened('others');
+                        // await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
+                        //     method: "PATCH",
+                        //     credentials: "include",
+                        // });
+            
                         this.notificationCount = 0;
                         if (this.elements.bellBtn) {
                             this.elements.bellBtn.setAttribute('data-count', '0');
@@ -874,7 +895,9 @@ class Chat {
 
         // Mailbox button event listener
         if (this.elements.mailboxBtn) {
-            this.elements.mailboxBtn.addEventListener('click', async () => {
+            this.elements.mailboxBtn.addEventListener('click', async (e) => {
+                 e.preventDefault();
+                    e.stopPropagation();
                 const visible = this.elements.messageNotifications?.style.display === 'block';
                 
                 if (this.elements.messageNotifications) {
