@@ -146,29 +146,13 @@ class Chat {
 
     private setupEventListeners(): void {
         // Send message
-        if (this.elements.sendBtn) {
-            
-
-
+        //how to load chat problem
+        if (this.elements.sendBtn) {     
             this.elements.sendBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 this.sendMessage()
             }
-        
-        );
-        }
-
-        if (this.elements.sendBtn) {
-            
-
-
-            this.elements.sendBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                this.sendMessage()
-            }
-        
         );
         }
 
@@ -200,11 +184,8 @@ class Chat {
             this.elements.closeDashboard.addEventListener('click', () => this.hideDashboard());
         }
 
-        // Notifications
-        if (this.elements.notificationBell) {
-            this.elements.notificationBell.addEventListener('click', (e) =>
-                 this.toggleNotifications());
-        }
+        // Setup notification event listeners
+        this.setupNotificationEventListeners();
 
         // Escape key for dashboard
         document.addEventListener('keydown', (e) => {
@@ -228,22 +209,44 @@ class Chat {
         });
 
         // Handle message notifications
-        this.socketService.on('messageReceivedInform', (data: any) => {
+        this.socketService.on('messageReceivedInform', async (data: any) => {
             // Only show toast if not in the current chat
             if (!this.currentChatId || this.currentChatId.toString() !== data.chatId?.toString()) {
                 toastManager.addToQueue(data.username, data.message);
             }
-            this.updateNotificationCount();
+
+            // Update mailbox notification count for message notifications
+            try {
+                const page = 1;
+                const limit = 50;
+                const notifications = await api.getNotifications('messages', page, limit);
+                const uniqueSenders = new Set(
+                    notifications.filter((n: any) => !n.is_read).map((n: any) => n.sender_id)
+                );
+                
+                this.mailboxNotificationCount = uniqueSenders.size;
+                if (this.elements.mailboxBtn) {
+                    this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+                }
+                
+                if (this.elements.messageNotifications) {
+                    this.renderNotificationList(this.elements.messageNotifications, notifications);
+                }
+            } catch (error) {
+                console.error('Error updating message notifications:', error);
+            }
         });
 
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
+            this.addNotification(data.message);
             this.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
+            this.addNotification(data.message);
             this.loadFriendData();
         });
     }
@@ -741,62 +744,182 @@ class Chat {
         }
     }
 
-    private toggleNotifications(): void {
+    // ===== NOTIFICATION SYSTEM =====
+    private addNotification(message: string): void {
         if (!this.elements.generalNotifications) return;
 
-        const isVisible = this.elements.generalNotifications.style.display === 'block';
-        this.elements.generalNotifications.style.display = isVisible ? 'none' : 'block';
+        const placeholder = this.elements.generalNotifications.querySelector("em");
+        if (placeholder) placeholder.remove();
+
+        const div = document.createElement("div");
+        div.classList.add("notification");
+        div.textContent = message;
         
-        if (this.elements.messageNotifications) {
-            this.elements.messageNotifications.style.display = 'none';
+        if (this.elements.generalNotifications.firstChild) {
+            this.elements.generalNotifications.insertBefore(
+                div,
+                this.elements.generalNotifications.firstChild
+            );
+        } else {
+            this.elements.generalNotifications.appendChild(div);
         }
 
-        if (!isVisible) {
-            // Load real notifications
-            this.loadNotifications();
+        this.notificationCount++;
+        if (this.elements.bellBtn) {
+            this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
         }
     }
 
-    private async loadNotifications(): Promise<void> {
+    private async initializeNotificationCounter(): Promise<void> {
         try {
-            const notifications = await api.getNotifications('others');
+            const page = 1;
+            const limit = 5;
+            const notifications = await api.getNotifications('others', page, limit);
             
-            if (this.elements.generalNotifications && notifications.length > 0) {
-                this.elements.generalNotifications.innerHTML = notifications.map((notif: any) => `
-                    <div class="notification" style="padding: 10px; border-bottom: 1px solid #333; cursor: pointer;">
-                        <strong>${notif.type || 'Notification'}</strong><br>
-                        ${notif.message}
-                    </div>
-                `).join('');
+            this.notificationCount = notifications.filter((n: any) => n.is_opened === 0).length;
+            if (this.elements.bellBtn) {
+                this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
             }
         } catch (error) {
-            console.error('Error loading notifications:', error);
+            console.error("Error initializing notification counter:", error);
+        }
+    }
+
+    private async initializeMailboxNotificationCounter(): Promise<void> {
+        try {
+            const page = 1;
+            const limit = 5;
+            const notifications = await api.getNotifications('messages', page, limit);
+            
+            this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
+            if (this.elements.mailboxBtn) {
+                this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
+            }
+        } catch (error) {
+            console.error("Error initializing mailbox notification counter:", error);
         }
     }
 
     private async initializeNotifications(): Promise<void> {
-        try {
-            const notifications = await api.getNotifications('messages');
-            this.notificationCount = notifications.filter((n: any) => !n.is_read).length;
-            this.updateNotificationBadge();
-        } catch (error) {
-            console.error('Error initializing notifications:', error);
+        await Promise.all([
+            this.initializeNotificationCounter(),
+            this.initializeMailboxNotificationCounter()
+        ]);
+    }
+
+    private renderNotificationList(container: HTMLElement, notifications: any[]): void {
+        container.innerHTML = '';
+        
+        if (notifications.length === 0) {
+            container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
+            return;
+        }
+
+        notifications.forEach((notification: any) => {
+            const div = document.createElement('div');
+            div.className = 'notification';
+            div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer;';
+            
+            const time = new Date(notification.created_at).toLocaleString();
+            div.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
+                <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
+                <div style="font-size: 11px; color: #999;">${time}</div>
+            `;
+            
+            container.appendChild(div);
+        });
+    }
+
+    private async setupNotificationEventListeners(): Promise<void> {
+        // Bell button event listener
+        if (this.elements.bellBtn) {
+            this.elements.bellBtn.addEventListener('click', async () => {
+                const visible = this.elements.generalNotifications?.style.display === 'block';
+                
+                if (this.elements.generalNotifications) {
+                    this.elements.generalNotifications.style.display = visible ? 'none' : 'block';
+                }
+                
+                if (this.elements.messageNotifications) {
+                    this.elements.messageNotifications.style.display = 'none';
+                }
+
+                if (!visible) {
+                    try {
+                        // Mark notifications as opened
+                        await api.markNotificationsAsOpened('others');
+                        this.notificationCount = 0;
+                        if (this.elements.bellBtn) {
+                            this.elements.bellBtn.setAttribute('data-count', '0');
+                        }
+                    } catch (error) {
+                        console.error('Error marking notifications as opened:', error);
+                    }
+                }
+
+                // Load and render notifications
+                try {
+                    const page = 1;
+                    const limit = 5;
+                    const notifications = await api.getNotifications('others', page, limit);
+                    if (this.elements.generalNotifications) {
+                        this.renderNotificationList(this.elements.generalNotifications, notifications);
+                    }
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            });
+        }
+
+        // Mailbox button event listener
+        if (this.elements.mailboxBtn) {
+            this.elements.mailboxBtn.addEventListener('click', async () => {
+                const visible = this.elements.messageNotifications?.style.display === 'block';
+                
+                if (this.elements.messageNotifications) {
+                    this.elements.messageNotifications.style.display = visible ? 'none' : 'block';
+                }
+                
+                if (this.elements.generalNotifications) {
+                    this.elements.generalNotifications.style.display = 'none';
+                }
+
+                if (!visible) {
+                    try {
+                        // Mark message notifications as read
+                        await api.markNotificationsAsOpened('messages');
+                        this.mailboxNotificationCount = 0;
+                        this.elements.mailboxBtn!.setAttribute('data-count', '0');
+                    } catch (error) {
+                        console.error('Error marking mailbox notifications as opened:', error);
+                    }
+                }
+
+                // Load and render message notifications
+                try {
+                    const page = 1;
+                    const limit = 5;
+                    const notifications = await api.getNotifications('messages', page, limit);
+                    if (this.elements.messageNotifications) {
+                        this.renderNotificationList(this.elements.messageNotifications, notifications);
+                    }
+                } catch (error) {
+                    console.error('Error loading message notifications:', error);
+                }
+            });
         }
     }
 
-    private updateNotificationCount(): void {
-        this.notificationCount++;
-        this.updateNotificationBadge();
-    }
-
-    private updateNotificationBadge(): void {
-        if (this.elements.notificationBell) {
-            this.elements.notificationBell.setAttribute('data-count', this.notificationCount.toString());
+    private updateMailboxNotificationCount(): void {
+        if (this.elements.mailboxBtn) {
+            this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
         }
     }
 
-    private showToastNotification(username: string, message: string): void {
-        toastManager.addToQueue(username, message);
+    public updateMailboxCount(count: number): void {
+        this.mailboxNotificationCount = count;
+        this.updateMailboxNotificationCount();
     }
 
     private initializeParticles(): void {
