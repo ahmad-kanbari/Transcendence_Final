@@ -695,7 +695,6 @@ class App {
             window.chatSocket.on('connect', () => {
                 console.log('Socket connected');
                 components.showToast('success', 'Connected', 'Real-time features active!', 2000);
-                notificationManager.init();
             });
             
             window.chatSocket.on('disconnect', () => {
@@ -703,6 +702,11 @@ class App {
                 components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
             });
         }
+        
+        // Initialize notification manager after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            notificationManager.init();
+        }, 500);
     }
 
 }

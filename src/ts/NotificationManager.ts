@@ -29,24 +29,41 @@ class NotificationManager {
     private baseURL: string = CONFIG.baseURL || '';
 
     constructor() {
-        // Initialize socket connection
-        if (typeof io !== 'undefined') {
-            this.socketService = io(CONFIG.socketURL, { withCredentials: true });
-            this.init();
-        }
+        // Don't auto-initialize here, let the app call init when ready
     }
     
 
         init(): void {
-            
-            setTimeout(() => {
-                this.getElements();
-                this.setupNotificationEventListeners();
-                // this.setupSocketHandlers(); 
-                this.initializeNotifications();
+        if (this.initialized) return;
         
-            }, 100);
-            console.log('NotificationManager initialized');
+        console.log('NotificationManager: Starting initialization...');
+        
+        // Use longer delay and retry mechanism for DOM elements
+        this.retryInitialization();
+    }
+
+    private retryInitialization(attempts: number = 0): void {
+        const maxAttempts = 10;
+        const delay = 200 + (attempts * 100); // Progressive delay
+        
+        setTimeout(() => {
+            this.getElements();
+            
+            // Check if essential elements are found
+            if (this.elements.bellBtn && this.elements.mailboxBtn) {
+                console.log('NotificationManager: Elements found, setting up...');
+                this.setupNotificationEventListeners();
+                this.setupSocketHandlers();
+                this.initializeNotifications();
+                this.initialized = true;
+                console.log('NotificationManager: Successfully initialized');
+            } else if (attempts < maxAttempts) {
+                console.log(`NotificationManager: Elements not found, retrying... (${attempts + 1}/${maxAttempts})`);
+                this.retryInitialization(attempts + 1);
+            } else {
+                console.warn('NotificationManager: Failed to find required elements after maximum attempts');
+            }
+        }, delay);
     }
 
         private getElements(): void {
@@ -145,12 +162,12 @@ class NotificationManager {
 
     private renderNotificationList(container: HTMLElement, notifications: any[]): void {
         container.innerHTML = '';
-        
+    
         if (notifications.length === 0) {
             container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
             return;
         }
-
+        // console.log('Rendering notifications:', notifications, "HtmlElement:", container);
         notifications.forEach((notification: any) => {
             const div = document.createElement('div');
             div.className = 'notification';
@@ -167,6 +184,61 @@ class NotificationManager {
         });
     }
 
+        private setupSocketHandlers(): void {
+        if (!this.socketService) return;
+
+        // Handle new messages
+        // this.socketService.on('newMessage', (message: any) => {
+        //     // if (message.chat_id === this.currentChatId) {
+        //     //     this.appendMessage(message);
+        //     // }
+        //     // this.loadChats(); // Refresh chat list
+        //     // this.messagesCount++;
+        //     // this.updateDashboardStats();
+        // });
+
+        // Handle message notifications
+        this.socketService.on('messageReceivedInform', async (data: any) => {
+            // Only show toast if not in the current chat
+            // if (!this.currentChatId || this.currentChatId.toString() !== data.chatId?.toString()) {
+                toastManager.addToQueue(data.username, data.message);
+            // }
+
+            // Update mailbox notification count for message notifications
+            try {
+                const page = 1;
+                const limit = 50;
+                const notifications = await api.getNotifications('messages', page, limit);
+                const uniqueSenders = new Set(
+                    notifications.filter((n: any) => !n.is_read).map((n: any) => n.sender_id)
+                );
+                
+                this.mailboxNotificationCount = uniqueSenders.size;
+                if (this.elements.mailboxBtn) {
+                    this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+                }
+                
+                if (this.elements.messageNotifications) {
+                    this.renderNotificationList(this.elements.messageNotifications, notifications);
+                }
+            } catch (error) {
+                console.error('Error updating message notifications:', error);
+            }
+        });
+
+        // Handle friend requests
+        this.socketService.on('friendRequestInform', (data: any) => {
+            toastManager.addToQueue('Friend Request', data.message);
+            this.addNotification(data.message);
+            // this.loadFriendData();
+        });
+
+        this.socketService.on('friendRequestAccept', (data: any) => {
+            toastManager.addToQueue('Friend Request', data.message);
+            this.addNotification(data.message);
+            // this.loadFriendData();
+        });
+    }
     // ===== NOTIFICATION SYSTEM =====
     private addNotification(message: string): void {
         if (!this.elements.generalNotifications) return;
@@ -195,6 +267,7 @@ class NotificationManager {
 
     private async initializeNotificationCounter(): Promise<void> {
         try {
+             console.log('NotificationManager initialized in the console');
             const page = 1;
             const limit = 5;
             // const notifications = await api.getNotifications('others', page, limit);
@@ -206,6 +279,7 @@ class NotificationManager {
             const notifications = await res.json();
             this.notificationCount = notifications.filter((n: any) => n.is_opened === 0).length;
             if (this.elements.bellBtn) {
+                console.log('Setting notification count:', this.notificationCount);
                 this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
             }
         } catch (error) {
@@ -253,27 +327,27 @@ class NotificationManager {
         this.updateMailboxNotificationCount();
     }
 
-    private initializeParticles(): void {
-        const particlesContainer = document.getElementById('particles');
-        if (!particlesContainer) return;
+    // private initializeParticles(): void {
+    //     const particlesContainer = document.getElementById('particles');
+    //     if (!particlesContainer) return;
 
-        const particleCount = 20;
-        particlesContainer.innerHTML = ''; // Clear existing particles
+    //     const particleCount = 20;
+    //     particlesContainer.innerHTML = ''; // Clear existing particles
         
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 10 + 's';
-            particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    //     for (let i = 0; i < particleCount; i++) {
+    //         const particle = document.createElement('div');
+    //         particle.className = 'particle';
+    //         particle.style.left = Math.random() * 100 + '%';
+    //         particle.style.animationDelay = Math.random() * 10 + 's';
+    //         particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
             
-            // Random colors
-            const colors = ['var(--cyber-blue)', 'var(--cyber-pink)', 'var(--cyber-purple)', 'var(--cyber-green)'];
-            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+    //         // Random colors
+    //         const colors = ['var(--cyber-blue)', 'var(--cyber-pink)', 'var(--cyber-purple)', 'var(--cyber-green)'];
+    //         particle.style.background = colors[Math.floor(Math.random() * colors.length)];
             
-            particlesContainer.appendChild(particle);
-        }
-    }
+    //         particlesContainer.appendChild(particle);
+    //     }
+    // }
 
 
 }
