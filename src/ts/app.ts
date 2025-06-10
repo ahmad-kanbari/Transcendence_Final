@@ -682,64 +682,6 @@ class App {
 
     }
 
-    // private initializeSocket(): void {
-    //     // Check if Socket.IO is available
-    //     if (typeof io === 'undefined') {
-    //         console.warn('Socket.IO not loaded. Some features may not work.');
-    //         return;
-    //     }
-
-    //     try {
-    //         // Initialize socket service
-    //         socketService.initialize();
-            
-    //         // Make it available globally for backward compatibility
-    //         window.socketService = socketService;
-    //         window.chatSocket = socketService.getSocket();
-            
-    //         // Listen for socket events
-    //         this.setupSocketEventListeners();
-            
-    //     } catch (error) {
-    //         console.error('Failed to initialize socket:', error);
-    //         components.showToast(
-    //             'warning',
-    //             'Connection Issue',
-    //             'Real-time features may not work properly.',
-    //             3000
-    //         );
-    //     }
-    // }
-
-    /**
-     * Setup app-level socket event listeners
-     */
-    // private setupSocketEventListeners(): void {
-    //     // Listen for connection events
-    //     document.addEventListener('socketConnected', (event: Event) => {
-    //         const customEvent = event as CustomEvent;
-    //         console.log('App detected socket connection:', customEvent.detail.socketId);
-    //         components.showToast('success', 'Connected', 'Real-time features are now active!', 2000);
-    //     });
-
-    //     document.addEventListener('socketDisconnected', (event: Event) => {
-    //         const customEvent = event as CustomEvent;
-    //         console.log('App detected socket disconnection:', customEvent.detail.reason);
-    //         components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
-    //     });
-
-    //     document.addEventListener('socketReconnected', (event: Event) => {
-    //         const customEvent = event as CustomEvent;
-    //         console.log('App detected socket reconnection after', customEvent.detail.attempts, 'attempts');
-    //         components.showToast('success', 'Reconnected', 'Real-time features restored!', 2000);
-    //     });
-
-    //     document.addEventListener('socketConnectionFailed', (event: Event) => {
-    //         const customEvent = event as CustomEvent;
-    //         console.error('App detected socket connection failure:', customEvent.detail.error);
-    //         components.showToast('error', 'Connection Failed', 'Unable to connect to server. Please refresh the page.', 5000);
-    //     });
-    // }
     private initializeSocket(): void {
         if (typeof io !== 'undefined') {
             window.chatSocket = io(CONFIG.socketURL, {
