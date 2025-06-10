@@ -364,6 +364,13 @@ class Chat {
         try {
             const messages = await api.getChatMessages(chatId.toString());
             messages.forEach((message: any) => this.appendMessage(message));
+            //mark messages as read
+            await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages//by-chat/${chatId}`, {
+                        method: 'PATCH',
+                        credentials: "include",
+                    });
+            this.mailboxNotificationCount = 0;
+            this.elements.mailboxBtn!.setAttribute('data-count', '0');
         } catch (error) {
             console.error('Error loading messages:', error);
         }
@@ -864,11 +871,11 @@ class Chat {
                 if (!visible) {
                     try {
                         // Mark notifications as opened
-                        await api.markNotificationsAsOpened('others');
-                        // await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
-                        //     method: "PATCH",
-                        //     credentials: "include",
-                        // });
+                        // await api.markNotificationsAsOpened('others');
+                        await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
+                            method: "PATCH",
+                            credentials: "include",
+                        });
             
                         this.notificationCount = 0;
                         if (this.elements.bellBtn) {
@@ -911,9 +918,13 @@ class Chat {
                 if (!visible) {
                     try {
                         // Mark message notifications as read
-                        await api.markNotificationsAsOpened('messages');
-                        this.mailboxNotificationCount = 0;
-                        this.elements.mailboxBtn!.setAttribute('data-count', '0');
+                        // await api.markNotificationsAsOpened('messages');
+                        // await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages`, {
+                        //         method: 'PATCH',
+                        //         credentials: "include",
+                        //     });
+                        // this.mailboxNotificationCount = 0;
+                        // this.elements.mailboxBtn!.setAttribute('data-count', '0');
                     } catch (error) {
                         console.error('Error marking mailbox notifications as opened:', error);
                     }

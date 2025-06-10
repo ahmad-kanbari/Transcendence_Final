@@ -14,6 +14,7 @@ import localization, { t } from './localization';
 import accessibility from './accessibility';
 import { ApiResponse } from './api';
 import chat from './chat';
+import notificationManager from './NotificationManager';
 // import friends from './friend';
 import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
@@ -89,6 +90,7 @@ class App {
       
       login.init();
       register.init();
+    
     //   twoFA.init();
       profile.init();
       chat.init();
@@ -693,6 +695,7 @@ class App {
             window.chatSocket.on('connect', () => {
                 console.log('Socket connected');
                 components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+                notificationManager.init();
             });
             
             window.chatSocket.on('disconnect', () => {

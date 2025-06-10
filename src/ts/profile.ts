@@ -92,7 +92,7 @@ class Profile {
       this.profileForm.profileUsername.textContent = app.getUsername() || 'Username';
     
     if (this.profileForm.profileAvatar)
-      this.profileForm.profileAvatar.src = app.getUserImg() || '../public/assets/icons/avatar.svg';
+      this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/avatar.svg';
     
     if (this.profileForm.displayNameField)
       this.profileForm.displayNameField.value = app.getUsername() || '';
