@@ -231,13 +231,13 @@ class NotificationManager {
         this.socketService.on('friendRequestInform', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
             this.addNotification(data.message);
-            // this.loadFriendData();
+            chat.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
             this.addNotification(data.message);
-            // this.loadFriendData();
+            chat.loadFriendData();
         });
     }
     // ===== NOTIFICATION SYSTEM =====
