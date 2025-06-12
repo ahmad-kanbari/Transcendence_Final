@@ -686,6 +686,7 @@ class App {
 
     private initializeSocket(): void {
         if (typeof io !== 'undefined') {
+           console.log('Initializing chat socket connection from app class');
             window.chatSocket = io(CONFIG.socketURL, {
                 withCredentials: true,
                 autoConnect: true,

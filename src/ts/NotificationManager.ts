@@ -3,6 +3,7 @@ import components from './components';
 import utils from './utils';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
+import chat from './chat';
 // import notificationManager from './NotificationManager';
 
 // Declare socket.io global
@@ -189,12 +190,12 @@ class NotificationManager {
 
         // Handle new messages
         // this.socketService.on('newMessage', (message: any) => {
-        //     // if (message.chat_id === this.currentChatId) {
-        //     //     this.appendMessage(message);
+        //     // if (message.chat_id === chat.currentChatId) {
+        //     //     chat.appendMessage(message);
         //     // }
-        //     // this.loadChats(); // Refresh chat list
-        //     // this.messagesCount++;
-        //     // this.updateDashboardStats();
+        //     // chat.loadChats(); // Refresh chat list
+        //     // chat.messagesCount++;
+        //     // chat.updateDashboardStats();
         // });
 
         // Handle message notifications

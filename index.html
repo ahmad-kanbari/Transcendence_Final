@@ -381,13 +381,13 @@
                         aria-label="Message notifications"
                         data-count="0"
                     >📬</div>
-                                    <!-- Notification Dropdowns -->
-                    <div id="generalNotifications" role="region" aria-label="General notifications" style="display: none;">
-                        <em>No notifications yet.</em>
-                    </div>
-                    <div id="messageNotifications" role="region" aria-label="Message notifications" style="display: none;">
-                        <em>No message notifications yet.</em>
-                    </div>
+                                <!-- Notification Dropdowns -->
+                <div id="generalNotifications" role="region" aria-label="General notifications" style="display: none;">
+                    <em>No notifications yet.</em>
+                </div>
+                <div id="messageNotifications" role="region" aria-label="Message notifications" style="display: none;">
+                    <em>No message notifications yet.</em>
+                </div>
                     <!-- User Profile Dropdown -->
                     <div class="hidden lg:block">
                         <div id="loginDropdown" class="relative">
@@ -429,18 +429,21 @@
                                 <span data-i18n="navigation.home">Home</span>
                             </a>
                         </li>
-                        <li>
-                            <a href="/game" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="gameNavBtnMobile">
-                                <i class="bi bi-controller mr-2 text-cyber-green"></i>
-                                <span data-i18n="navigation.game">Game</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="/chat" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="chatNavBtnMobile">
-                                <i class="bi bi-controller mr-2 text-cyber-green"></i>
-                                <span data-i18n="navigation.chat">Chat</span>
-                            </a>
-                        </li>
+                    
+                       
+                            <li>
+                                <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-cente" id="gameNavBtn">
+                                    <i class="bi bi-controller mr-2 text-cyber-green"></i>
+                                    <span data-i18n="navigation.game">Game</span>
+                                </a>
+                            </li>
+                     
+                             <li>
+                                     <a href="/chat" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-cente" id="chatNavBtn">
+                                        <i class="bi bi-chat-dots mr-2 text-cyber-green"></i>
+                                    <span data-i18n="navigation.chat">Chat</span>
+                                </a>
+                            </li>
                         <li>
                             <a href="/profile" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-purple" id="profileNavBtnMobile">
                                 <i class="bi bi-person mr-2 text-cyber-purple"></i>
