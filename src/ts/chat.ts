@@ -1,9 +1,8 @@
 import api from './api';
 import components from './components';
 import utils from './utils';
-import { CONFIG } from './constants';
+import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
-// import notificationManager from './NotificationManager';
 
 // Declare socket.io global
 declare const io: any;
@@ -102,7 +101,6 @@ class Chat {
             this.initializeParticles();
             this.loadChats();
             this.loadFriendData();
-            // this.initializeNotifications();
             this.updateDashboardStats();
         }, 100);
     }
@@ -146,14 +144,12 @@ class Chat {
 
     private setupEventListeners(): void {
         // Send message
-        //how to load chat problem
         if (this.elements.sendBtn) {     
             this.elements.sendBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 this.sendMessage()
-            }
-        );
+            });
         }
 
         if (this.elements.messageInput) {
@@ -184,17 +180,12 @@ class Chat {
             this.elements.closeDashboard.addEventListener('click', () => this.hideDashboard());
         }
 
-        // Setup notification event listeners
-        // this.setupNotificationEventListeners();
-
         // Escape key for dashboard
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.elements.dashboardView?.classList.contains('active')) {
                 this.hideDashboard();
             }
         });
-
-        
     }
 
     private setupSocketHandlers(): void {
@@ -205,7 +196,7 @@ class Chat {
             if (message.chat_id === this.currentChatId) {
                 this.appendMessage(message);
             }
-            this.loadChats(); // Refresh chat list
+            this.debouncedReloadChats(); // Use debounced reload
             this.messagesCount++;
             this.updateDashboardStats();
         });
@@ -242,88 +233,151 @@ class Chat {
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
-            // this.addNotification(data.message);
             this.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
-            // this.addNotification(data.message);
             this.loadFriendData();
         });
     }
 
-    // ===== CHAT FUNCTIONALITY =====
+    // ===== IMPROVED CHAT FUNCTIONALITY =====
+    
+    /**
+     * Debounced chat reload to prevent excessive API calls
+     */
+    private debouncedReloadChats(): void {
+        if (this.chatReloadTimeout) {
+            clearTimeout(this.chatReloadTimeout);
+        }
+        this.chatReloadTimeout = setTimeout(() => {
+            this.loadChats();
+            this.chatReloadTimeout = null;
+        }, 300);
+    }
+
+    /**
+     * Load chats with improved performance and error handling
+     */
     private async loadChats(): Promise<void> {
         if (!this.elements.chatRows) return;
 
+        // Clear existing chat rows efficiently
+        while (this.elements.chatRows.firstChild) {
+            this.elements.chatRows.removeChild(this.elements.chatRows.firstChild);
+        }
+
         try {
-            const chats = await api.getChats();
-            this.renderChatList(chats);
+            // Use the direct API approach from the second snippet
+            const res = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                credentials: 'include'
+            });
+            
+            if (!res.ok) {
+                throw new Error(`Failed to fetch chats: ${res.status}`);
+            }
+            
+            const chats = await res.json();
+
+            if (chats.length === 0) {
+                const noChatsMsg = document.createElement('div');
+                noChatsMsg.textContent = 'No chats yet.';
+                noChatsMsg.style.cssText = 'text-align: center; color: #999; padding: 20px;';
+                this.elements.chatRows.appendChild(noChatsMsg);
+                return;
+            }
+
+            // Use DocumentFragment for better performance
+            const fragment = document.createDocumentFragment();
+
+            for (const { chat_id, participantId } of chats) {
+                try {
+                    const userRes = await api.fetchWithAutoRefresh(
+                        `${this.baseURL}/users/${participantId}`,
+                        { credentials: 'include' }
+                    );
+                    
+                    if (!userRes.ok) continue;
+                    
+                    const user = await userRes.json();
+
+                    const chatRow = document.createElement('div');
+                    chatRow.className = 'chat-row chatRow'; // Keep both class names for compatibility
+                    chatRow.role = 'listitem';
+                    chatRow.dataset.chatId = chat_id.toString();
+                    
+                    chatRow.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="online-status"></span>
+                            <span>${user.username || 'Unknown User'}</span>
+                        </div>
+                        <div style="font-size: 12px; color: #999; margin-top: 5px;">Click to open chat</div>
+                    `;
+
+                    // Mark active chat
+                    if (this.currentChatId === chat_id) {
+                        chatRow.classList.add('active');
+                    }
+
+                    // Add click event listener
+                    chatRow.addEventListener('click', async () => {
+                        await this.selectChatFromList(chat_id);
+                    });
+
+                    fragment.appendChild(chatRow);
+                } catch (error) {
+                    console.error('Error rendering chat:', error);
+                }
+            }
+
+            this.elements.chatRows.appendChild(fragment);
+            return chats;
         } catch (error) {
             console.error('Error loading chats:', error);
+            this.elements.chatRows.innerHTML = '<div style="text-align: center; color: #f44336; padding: 20px;">Error loading chats.</div>';
+            return;
         }
     }
 
-    private async renderChatList(chats: any[]): Promise<void> {
-        if (!this.elements.chatRows) return;
-
-        this.elements.chatRows.innerHTML = '';
-
-        if (chats.length === 0) {
-            this.elements.chatRows.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No chats yet</div>';
-            return;
-        }
-
-        for (const chat of chats) {
-            try {
-                const user = await api.getUserById(chat.participantId.toString());
-                if (!user || !user.success) continue;
-
-                const chatRow = document.createElement('div');
-                chatRow.className = 'chat-row';
-                chatRow.role = 'listitem';
-                chatRow.dataset.chatId = chat.chat_id.toString();
-                
-                chatRow.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="online-status"></span>
-                        <span>${user.data?.username || 'Unknown User'}</span>
-                    </div>
-                    <div style="font-size: 12px; color: #999; margin-top: 5px;">Click to open chat</div>
-                `;
-
-                if (this.currentChatId === chat.chat_id) {
-                    chatRow.classList.add('active');
+    /**
+     * Select chat from the chat list (combining both approaches)
+     */
+    private async selectChatFromList(chatId: number): Promise<void> {
+        try {
+            // Join the room
+            await this.joinRoom(chatId);
+            
+            // Mark notifications as read for the current chat
+            const res = await api.fetchWithAutoRefresh(
+                `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
                 }
-
-                chatRow.addEventListener('click', () => this.selectChat(chat.chat_id));
-                this.elements.chatRows.appendChild(chatRow);
-            } catch (error) {
-                console.error('Error rendering chat:', error);
+            );
+            
+            if (res.ok) {
+                this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+                if (this.elements.mailboxBtn) {
+                    this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+                }
             }
+
+            // Update URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('chatId', chatId.toString());
+            window.history.pushState({}, '', url);
+            
+        } catch (error) {
+            console.error('Error selecting chat:', error);
+            components.showToast('error', 'Chat Error', 'Failed to open chat', 3000);
         }
     }
 
     private async selectChat(chatId: number): Promise<void> {
-        await this.joinRoom(chatId);
-        
-        // Update chat header
-        if (this.elements.chatHeader) {
-            this.elements.chatHeader.textContent = 'Online chat...';
-        }
-        
-        // Mark notifications as read
-        try {
-            await api.markChatNotificationsAsRead(chatId.toString());
-        } catch (error) {
-            console.error('Error marking notifications as read:', error);
-        }
-        
-        // Update URL
-        const url = new URL(window.location.href);
-        url.searchParams.set('chatId', chatId.toString());
-        window.history.pushState({}, '', url);
+        // Use the improved selectChatFromList method
+        await this.selectChatFromList(chatId);
     }
 
     private async joinRoom(chatId: number): Promise<void> {
@@ -339,8 +393,8 @@ class Chat {
 
         this.currentChatId = chatId;
 
-        // Update UI
-        document.querySelectorAll('.chat-row').forEach(row => {
+        // Update UI - use both class selectors for compatibility
+        document.querySelectorAll('.chat-row, .chatRow').forEach(row => {
             row.classList.remove('active');
         });
 
@@ -364,13 +418,17 @@ class Chat {
         try {
             const messages = await api.getChatMessages(chatId.toString());
             messages.forEach((message: any) => this.appendMessage(message));
-            //mark messages as read
-            await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages//by-chat/${chatId}`, {
-                        method: 'PATCH',
-                        credentials: "include",
-                    });
+            
+            // Mark messages as read
+            await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
+                method: 'PATCH',
+                credentials: "include",
+            });
+            
             this.mailboxNotificationCount = 0;
-            this.elements.mailboxBtn!.setAttribute('data-count', '0');
+            if (this.elements.mailboxBtn) {
+                this.elements.mailboxBtn.setAttribute('data-count', '0');
+            }
         } catch (error) {
             console.error('Error loading messages:', error);
         }
@@ -477,7 +535,10 @@ class Chat {
     }
 
     private renderChatSearchResults(users: any[]): void {
-        if (!this.elements.userSearchResultsChat) return;
+        if (!this.elements.userSearchResultsChat) {
+            console.error('userSearchResultsChat element not found!');
+            return;
+        } 
 
         this.elements.userSearchResultsChat.innerHTML = '';
 
@@ -485,12 +546,13 @@ class Chat {
             this.elements.userSearchResultsChat.style.display = 'none';
             return;
         }
-
+        
+        this.elements.userSearchResultsChat.style.display = 'block';
         users.forEach(user => {
             const div = document.createElement('div');
             div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
-            div.textContent = user.username;
-            div.addEventListener('click', () => this.startChatWithUser(user));
+            div.textContent = user.username || 'Unknown User';
+            div.addEventListener('click', () => this.startChatWithUser(user, user.chat_id));
             this.elements.userSearchResultsChat!.appendChild(div);
         });
 
@@ -579,26 +641,17 @@ class Chat {
             }
 
             requests.forEach((request: any) => {
-                // const li = document.createElement('li');
-                // li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
-                
-                // li.innerHTML = `
-                //     <span>${request.senderUsername}</span>
-                //     <button onclick="window.chat.cancelFriendRequest('${request.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Cancel</button>
-                // `;
                 const li = document.createElement('li');
                 li.innerHTML = `<span>${request.senderUsername}</span>`;
 
                 const cancelBtn = document.createElement('button');
                 cancelBtn.textContent = 'Cancel';
-                cancelBtn.style = 'padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;';
+                cancelBtn.style.cssText = 'padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;';
                 cancelBtn.addEventListener('click', () => {
                     window.chat.cancelFriendRequest(request.friendshipId);
                 });
 
                 li.appendChild(cancelBtn);
-
-                
                 this.elements.outgoingRequests!.appendChild(li);
             });
         } catch (error) {
@@ -694,19 +747,152 @@ class Chat {
         }
     }
 
-    public startChatWithFriend(friendId: string): void {
-        components.showToast('info', 'Chat Feature', 'Opening chat with friend...', 2000);
-        // You could implement chat creation here
+    public async startChatWithFriend(friendId: string): Promise<void> {
+        try {
+            components.showToast('info', 'Chat Feature', 'Opening chat with friend...', 2000);
+            
+            // First, check if a chat already exists between users using your backend route
+            const existingChat = await this.checkExistingChatWithFriend(friendId);
+            
+            if (existingChat && existingChat.chat_id) {
+                // If chat exists, join it directly
+                await this.selectChatFromList(existingChat.chat_id);
+                components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
+                return;
+            }
+            
+            // If no existing chat, create a new one
+            const newChat = await this.createChatWithFriend(friendId);
+            
+            if (newChat && (newChat.chat_id || newChat.id)) {
+                const chatId = newChat.chat_id || newChat.id;
+                
+                // Reload chat list to show the new chat
+                await this.loadChats();
+                
+                // Join the new chat
+                await this.selectChatFromList(chatId);
+                
+                components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
+            } else {
+                throw new Error('Failed to create chat - no chat ID returned');
+            }
+            
+        } catch (error) {
+            console.error('Error starting chat with friend:', error);
+            components.showToast('error', 'Chat Failed', 'Failed to start chat with friend', 3000);
+        }
+    }
+
+    /**
+     * Check if chat exists between current user and friend using your backend endpoint
+     */
+    private async checkExistingChatWithFriend(friendId: string): Promise<any | null> {
+        try {
+            // Use your backend route: GET /chats/between/:otherUserId
+            const res = await api.fetchWithAutoRefresh(`${this.baseURL}/chats/between/${friendId}`, {
+                credentials: 'include'
+            });
+            
+            if (res.ok) {
+                const chatData = await res.json();
+                return chatData;
+            } else if (res.status === 404) {
+                // Chat doesn't exist, which is expected
+                return null;
+            } else {
+                throw new Error(`Failed to check existing chat: ${res.status}`);
+            }
+            
+        } catch (error) {
+            console.error('Error checking existing chat:', error);
+            // Return null so we can try to create a new chat
+            return null;
+        }
+    }
+
+    /**
+     * Create a new chat with a friend using your backend endpoint
+     */
+    private async createChatWithFriend(friendId: string): Promise<any | null> {
+        try {
+            // Use your backend route: POST /chats
+            // Based on typical chat creation, the body usually contains the other user's ID
+            const res = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    otherUserId: friendId
+                    // Alternative field names that might be expected:
+                    // participantId: friendId,
+                    // userId: friendId,
+                    // friendId: friendId
+                })
+            });
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Failed to create chat: ${res.status} - ${errorText}`);
+            }
+            
+            const newChat = await res.json();
+            return newChat;
+            
+        } catch (error) {
+            console.error('Error creating chat with friend:', error);
+            
+            // Try with alternative field name
+            try {
+                const alternativeRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        participantId: friendId
+                    })
+                });
+                
+                if (alternativeRes.ok) {
+                    return await alternativeRes.json();
+                }
+            } catch (fallbackError) {
+                console.error('Alternative chat creation also failed:', fallbackError);
+            }
+            
+            throw error;
+        }
     }
 
     // ===== UTILITY METHODS =====
-    private async startChatWithUser(user: any): Promise<void> {
+    private async startChatWithUser(user: any, chat_id: number): Promise<void> {
         components.showToast('info', 'Chat Feature', `Starting chat with ${user.username}...`, 2000);
         
         // Clear search
         if (this.elements.userSearchInput && this.elements.userSearchResultsChat) {
             this.elements.userSearchInput.value = '';
             this.elements.userSearchResultsChat.style.display = 'none';
+        }
+
+        this.joinRoom(chat_id);
+
+        // Mark notifications as read for the current chat
+        const res = await api.fetchWithAutoRefresh(
+            `${baseURL}/notifications/messages/by-chat/${chat_id}`,
+            {
+                method: "PATCH",
+                credentials: "include",
+            }
+        );
+        if (res.ok) {
+            this.mailboxNotificationCount--;
+            if (this.elements.mailboxBtn) {
+                this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+            }
         }
     }
 
@@ -753,209 +939,6 @@ class Chat {
         }
     }
 
-    // ===== NOTIFICATION SYSTEM =====
-    // private addNotification(message: string): void {
-    //     if (!this.elements.generalNotifications) return;
-
-    //     const placeholder = this.elements.generalNotifications.querySelector("em");
-    //     if (placeholder) placeholder.remove();
-
-    //     const div = document.createElement("div");
-    //     div.classList.add("notification");
-    //     div.textContent = message;
-        
-    //     if (this.elements.generalNotifications.firstChild) {
-    //         this.elements.generalNotifications.insertBefore(
-    //             div,
-    //             this.elements.generalNotifications.firstChild
-    //         );
-    //     } else {
-    //         this.elements.generalNotifications.appendChild(div);
-    //     }
-
-    //     this.notificationCount++;
-    //     if (this.elements.bellBtn) {
-    //         this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
-    //     }
-    // }
-
-    // private async initializeNotificationCounter(): Promise<void> {
-    //     try {
-    //         const page = 1;
-    //         const limit = 5;
-    //         // const notifications = await api.getNotifications('others', page, limit);
-    //         const res = await api.fetchWithAutoRefresh(
-	// 		`${this.baseURL}/notifications/others?page=${page}&limit=${limit}`,
-	// 		{ credentials: "include" }
-	// 	);
-    //         if (!res .ok) throw new Error("Failed to fetch notifications");
-    //         const notifications = await res.json();
-    //         this.notificationCount = notifications.filter((n: any) => n.is_opened === 0).length;
-    //         if (this.elements.bellBtn) {
-    //             this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
-    //         }
-    //     } catch (error) {
-    //         console.error("Error initializing notification counter:", error);
-    //     }
-    // }
-
-    // private async initializeMailboxNotificationCounter(): Promise<void> {
-    //     try {
-    //         const page = 1;
-    //         const limit = 5;
-    //         // const notifications = await api.getNotifications('messages', page, limit);
-    //         const res = await api.fetchWithAutoRefresh(
-	// 		`${this.baseURL}/notifications/messages?page=${page}&limit=${limit}`,
-	// 		{ credentials: "include" }, 
-        
-	// 	);
-	// 	if (!res.ok) throw new Error("Failed to fetch mailbox notifications");
-
-	// 	const notifications = await res.json();
-    //         this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
-    //         if (this.elements.mailboxBtn) {
-    //             this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
-    //         }
-    //     } catch (error) {
-    //         console.error("Error initializing mailbox notification counter:", error);
-    //     }
-    // }
-
-    // private async initializeNotifications(): Promise<void> {
-    //     await Promise.all([
-    //         this.initializeNotificationCounter(),
-    //         this.initializeMailboxNotificationCounter()
-    //     ]);
-    // }
-
-    // private renderNotificationList(container: HTMLElement, notifications: any[]): void {
-    //     container.innerHTML = '';
-        
-    //     if (notifications.length === 0) {
-    //         container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
-    //         return;
-    //     }
-
-    //     notifications.forEach((notification: any) => {
-    //         const div = document.createElement('div');
-    //         div.className = 'notification';
-    //         div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer;';
-            
-    //         const time = new Date(notification.created_at).toLocaleString();
-    //         div.innerHTML = `
-    //             <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
-    //             <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
-    //             <div style="font-size: 11px; color: #999;">${time}</div>
-    //         `;
-            
-    //         container.appendChild(div);
-    //     });
-    // }
-
-    // private async setupNotificationEventListeners(): Promise<void> {
-    //     // Bell button event listener
-    //     if (this.elements.bellBtn) {
-    //         this.elements.bellBtn.addEventListener('click', async (e) => {
-    //              e.preventDefault();
-    //              e.stopPropagation();
-    //             const visible = this.elements.generalNotifications?.style.display === 'block';
-                
-    //             if (this.elements.generalNotifications) {
-    //                 this.elements.generalNotifications.style.display = visible ? 'none' : 'block';
-    //             }
-                
-    //             if (this.elements.messageNotifications) {
-    //                 this.elements.messageNotifications.style.display = 'none';
-    //             }
-
-    //             if (!visible) {
-    //                 try {
-    //                     // Mark notifications as opened
-    //                     // await api.markNotificationsAsOpened('others');
-    //                     await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
-    //                         method: "PATCH",
-    //                         credentials: "include",
-    //                     });
-            
-    //                     this.notificationCount = 0;
-    //                     if (this.elements.bellBtn) {
-    //                         this.elements.bellBtn.setAttribute('data-count', '0');
-    //                     }
-    //                 } catch (error) {
-    //                     console.error('Error marking notifications as opened:', error);
-    //                 }
-    //             }
-
-    //             // Load and render notifications
-    //             try {
-    //                 const page = 1;
-    //                 const limit = 5;
-    //                 const notifications = await api.getNotifications('others', page, limit);
-    //                 if (this.elements.generalNotifications) {
-    //                     this.renderNotificationList(this.elements.generalNotifications, notifications);
-    //                 }
-    //             } catch (error) {
-    //                 console.error('Error loading notifications:', error);
-    //             }
-    //         });
-    //     }
-
-    //     // Mailbox button event listener
-    //     if (this.elements.mailboxBtn) {
-    //         this.elements.mailboxBtn.addEventListener('click', async (e) => {
-    //              e.preventDefault();
-    //                 e.stopPropagation();
-    //             const visible = this.elements.messageNotifications?.style.display === 'block';
-                
-    //             if (this.elements.messageNotifications) {
-    //                 this.elements.messageNotifications.style.display = visible ? 'none' : 'block';
-    //             }
-                
-    //             if (this.elements.generalNotifications) {
-    //                 this.elements.generalNotifications.style.display = 'none';
-    //             }
-
-    //             if (!visible) {
-    //                 try {
-    //                     // Mark message notifications as read
-    //                     // await api.markNotificationsAsOpened('messages');
-    //                     // await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages`, {
-    //                     //         method: 'PATCH',
-    //                     //         credentials: "include",
-    //                     //     });
-    //                     // this.mailboxNotificationCount = 0;
-    //                     // this.elements.mailboxBtn!.setAttribute('data-count', '0');
-    //                 } catch (error) {
-    //                     console.error('Error marking mailbox notifications as opened:', error);
-    //                 }
-    //             }
-
-    //             // Load and render message notifications
-    //             try {
-    //                 const page = 1;
-    //                 const limit = 5;
-    //                 const notifications = await api.getNotifications('messages', page, limit);
-    //                 if (this.elements.messageNotifications) {
-    //                     this.renderNotificationList(this.elements.messageNotifications, notifications);
-    //                 }
-    //             } catch (error) {
-    //                 console.error('Error loading message notifications:', error);
-    //             }
-    //         });
-    //     }
-    // }
-
-    // private updateMailboxNotificationCount(): void {
-    //     if (this.elements.mailboxBtn) {
-    //         this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
-    //     }
-    // }
-
-    // public updateMailboxCount(count: number): void {
-    //     this.mailboxNotificationCount = count;
-    //     this.updateMailboxNotificationCount();
-    // }
-
     private initializeParticles(): void {
         const particlesContainer = document.getElementById('particles');
         if (!particlesContainer) return;
@@ -1001,8 +984,42 @@ class Chat {
         }
     }
 
+    // ===== PUBLIC API METHODS =====
+    
+    /**
+     * Get current chat ID - useful for external components
+     */
+    public getCurrentChatId(): number | null {
+        return this.currentChatId;
+    }
+
+    /**
+     * Manually trigger chat reload - useful for external triggers
+     */
+    public reloadChats(): void {
+        this.loadChats();
+    }
+
+    /**
+     * Get debounced reload function - useful for external components
+     */
+    public getDebouncedReload(): () => void {
+        return () => this.debouncedReloadChats();
+    }
+
+    /**
+     * Force join a specific room - useful for external navigation
+     */
+    public async forceJoinRoom(chatId: number): Promise<void> {
+        await this.joinRoom(chatId);
+    }
+
     // Cleanup method
     destroy(): void {
+        if (this.chatReloadTimeout) {
+            clearTimeout(this.chatReloadTimeout);
+        }
+        
         if (this.socketService) {
             if (this.currentChatId) {
                 this.socketService.emit('leaveRoom', this.currentChatId);
@@ -1010,21 +1027,37 @@ class Chat {
             this.socketService.disconnect();
         }
     }
-
-    // Getter for current chat ID
-    getCurrentChatId(): number | null {
-        return this.currentChatId;
-    }
 }
 
 const chat = new Chat();
 
-// Make chat available globally for button onclick handlers
+// Make chat available globally for button onclick handlers and external access
 declare global {
     interface Window {
         chat: Chat;
+        // Backwards compatibility for your existing code
+        chatUI?: {
+            loadChats: () => void;
+            debouncedReloadChats: () => void;
+        };
+        chatMessages?: {
+            getCurrentChatId: () => number | null;
+            joinRoom: (chatId: number) => Promise<void>;
+        };
     }
 }
+
 window.chat = chat;
+
+// Provide backwards compatibility with your existing window.chatUI and window.chatMessages
+window.chatUI = {
+    loadChats: () => chat.reloadChats(),
+    debouncedReloadChats: () => chat.getDebouncedReload()(),
+};
+
+window.chatMessages = {
+    getCurrentChatId: () => chat.getCurrentChatId(),
+    joinRoom: (chatId: number) => chat.forceJoinRoom(chatId),
+};
 
 export default chat;
