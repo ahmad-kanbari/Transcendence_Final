@@ -897,14 +897,17 @@ class Chat {
             friends.forEach((friend: any) => {
                 const li = document.createElement('li');
                 li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
-                
+                console.log(`Rendering friend: ${friend.username} with object: ${JSON.stringify(friend)}`);
                 li.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="online-status"></span>
                         <span>${friend.username}</span>
                     </div>
                     <div>
-                        <button onclick="window.chat.startChatWithFriend('${friend.id}')" style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer;">Chat</button>
+                        <button onclick="window.chat.startChatWithFriend('${friend.userId}')" 
+                            style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer;">
+                                Chat
+                        </button>
                         <button onclick="window.chat.removeFriend('${friend.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Remove</button>
                     </div>
                 `;
@@ -1065,8 +1068,10 @@ class Chat {
                     // participantId: friendId,
                     // userId: friendId,
                     // friendId: friendId
+                    // user2Id: user.id 
                 })
             });
+
             
             if (!res.ok) {
                 const errorText = await res.text();
