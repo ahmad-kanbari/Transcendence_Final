@@ -84,51 +84,92 @@ class NotificationManager {
 
     private async setupNotificationEventListeners(): Promise<void> {
         // Bell button event listener
+        // if (this.elements.bellBtn) {
+        //     this.elements.bellBtn.addEventListener('click', async (e) => {
+        //          e.preventDefault();
+        //          e.stopPropagation();
+        //         const visible = this.elements.generalNotifications?.style.display === 'block';
+                
+        //         if (this.elements.generalNotifications) {
+        //             this.elements.generalNotifications.style.display = visible ? 'none' : 'block';
+        //         }
+                
+        //         if (this.elements.messageNotifications) {
+        //             this.elements.messageNotifications.style.display = 'none';
+        //         }
+        //         if (!visible) {
+        //             try {
+        //                 // Mark notifications as opened
+        //                 await api.markNotificationsAsOpened('others');
+        //                 // await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
+        //                 //     method: "PATCH",
+        //                 //     credentials: "include",
+        //                 // });
+            
+        //                 this.notificationCount = 0;
+        //                 if (this.elements.bellBtn) {
+        //                     this.elements.bellBtn.setAttribute('data-count', '0');
+        //                 }
+        //             } catch (error) {
+        //                 console.error('Error marking notifications as opened:', error);
+        //             }
+        //         }
+
+        //         // Load and render notifications
+        //         try {
+        //             const page = 1;
+        //             const limit = 5;
+        //             const notifications = await api.getNotifications('others', page, limit);
+        //             if (this.elements.generalNotifications) {
+        //                 this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
+        //             }
+        //         } catch (error) {
+        //             console.error('Error loading notifications:', error);
+        //         }
+        //     });
+        // }
+
+        // ENHANCED VERSION: With click outside to close
         if (this.elements.bellBtn) {
             this.elements.bellBtn.addEventListener('click', async (e) => {
-                 e.preventDefault();
-                 e.stopPropagation();
-                const visible = this.elements.generalNotifications?.style.display === 'block';
+                e.preventDefault();
+                e.stopPropagation();
                 
-                if (this.elements.generalNotifications) {
-                    this.elements.generalNotifications.style.display = visible ? 'none' : 'block';
-                }
+                const isCurrentlyVisible = this.elements.generalNotifications?.style.display === 'block';
                 
+                // Close message notifications
                 if (this.elements.messageNotifications) {
                     this.elements.messageNotifications.style.display = 'none';
                 }
-                if (!visible) {
-                    try {
-                        // Mark notifications as opened
-                        await api.markNotificationsAsOpened('others');
-                        // await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
-                        //     method: "PATCH",
-                        //     credentials: "include",
-                        // });
-            
-                        this.notificationCount = 0;
-                        if (this.elements.bellBtn) {
-                            this.elements.bellBtn.setAttribute('data-count', '0');
-                        }
-                    } catch (error) {
-                        console.error('Error marking notifications as opened:', error);
-                    }
+                
+                if (isCurrentlyVisible) {
+                    // Close notifications
+                    this.closeGeneralNotifications();
+                } else {
+                    // Open notifications
+                    await this.openGeneralNotifications();
                 }
-
-                // Load and render notifications
-                try {
-                    const page = 1;
-                    const limit = 5;
-                    const notifications = await api.getNotifications('others', page, limit);
-                    if (this.elements.generalNotifications) {
-                        this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
-                    }
-                } catch (error) {
-                    console.error('Error loading notifications:', error);
+            });
+            
+            // Add click outside listener to close notifications
+            document.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement;
+                
+                // Check if click is outside bell button and notifications
+                if (!target.closest('#bellBtn') && 
+                    !target.closest('#generalNotifications') &&
+                    this.elements.generalNotifications?.style.display === 'block') {
+                    this.closeGeneralNotifications();
+                }
+                
+                // Same for message notifications
+                if (!target.closest('#mailboxBtn') && 
+                    !target.closest('#messageNotifications') &&
+                    this.elements.messageNotifications?.style.display === 'block') {
+                    this.closeMessageNotifications();
                 }
             });
         }
-
         // Mailbox button event listener
         if (this.elements.mailboxBtn) {
             this.elements.mailboxBtn.addEventListener('click', async (e) => {
@@ -187,6 +228,61 @@ class NotificationManager {
     //         container.appendChild(div);
     //     });
     // }
+    // HELPER METHODS for the enhanced version
+        private closeGeneralNotifications(): void {
+            if (this.elements.generalNotifications) {
+                this.elements.generalNotifications.style.display = 'none';
+            }
+        }
+
+        private closeMessageNotifications(): void {
+            if (this.elements.messageNotifications) {
+                this.elements.messageNotifications.style.display = 'none';
+            }
+        }
+
+        private async openGeneralNotifications(): Promise<void> {
+            if (!this.elements.generalNotifications) return;
+            
+            try {
+                // Show dropdown with loading state
+                this.elements.generalNotifications.style.display = 'block';
+                this.elements.generalNotifications.innerHTML = 
+                    '<div style="padding: 10px; color: #999; text-align: center;">Loading notifications...</div>';
+                
+                // Load notifications
+                const notifications = await api.getNotifications('others', 1, 5);
+                
+                // Render notifications
+                this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
+                
+                // Mark as opened and reset count
+                await api.markNotificationsAsOpened('others');
+                this.notificationCount = 0;
+                
+                if (this.elements.bellBtn) {
+                    this.elements.bellBtn.setAttribute('data-count', '0');
+                }
+                
+            } catch (error) {
+                console.error('Error opening general notifications:', error);
+                
+                if (this.elements.generalNotifications) {
+                    this.elements.generalNotifications.innerHTML = 
+                        '<div style="color: #f44336; padding: 10px; text-align: center;">' +
+                        'Error loading notifications<br>' +
+                        '<button onclick="window.notificationManager.openGeneralNotifications()" ' +
+                        'style="margin-top: 5px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 3px; cursor: pointer;">' +
+                        'Retry</button>' +
+                        '</div>';
+                }
+            }
+        }
+
+        // Make openGeneralNotifications public so it can be called from the retry button
+        public async openGeneralNotificationsPublic(): Promise<void> {
+            return this.openGeneralNotifications();
+        }
 
     private renderNotificationList(container: HTMLElement, notifications: any[], type: "messages" | "others"): void {
     container.innerHTML = '';
