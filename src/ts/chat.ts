@@ -53,6 +53,7 @@ class Chat {
      messagesCount: number = 0;
      baseURL: string = CONFIG.baseURL || '';
      chatReloadTimeout: any = null;
+     currentChatWithUsername: string | null = null;
 
     constructor() {
         // Initialize socket connection
@@ -216,6 +217,40 @@ class Chat {
                 this.hideDashboard();
             }
         });
+
+         document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        
+        // Hide chat search results if clicking outside
+        if (this.elements.userSearchResultsChat && 
+            !target.closest('#userSearchInput') && 
+            !target.closest('#userSearchResultsChat')) {
+            this.elements.userSearchResultsChat.style.display = 'none';
+        }
+        
+        // Hide friend search results if clicking outside
+        if (this.elements.userSearchResults && 
+            !target.closest('#userSearch') && 
+            !target.closest('#userSearchResults')) {
+            this.elements.userSearchResults.style.display = 'none';
+        }
+        
+        // Deactivate chat if clicking outside chat area
+        if (this.currentChatId && 
+            !target.closest('.chat-row') && 
+            !target.closest('.chatRow') &&
+            !target.closest('#messageBox') &&
+            !target.closest('#messageInput') &&
+            !target.closest('#sendBtn') &&
+            !target.closest('#chatHeader') &&
+            // !target.closest('.chat-container') && // Adjust based on your HTML structure
+            !target.closest('#userSearchResultsChat')) {
+            
+            this.deactivateChat();
+        }
+    });
+
+
     }
 
      setupSocketHandlers(): void {
@@ -352,7 +387,7 @@ class Chat {
 
                     // Add click event listener
                     chatRow.addEventListener('click', async () => {
-                        await this.selectChatFromList(chat_id);
+                        await this.selectChatFromList(chat_id, user);
                     });
 
                     fragment.appendChild(chatRow);
@@ -373,12 +408,12 @@ class Chat {
     /**
      * Select chat from the chat list (combining both approaches)
      */
-     async selectChatFromList(chatId: number): Promise<void> {
+     async selectChatFromList(chatId: number, user: any): Promise<void> {
         try {
             // Join the room
             console.log(`Joining chat room from selectChatFromList: ${chatId}`);
+            this.currentChatWithUsername = user.username || null; // Store current username for later use
             await this.joinRoom(chatId);
-            
             // Mark notifications as read for the current chat
             if (this.mailboxNotificationCount > 0 && this.elements.mailboxBtn) {
             const res = await api.fetchWithAutoRefresh(
@@ -409,7 +444,7 @@ class Chat {
 
      async selectChat(chatId: number): Promise<void> {
         // Use the improved selectChatFromList method
-        await this.selectChatFromList(chatId);
+        await this.selectChatFromList(chatId, null);
     }
 
      async joinRoom(chatId: number): Promise<void> {
@@ -435,7 +470,9 @@ class Chat {
         if (activeRow) {
             activeRow.classList.add('active');
         }
-
+        if (this.elements.chatHeader) {
+            this.elements.chatHeader.textContent = `Chat Active with ${this.currentChatWithUsername || 'Unknown User'}`;
+            }
         // Clear and load messages
         // this.clearMessages();
         console.log(`Joining chat room: ${chatId}`);
@@ -447,17 +484,18 @@ class Chat {
         }else {
             console.error('Invalid chatId:', chatId);
         }
-        // Update header
-        if (this.elements.chatHeader) {
-            this.elements.chatHeader.textContent = 'Chat Active';
-        }
+        
+    
 
         try {
             console.log(`Loading messages from join room function`);
             const messages = await api.getChatMessages(chatId.toString());
            
             messages.forEach((message: any) => this.appendMessage(message));
-            
+            // Update header
+                if (this.elements.chatHeader) {
+                    this.elements.chatHeader.textContent =`Chat Active with ${this.currentChatWithUsername  || 'Unknown User'}`;
+                }
             if ( this.mailboxNotificationCount > 0){
                 // Mark messages as read
                 await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
@@ -478,7 +516,35 @@ class Chat {
         }
     
     
-
+        private deactivateChat(): void {
+            // Clear current chat state
+            this.currentChatId = null;
+            
+            // Remove active class from all chat rows
+            document.querySelectorAll('.chat-row, .chatRow').forEach(row => {
+                row.classList.remove('active');
+            });
+            
+            // Clear messages
+            this.clearMessages();
+            
+            // Update header
+            if (this.elements.chatHeader) {
+                this.elements.chatHeader.textContent = 'Select a chat';
+            }
+            
+            // Leave socket room
+            if (this.socketService && this.currentChatId) {
+                this.socketService.emit('leaveRoom', this.currentChatId);
+            }
+            
+            // Update URL to remove chatId
+            const url = new URL(window.location.href);
+            url.searchParams.delete('chatId');
+            window.history.pushState({}, '', url);
+            
+            console.log('Chat deactivated');
+    }
      async sendMessage(): Promise<void> {
         if (!this.elements.messageInput || !this.currentChatId) return;
 
@@ -515,11 +581,11 @@ class Chat {
         this.elements.messageBox.scrollTop = this.elements.messageBox.scrollHeight;
     }
 
-     clearMessages(): void {
+    clearMessages(): void {
         if (this.elements.messageBox) {
             this.elements.messageBox.innerHTML = '';
+            console.log('Messages cleared');
         }
-        
     }
 
     // ===== FRIEND FUNCTIONALITY =====
@@ -580,30 +646,30 @@ class Chat {
         this.elements.userSearchResults.style.display = 'block';
     }
 
-     renderChatSearchResults(users: any[]): void {
-        if (!this.elements.userSearchResultsChat) {
-            console.error('userSearchResultsChat element not found!');
-            return;
-        } 
+    //  renderChatSearchResults(users: any[]): void {
+    //     if (!this.elements.userSearchResultsChat) {
+    //         console.error('userSearchResultsChat element not found!');
+    //         return;
+    //     } 
 
-        this.elements.userSearchResultsChat.innerHTML = '';
+    //     this.elements.userSearchResultsChat.innerHTML = '';
 
-        if (users.length === 0) {
-            this.elements.userSearchResultsChat.style.display = 'none';
-            return;
-        }
+    //     if (users.length === 0) {
+    //         this.elements.userSearchResultsChat.style.display = 'none';
+    //         return;
+    //     }
         
-        this.elements.userSearchResultsChat.style.display = 'block';
-        users.forEach(user => {
-            const div = document.createElement('div');
-            div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
-            div.textContent = user.username || 'Unknown User';
-            div.addEventListener('click', () => this.startChatWithUser(user));
-            this.elements.userSearchResultsChat!.appendChild(div);
-        });
+    //     this.elements.userSearchResultsChat.style.display = 'block';
+    //     users.forEach(user => {
+    //         const div = document.createElement('div');
+    //         div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
+    //         div.textContent = user.username || 'Unknown User';
+    //         div.addEventListener('click', () => this.startChatWithUser(user));
+    //         this.elements.userSearchResultsChat!.appendChild(div);
+    //     });
 
-        this.elements.userSearchResultsChat.style.display = 'block';
-    }
+    //     this.elements.userSearchResultsChat.style.display = 'block';
+    // }
 
      async sendFriendRequest(userId: string): Promise<void> {
         try {
@@ -627,6 +693,116 @@ class Chat {
             components.showToast('error', 'Request Failed', 'An error occurred while sending the request', 3000);
         }
     }
+
+    renderChatSearchResults(users: any[]): void {
+    if (!this.elements.userSearchResultsChat) {
+        console.error('userSearchResultsChat element not found!');
+        return;
+    } 
+
+    this.elements.userSearchResultsChat.innerHTML = '';
+
+    if (users.length === 0) {
+        this.elements.userSearchResultsChat.style.display = 'none';
+        return;
+    }
+    
+    this.elements.userSearchResultsChat.style.display = 'block';
+    users.forEach(user => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
+        div.textContent = user.username || 'Unknown User';
+        
+        // MODIFIED: Create chat when clicking on user
+        div.addEventListener('click', async () => {
+            try {
+                // Hide search results immediately
+                this.elements.userSearchResultsChat!.style.display = 'none';
+                if (this.elements.userSearchInput) {
+                    this.elements.userSearchInput.value = '';
+                }
+                
+                components.showToast('info', 'Creating Chat', `Creating chat with ${user.username}...`, 2000);
+                
+                // Check if chat already exists
+                let chatId;
+                const existingChatRes = await api.fetchWithAutoRefresh(
+                    `${this.baseURL}/chats/between/${user.id}`,
+                    { credentials: 'include' }
+                );
+                
+                if (existingChatRes.ok) {
+                    // Chat exists, get the chat ID
+                    const existingChat = await existingChatRes.json();
+                    chatId = existingChat.chat_id;
+                    components.showToast('success', 'Chat Found', `Opening existing chat with ${user.username}`, 2000);
+                } else if (existingChatRes.status === 404) {
+                    // Chat doesn't exist, create new one
+                    const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ 
+                            user2Id: user.id,
+                            // Try alternative field names if the above doesn't work
+                            otherUserId: user.id,
+                            participantId: user.id
+                        })
+                    });
+                    
+                    if (!createChatRes.ok) {
+                        throw new Error(`Failed to create chat: ${createChatRes.status}`);
+                    }
+                    
+                    const newChat = await createChatRes.json();
+                    chatId = newChat.chat_id || newChat.id;
+                    
+                    components.showToast('success', 'Chat Created', `New chat created with ${user.username}`, 2000);
+                    
+                    // Reload chats to show the new chat in the list
+                    await this.loadChats();
+                } else {
+                    throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
+                }
+                
+                // Join the chat room
+                if (chatId) {
+                    await this.joinRoom(chatId);
+                } else {
+                    throw new Error('No chat ID received');
+                }
+
+                                // CRITICAL: Always reload chats to ensure the chat row appears
+                console.log('Reloading chats to show new/existing chat row...');
+                await this.loadChats();
+                this.currentChatWithUsername = user.username;
+                // Wait a moment for the DOM to update, then join the chat
+                setTimeout(async () => {
+
+                    if (chatId) {
+                          // Store current username for later use
+                        console.log(`Joining chat room ${chatId} after creating chat row`);
+                        await this.joinRoom(chatId);
+                        
+                        // Scroll to the active chat row if needed
+                        const activeRow = document.querySelector(`[data-chat-id="${chatId}"]`);
+                        if (activeRow) {
+                            activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        
+                        components.showToast('success', 'Chat Ready', `Chat with ${user.username} is now active!`, 2000);
+                    }
+                }, 200);
+                
+            } catch (error) {
+                console.error('Error creating/opening chat:', error);
+                components.showToast('error', 'Chat Error', `Failed to create chat with ${user.username}`, 3000);
+            }
+        });
+        
+        this.elements.userSearchResultsChat!.appendChild(div);
+    });
+}
 
      async loadFriendData(): Promise<void> {
         try {
@@ -799,10 +975,23 @@ class Chat {
             
             // First, check if a chat already exists between users using your backend route
             const existingChat = await this.checkExistingChatWithFriend(friendId);
-            
+                 let user;
+            try {
+                const userRes = await api.fetchWithAutoRefresh(`${this.baseURL}/users/${friendId}`);
+                if (userRes.ok) {
+                    user = await userRes.json();
+                } else {
+                    throw new Error(`Failed to get user info: ${userRes.status}`);
+                }
+            } catch (error) {
+                console.error('Error getting user info:', error);
+                // Fallback user object if API call fails
+                user = { id: friendId, username: 'Unknown User' };
+            }
             if (existingChat && existingChat.chat_id) {
                 // If chat exists, join it directly
-                await this.selectChatFromList(existingChat.chat_id);
+                
+                await this.selectChatFromList(existingChat.chat_id, user);
                 components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
                 return;
             }
@@ -817,7 +1006,7 @@ class Chat {
                 await this.loadChats();
                 
                 // Join the new chat
-                await this.selectChatFromList(chatId);
+                await this.selectChatFromList(chatId , user);
                 
                 components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
             } else {
