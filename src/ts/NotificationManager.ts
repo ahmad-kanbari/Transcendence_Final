@@ -4,6 +4,7 @@ import utils from './utils';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
 import chat from './chat';
+import pages from './pages';
 // import notificationManager from './NotificationManager';
 
 // Declare socket.io global
@@ -96,7 +97,6 @@ class NotificationManager {
                 if (this.elements.messageNotifications) {
                     this.elements.messageNotifications.style.display = 'none';
                 }
-
                 if (!visible) {
                     try {
                         // Mark notifications as opened
@@ -121,7 +121,7 @@ class NotificationManager {
                     const limit = 5;
                     const notifications = await api.getNotifications('others', page, limit);
                     if (this.elements.generalNotifications) {
-                        this.renderNotificationList(this.elements.generalNotifications, notifications);
+                        this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
                     }
                 } catch (error) {
                     console.error('Error loading notifications:', error);
@@ -151,7 +151,7 @@ class NotificationManager {
                     const limit = 5;
                     const notifications = await api.getNotifications('messages', page, limit);
                     if (this.elements.messageNotifications) {
-                        this.renderNotificationList(this.elements.messageNotifications, notifications);
+                        this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
                     }
                 } catch (error) {
                     console.error('Error loading message notifications:', error);
@@ -161,29 +161,191 @@ class NotificationManager {
     }
 
 
-    private renderNotificationList(container: HTMLElement, notifications: any[]): void {
-        container.innerHTML = '';
+    // private renderNotificationList(container: HTMLElement, notifications: any[], type : "messages" | "others"): void {
+    //     container.innerHTML = '';
     
-        if (notifications.length === 0) {
-            container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
+    //     if (notifications.length === 0) {
+    //         container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
+    //         return;
+    //     }
+    //     // console.log('Rendering notifications:', notifications, "HtmlElement:", container);
+    //     notifications.forEach((notification: any) => {
+    //         const div = document.createElement('div');
+    //         div.className = 'notification';
+    //         div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer;';
+            
+    //         const time = new Date(notification.created_at).toLocaleString();
+    //         div.innerHTML = `
+    //             <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
+    //             <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
+    //             <div style="font-size: 11px; color: #999;">${time}</div>
+    //         `;
+    //         div.addEventListener('click', async () => {
+                
+    //         });
+            
+    //         container.appendChild(div);
+    //     });
+    // }
+
+    private renderNotificationList(container: HTMLElement, notifications: any[], type: "messages" | "others"): void {
+    container.innerHTML = '';
+    
+    if (notifications.length === 0) {
+        container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
+        return;
+    }
+    
+    notifications.forEach((notification: any) => {
+        const div = document.createElement('div');
+        div.className = 'notification';
+        div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer; transition: background-color 0.2s;';
+        
+        // Add hover effect
+        div.addEventListener('mouseenter', () => {
+            div.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+        });
+        div.addEventListener('mouseleave', () => {
+            div.style.backgroundColor = 'transparent';
+        });
+        
+        const time = new Date(notification.created_at).toLocaleString();
+        div.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
+            <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
+            <div style="font-size: 11px; color: #999;">${time}</div>
+        `;
+        
+        // Handle click based on notification type
+        div.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                if (type === 'messages') {
+                    // For message notifications, open the specific chat
+                    await this.handleMessageNotificationClick(notification);
+                } else {
+                    // For other notifications, navigate to chat page
+                    await this.handleGeneralNotificationClick(notification);
+                }
+                
+                // Hide the notification dropdown after clicking
+                if (this.elements.generalNotifications) {
+                    this.elements.generalNotifications.style.display = 'none';
+                }
+                if (this.elements.messageNotifications) {
+                    this.elements.messageNotifications.style.display = 'none';
+                }
+                
+            } catch (error) {
+                console.error('Error handling notification click:', error);
+            }
+        });
+        
+        container.appendChild(div);
+    });
+}
+
+private async handleMessageNotificationClick(notification: any): Promise<void> {
+    try {
+      
+        // Get the sender ID from the notification
+        const senderId = notification.sender_id || notification.from_user_id;
+        
+        if (!senderId) {
+            console.error('No sender ID found in message notification:', notification);
             return;
         }
-        // console.log('Rendering notifications:', notifications, "HtmlElement:", container);
-        notifications.forEach((notification: any) => {
-            const div = document.createElement('div');
-            div.className = 'notification';
-            div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer;';
+        
+        // Check if there's an existing chat with this sender
+        const existingChatRes = await api.fetchWithAutoRefresh(
+            `${this.baseURL}/chats/between/${senderId}`,
+            { credentials: 'include' }
+        );
+        
+        if (existingChatRes.ok) {
+            const chatData = await existingChatRes.json();
+            const chatId = chatData.chat_id;
             
-            const time = new Date(notification.created_at).toLocaleString();
-            div.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
-                <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
-                <div style="font-size: 11px; color: #999;">${time}</div>
-            `;
+            // Navigate to chat page if not already there
+            if (window.location.pathname !== '/chat') {
+                window.location.href = `/chat?chatId=${chatId}`;
+                return;
+            }
             
-            container.appendChild(div);
-        });
+            // If already on chat page, load chats and join the specific chat
+            await chat.loadChats();
+            await chat.forceJoinRoom(chatId);
+            
+            // Mark this specific chat's messages as read
+            try {
+                await api.fetchWithAutoRefresh(
+                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+                    {
+                        method: 'PATCH',
+                        credentials: 'include',
+                    }
+                );
+                
+                // Update mailbox notification count
+                this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+                this.updateMailboxNotificationCount();
+                
+            } catch (error) {
+                console.error('Error marking messages as read:', error);
+            }
+            
+            components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
+            
+        } else {
+            console.error('Chat not found for sender:', senderId);
+            components.showToast('error', 'Chat Error', 'Could not find chat with this user', 3000);
+        }
+        
+    } catch (error) {
+        console.error('Error handling message notification:', error);
+        components.showToast('error', 'Error', 'Failed to open chat', 3000);
     }
+}
+
+private async handleGeneralNotificationClick(notification: any): Promise<void> {
+    try {
+        // Navigate to chat page if not already there
+        if (window.location.pathname !== '/chat') {
+        
+            pages.showPage('chat');
+            return;
+        }
+        
+        // If already on chat page, just show a toast
+        components.showToast('info', 'Notification', 'You are already on the chat page', 2000);
+        
+        // Mark the notification as read if it has an ID
+        if (notification.id) {
+            try {
+                await api.fetchWithAutoRefresh(
+                    `${this.baseURL}/notifications/${notification.id}/read`,
+                    {
+                        method: 'PATCH',
+                        credentials: 'include',
+                    }
+                );
+                
+                // Update bell notification count
+                this.notificationCount = Math.max(0, this.notificationCount - 1);
+                if (this.elements.bellBtn) {
+                    this.elements.bellBtn.setAttribute('data-count', this.notificationCount.toString());
+                }
+                
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error handling general notification:', error);
+    }
+}
 
         private setupSocketHandlers(): void {
         if (!this.socketService) return;
@@ -201,9 +363,9 @@ class NotificationManager {
         // Handle message notifications
         this.socketService.on('messageReceivedInform', async (data: any) => {
             // Only show toast if not in the current chat
-            // if (!this.currentChatId || this.currentChatId.toString() !== data.chatId?.toString()) {
+            if (!chat.currentChatId || chat.currentChatId.toString() !== data.chatId?.toString()) {
                 toastManager.addToQueue(data.username, data.message);
-            // }
+            }
 
             // Update mailbox notification count for message notifications
             try {
@@ -220,7 +382,7 @@ class NotificationManager {
                 }
                 
                 if (this.elements.messageNotifications) {
-                    this.renderNotificationList(this.elements.messageNotifications, notifications);
+                    this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
                 }
             } catch (error) {
                 console.error('Error updating message notifications:', error);
