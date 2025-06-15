@@ -392,7 +392,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
     }
   }
   
-  init2FA(): void {
+init2FA(): void {
     const modal = document.getElementById('twoFAModal');
     const enableBtn = document.getElementById('enableTwoFABtn');
     const disableBtn = document.getElementById('disableTwoFABtn');
@@ -403,10 +403,6 @@ saveProfilePictureToLocalStorage(base64String: string): void {
       enableBtn.addEventListener('click', (event: MouseEvent) => {
         event.preventDefault();
         event.stopPropagation();
-        
-        const parentForm = enableBtn.closest('form');
-        if (parentForm) 
-          parentForm.onsubmit = (e: Event) => e.preventDefault();
         
         if (modal) {
           const qrSection = document.getElementById('qrCodeSection');
@@ -430,16 +426,19 @@ saveProfilePictureToLocalStorage(base64String: string): void {
         event.preventDefault();
         event.stopPropagation();
         
-        const parentForm = disableBtn.closest('form');
-        if (parentForm) 
-          parentForm.onsubmit = (e: Event) => e.preventDefault();
-        
         if (modal) {
           const qrSection = document.getElementById('qrCodeSection');
           if (qrSection) {
             qrSection.classList.add('hidden');
             qrSection.style.display = 'none';
           }
+          
+          // Update modal for disable flow
+          const modalTitle = modal.querySelector('.two-fa-title');
+          if (modalTitle) modalTitle.textContent = 'Disable Two-Factor Authentication';
+          
+          const buttonText = modal.querySelector('[data-button-text]');
+          if (buttonText) buttonText.textContent = 'Disable 2FA';
           
           modal.classList.remove('hidden');
           modal.style.display = 'flex';
@@ -452,7 +451,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
     if (form) {
       form.addEventListener('submit', (e: Event) => {
         e.preventDefault();
-        e.stopPropagation();
+        
         if (enableBtn && !enableBtn.classList.contains('hidden') && enableBtn.style.display !== 'none') 
           this.verify2FACode();
         else 
@@ -465,6 +464,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
         if (modal) {
           modal.classList.add('hidden');
           modal.style.display = 'none';
+          this.resetModalState();
         }
       });
     }
@@ -474,21 +474,39 @@ saveProfilePictureToLocalStorage(base64String: string): void {
         if (e.target === modal) {
           modal.classList.add('hidden');
           modal.style.display = 'none';
+          this.resetModalState();
         }
       });
     }
   }
+
+  resetModalState(): void {
+    const modal = document.getElementById('twoFAModal');
+    if (!modal) return;
+
+    const modalTitle = modal.querySelector('.two-fa-title');
+    if (modalTitle) modalTitle.textContent = 'Two-Factor Authentication';
+
+    const buttonText = modal.querySelector('[data-button-text]');
+    if (buttonText) buttonText.textContent = 'Verify';
+
+    const codeInput = document.getElementById('twoFACode') as HTMLInputElement;
+    if (codeInput) codeInput.value = '';
+
+    const errorElement = document.getElementById('twofa-error');
+    if (errorElement) {
+      errorElement.classList.add('hidden');
+      errorElement.style.display = 'none';
+    }
+  }
   
-  async setup2FA(): Promise<void> {
+ async setup2FA(): Promise<void> {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
     const secretKeyElement = document.getElementById('secretKey');
     const errorElement = document.getElementById('twofa-error');
     
     if (!qrCodeContainer || !secretKeyElement) {
-      console.error('setup2FA: Required elements not found', { 
-        qrCodeContainer: !!qrCodeContainer, 
-        secretKeyElement: !!secretKeyElement 
-      });
+      console.error('setup2FA: Required elements not found');
       return;
     }
     
@@ -514,19 +532,21 @@ saveProfilePictureToLocalStorage(base64String: string): void {
 
       const data = await response.json();
       
-      if (!data || !data.qrCode || !data.secret) {
+      if (!data || !data.qrCode) {
         throw new Error(data.error || 'Failed to set up 2FA');
       }
       
       const qrImg = document.createElement('img');
       qrImg.src = data.qrCode;
       qrImg.alt = 'QR Code for 2FA';
-      qrImg.className = 'qr-code max-w-full';
+      qrImg.className = 'max-w-full';
       
       qrCodeContainer.innerHTML = '';
       qrCodeContainer.appendChild(qrImg);
       
-      secretKeyElement.textContent = data.secret;
+      if (data.secret) {
+        secretKeyElement.textContent = data.secret;
+      }
     } catch (error: any) {
       qrCodeContainer.innerHTML = '<div class="text-cyber-pink">Failed to load QR code</div>';
       secretKeyElement.textContent = 'Error loading secret key';
@@ -638,7 +658,9 @@ saveProfilePictureToLocalStorage(base64String: string): void {
     try {
       const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/disable`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({ token: code }),
       });
 
       if (!response.ok) {
@@ -665,7 +687,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
           modal.style.display = 'none';
         }
 
-        // Reload profile to update UI
+        this.resetModalState();
         this.loadProfileData();
       } else {
         if (errorElement) {
