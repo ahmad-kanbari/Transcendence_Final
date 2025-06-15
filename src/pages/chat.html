@@ -5,11 +5,98 @@
     <!-- Floating Particles -->
     <div class="particles" id="particles"></div>
 
+    <!-- Friend Action Popup (Hidden by default) -->
+    <div id="friendSearchPopupOverlay" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        backdrop-filter: blur(5px);
+    ">
+        <div id="friendSearchPopup" style="
+            background: #1a1a1a;
+            border: 2px solid var(--cyber-blue, #00f);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 255, 255, 0.3);
+            animation: popupSlideIn 0.3s ease-out;
+        ">
+            <button id="friendSearchPopupCloseBtn" style="
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #999;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            ">&times;</button>
+            
+            <h3 style="
+                color: var(--cyber-blue, #00f);
+                margin-bottom: 10px;
+                font-size: 24px;
+            ">User Actions</h3>
+            
+            <p style="color: #ccc; margin-bottom: 30px;">
+                What would you like to do with 
+                <strong id="friendSearchPopupUsername" style="color: var(--cyber-green, #0f0);"></strong>?
+            </p>
+            
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="friendSearchPopupAddBtn" style="
+                    background: linear-gradient(45deg, var(--cyber-green, #0f0), #00ff88);
+                    color: #000;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    flex: 1;
+                    max-width: 120px;
+                ">Add Friend</button>
+                
+                <button id="friendSearchPopupBlockBtn" style="
+                    background: linear-gradient(45deg, #ff0040, #ff4444);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    flex: 1;
+                    max-width: 120px;
+                ">Block User</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Dashboard Stats View -->
     <div class="dashboard-view" id="dashboardView">
         <button class="close-dashboard" id="closeDashboard">&times;</button>
         <h2 style="font-family: 'Orbitron', sans-serif; color: var(--cyber-blue); text-align: center; margin-bottom: 30px; font-size: 2rem; text-transform: uppercase; letter-spacing: 2px;">Dashboard Overview</h2>
-        
+                
         <div class="dashboard-stats">
             <div class="stat-card">
                 <h3>Total Friends</h3>
@@ -60,6 +147,30 @@
                 <h3>Friends</h3>
                 <ul id="friendsList" role="list" aria-label="Friends list"></ul>
             </div>
+
+            <!-- NEW: Blocked Users Section -->
+            <div class="section">
+                <h3 style="display: flex; align-items: center; gap: 10px;">
+                    Blocked Users 
+                    <span class="badge blocked-badge" id="blockedUsersBadge" style="
+                        display: none; 
+                        background: #ff4444; 
+                        color: white; 
+                        padding: 2px 8px; 
+                        border-radius: 10px; 
+                        font-size: 12px;
+                        min-width: 20px;
+                        text-align: center;
+                    ">0</span>
+                </h3>
+                <ul id="blockedUsersList" role="list" aria-label="Blocked users list" style="
+                    max-height: 200px;
+                    overflow-y: auto;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                "></ul>
+            </div>
         </div>
 
         <!-- Main Chat Area -->
@@ -71,12 +182,9 @@
                     <button class="dashboard-toggle" id="showDashboard">
                         <i class="bi bi-graph-up"></i> Dashboard
                     </button>
-                   
                 </div>
             </div>
-
-   
-
+                  
             <!-- Chat Container -->
             <div class="chat-container">
                 <!-- Chat List -->
@@ -122,4 +230,79 @@
 
     <!-- Toast Container -->
     <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <style>
+        /* Popup Animation */
+        @keyframes popupSlideIn {
+            from {
+                transform: scale(0.7) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Button Hover Effects */
+        #friendSearchPopupAddBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+        
+        #friendSearchPopupBlockBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 64, 0.4);
+        }
+        
+        #friendSearchPopupCloseBtn:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        /* Blocked Users List Styling */
+        #blockedUsersList li {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 68, 68, 0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #blockedUsersList li:hover {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        #blockedUsersList .unblock-btn {
+            padding: 4px 12px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        #blockedUsersList .unblock-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        /* User info styling in blocked list */
+        .blocked-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blocked-user-icon {
+            color: #ff4444;
+            font-size: 16px;
+        }
+    </style>
 </div>

@@ -40,6 +40,18 @@ interface ChatElements {
     activeChats: HTMLElement | null;
     messagesToday: HTMLElement | null;
     onlineFriends: HTMLElement | null;
+
+    // Friend search popup elements
+    friendSearchPopup: HTMLElement | null;
+    friendSearchPopupOverlay: HTMLElement | null;
+    friendSearchPopupUsername: HTMLElement | null;
+    friendSearchPopupAddBtn: HTMLElement | null;
+    friendSearchPopupBlockBtn: HTMLElement | null;
+    friendSearchPopupCloseBtn: HTMLElement | null;
+
+    // Blocked users elements
+    blockedUsersList: HTMLElement | null;
+    blockedUsersBadge: HTMLElement | null;
 }
 
 class Chat {
@@ -55,6 +67,11 @@ class Chat {
      chatReloadTimeout: any = null;
      currentChatWithUsername: string | null = null;
 
+    // Blocked users management
+    blockedUsersCache: Set<string> = new Set();
+    blockedUsersList: any[] = [];
+    currentPopupUser: any = null;
+     
     constructor() {
         // Initialize socket connection
         if (typeof io !== 'undefined') {
@@ -94,19 +111,12 @@ class Chat {
      setupBaseSocketHandlers(): void {
         if (!this.socketService) return;
 
-
-
-          // ADD THIS: Remove existing listeners first
-        // this.socketService.off('newMessage');
-        // this.socketService.off('friendRequestInform');
-        // this.socketService.off('friendRequestAccept');
-
-
         this.socketService.on('connect', () => {
             console.log('Chat socket connected');
             if (this.elements.chatRows) {
                 this.loadChats();
                 this.loadFriendData();
+                this.loadBlockedUsers(); 
                 this.handleURLChatId();
             }
         });
@@ -128,10 +138,13 @@ class Chat {
         setTimeout(() => {
             this.getElements();
             this.setupEventListeners();
+            this.createBlockedUsersSection(); // Create section first
             this.setupSocketHandlers();
+            this.setupPopupEventListeners(); // FIXED: Setup popup listeners
             this.initializeParticles();
             this.loadChats();
             this.loadFriendData();
+             this.loadBlockedUsers(); 
             this.updateDashboardStats();
         }, 100);
     }
@@ -170,6 +183,18 @@ class Chat {
             activeChats: document.getElementById('activeChats'),
             messagesToday: document.getElementById('messagesToday'),
             onlineFriends: document.getElementById('onlineFriends'),
+
+            // Try to get popup elements from HTML first, fallback to creation
+            friendSearchPopup: document.getElementById('friendSearchPopup'),
+            friendSearchPopupOverlay: document.getElementById('friendSearchPopupOverlay'),
+            friendSearchPopupUsername: document.getElementById('friendSearchPopupUsername'),
+            friendSearchPopupAddBtn: document.getElementById('friendSearchPopupAddBtn'),
+            friendSearchPopupBlockBtn: document.getElementById('friendSearchPopupBlockBtn'),
+            friendSearchPopupCloseBtn: document.getElementById('friendSearchPopupCloseBtn'),
+
+            // Blocked users elements
+            blockedUsersList: document.getElementById('blockedUsersList'),
+            blockedUsersBadge: document.getElementById('blockedUsersBadge'),
         };
     }
 
@@ -267,35 +292,6 @@ class Chat {
             this.messagesCount++;
             this.updateDashboardStats();
         });
-
-        // Handle message notifications
-        // this.socketService.on('messageReceivedInform', async (data: any) => {
-        //     // Only show toast if not in the current chat
-        //     if (!this.currentChatId || this.currentChatId.toString() !== data.chatId?.toString()) {
-        //         toastManager.addToQueue(data.username, data.message);
-        //     }
-
-        //     // Update mailbox notification count for message notifications
-        //     try {
-        //         const page = 1;
-        //         const limit = 50;
-        //         const notifications = await api.getNotifications('messages', page, limit);
-        //         const uniqueSenders = new Set(
-        //             notifications.filter((n: any) => !n.is_read).map((n: any) => n.sender_id)
-        //         );
-                
-        //         this.mailboxNotificationCount = uniqueSenders.size;
-        //         if (this.elements.mailboxBtn) {
-        //             this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
-        //         }
-                
-        //         if (this.elements.messageNotifications) {
-        //             // this.renderNotificationList(this.elements.messageNotifications, notifications);
-        //         }
-        //     } catch (error) {
-        //         console.error('Error updating message notifications:', error);
-        //     }
-        // });
 
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
@@ -551,6 +547,17 @@ class Chat {
         const content = this.elements.messageInput.value.trim();
         if (!content) return;
 
+        // Check if trying to send message to blocked user
+        if (this.currentChatWithUsername) {
+            const blockedUser = this.blockedUsersList.find(user => 
+                user.username === this.currentChatWithUsername
+            );
+            
+            if (blockedUser) {
+                components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
+                return;
+            }
+        }
         try {
             const result = await api.sendMessage(this.currentChatId.toString(), content);
             
@@ -639,37 +646,33 @@ class Chat {
             const li = document.createElement('li');
             li.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
             li.textContent = user.username;
-            li.addEventListener('click', () => this.sendFriendRequest(user.id));
+            // Add hover effect
+            li.addEventListener('mouseenter', () => {
+                li.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            });
+            li.addEventListener('mouseleave', () => {
+                li.style.backgroundColor = 'transparent';
+            });
+
+            // li.addEventListener('click', () => this.sendFriendRequest(user.id));
+                       // FIXED: Use showPopup instead of showFriendActionPopup
+            li.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.showPopup(user);
+                // Hide search results
+                this.elements.userSearchResults!.style.display = 'none';
+                if (this.elements.userSearch) {
+                    this.elements.userSearch.value = '';
+                }
+            });
             this.elements.userSearchResults!.appendChild(li);
         });
 
         this.elements.userSearchResults.style.display = 'block';
     }
 
-    //  renderChatSearchResults(users: any[]): void {
-    //     if (!this.elements.userSearchResultsChat) {
-    //         console.error('userSearchResultsChat element not found!');
-    //         return;
-    //     } 
 
-    //     this.elements.userSearchResultsChat.innerHTML = '';
-
-    //     if (users.length === 0) {
-    //         this.elements.userSearchResultsChat.style.display = 'none';
-    //         return;
-    //     }
-        
-    //     this.elements.userSearchResultsChat.style.display = 'block';
-    //     users.forEach(user => {
-    //         const div = document.createElement('div');
-    //         div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
-    //         div.textContent = user.username || 'Unknown User';
-    //         div.addEventListener('click', () => this.startChatWithUser(user));
-    //         this.elements.userSearchResultsChat!.appendChild(div);
-    //     });
-
-    //     this.elements.userSearchResultsChat.style.display = 'block';
-    // }
 
      async sendFriendRequest(userId: string): Promise<void> {
         try {
@@ -1274,6 +1277,315 @@ class Chat {
         await this.joinRoom(chatId);
     }
 
+
+     // ===== BLOCKED USERS SECTION CREATION =====
+      private createBlockedUsersSection(): void {
+        // Only create if elements don't exist
+        if (this.elements.blockedUsersList && this.elements.blockedUsersBadge) {
+            console.log('Blocked users section already exists in HTML');
+            return;
+        }
+
+        const friendsSidebar = document.querySelector('.sidebar.friends-sidebar') || document.querySelector('.sidebar');
+        if (!friendsSidebar) {
+            console.error('Friends sidebar not found, cannot create blocked users section');
+            return;
+        }
+
+        const blockedSection = document.createElement('div');
+        blockedSection.className = 'section blocked-users-section';
+        blockedSection.innerHTML = `
+            <h3 style="display: flex; align-items: center; gap: 10px;">
+                Blocked Users 
+                <span class="badge blocked-badge" id="blockedUsersBadge" style="display: none; background: #ff4444;">0</span>
+            </h3>
+            <ul id="blockedUsersList" role="list" aria-label="Blocked users list" class="blocked-list" style="
+                max-height: 200px;
+                overflow-y: auto;
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            "></ul>
+        `;
+
+        friendsSidebar.appendChild(blockedSection);
+
+        // Update element references
+        this.elements.blockedUsersList = document.getElementById('blockedUsersList');
+        this.elements.blockedUsersBadge = document.getElementById('blockedUsersBadge');
+
+        console.log('Blocked users section created successfully');
+    }
+
+
+    // ===== POPUP FUNCTIONALITY =====
+
+    private createFriendActionPopup(): void {
+        // Only create if popup doesn't exist in HTML
+        if (document.getElementById('friendSearchPopupOverlay')) {
+            console.log('Popup already exists in HTML');
+            return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'friendSearchPopupOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        `;
+
+        const popup = document.createElement('div');
+        popup.id = 'friendSearchPopup';
+        popup.style.cssText = `
+            background: #1a1a1a;
+            border: 2px solid var(--cyber-blue, #00f);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 255, 255, 0.3);
+            animation: popupSlideIn 0.3s ease-out;
+        `;
+
+        popup.innerHTML = `
+            <button id="friendSearchPopupCloseBtn" style="
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                background: none;
+                border: none;
+                color: #999;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">&times;</button>
+            
+            <h3 style="
+                color: var(--cyber-blue, #00f);
+                margin-bottom: 10px;
+                font-size: 24px;
+            ">User Actions</h3>
+            
+            <p style="color: #ccc; margin-bottom: 30px;">
+                What would you like to do with 
+                <strong id="friendSearchPopupUsername" style="color: var(--cyber-green, #0f0);"></strong>?
+            </p>
+            
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="friendSearchPopupAddBtn" style="
+                    background: linear-gradient(45deg, var(--cyber-green, #0f0), #00ff88);
+                    color: #000;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    flex: 1;
+                    max-width: 120px;
+                ">Add Friend</button>
+                
+                <button id="friendSearchPopupBlockBtn" style="
+                    background: linear-gradient(45deg, #ff0040, #ff4444);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    flex: 1;
+                    max-width: 120px;
+                ">Block User</button>
+            </div>
+        `;
+
+        // Add CSS animation if not exists
+        if (!document.getElementById('popup-styles')) {
+            const style = document.createElement('style');
+            style.id = 'popup-styles';
+            style.textContent = `
+                @keyframes popupSlideIn {
+                    from {
+                        transform: scale(0.7) translateY(-50px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: scale(1) translateY(0);
+                        opacity: 1;
+                    }
+                }
+                
+                #friendSearchPopupAddBtn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+                }
+                
+                #friendSearchPopupBlockBtn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 15px rgba(255, 0, 64, 0.4);
+                }
+                
+                #friendSearchPopupCloseBtn:hover {
+                    color: #fff;
+                    transform: rotate(90deg);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+
+        // Update element references
+        this.elements.friendSearchPopupOverlay = overlay;
+        this.elements.friendSearchPopup = popup;
+        this.elements.friendSearchPopupUsername = document.getElementById('friendSearchPopupUsername');
+        this.elements.friendSearchPopupAddBtn = document.getElementById('friendSearchPopupAddBtn');
+        this.elements.friendSearchPopupBlockBtn = document.getElementById('friendSearchPopupBlockBtn');
+        this.elements.friendSearchPopupCloseBtn = document.getElementById('friendSearchPopupCloseBtn');
+    }
+
+
+     // FIXED: Proper popup event listeners setup
+    private setupPopupEventListeners(): void {
+        // Ensure popup exists
+        if (!this.elements.friendSearchPopupOverlay) {
+            this.createFriendActionPopup();
+        }
+
+        // Add Friend button
+        if (this.elements.friendSearchPopupAddBtn) {
+            this.elements.friendSearchPopupAddBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent click from bubbling up to overlay
+                e.preventDefault(); // Prevent default button behavior
+                console.log('Add Friend button clicked');
+                if (this.currentPopupUser && !this.isUserBlocked(this.currentPopupUser.id)) {
+                    await this.sendFriendRequest(this.currentPopupUser.id);
+                }
+                this.closePopup();
+            });
+        }
+        
+        // Block/Unblock button
+        if (this.elements.friendSearchPopupBlockBtn) {
+            this.elements.friendSearchPopupBlockBtn.addEventListener('click', async (e) => {
+                if (!this.currentPopupUser) return;
+                e.stopPropagation(); // Prevent click from bubbling up to overlay
+                e.preventDefault(); // Prevent default button behavior
+                const isBlocked = this.isUserBlocked(this.currentPopupUser.id);
+                if (isBlocked) {
+                    console.log('Unblock User button clicked');
+                    await this.handleUnblockUser(this.currentPopupUser);
+                } else {
+                    await this.handleBlockUser(this.currentPopupUser);
+                }
+                this.closePopup();
+            });
+        }
+        
+        // Close button
+        if (this.elements.friendSearchPopupCloseBtn) {
+            this.elements.friendSearchPopupCloseBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent click from bubbling up to overlay
+                e.preventDefault(); // Prevent default button behavior
+                this.closePopup();
+            });
+        }
+        
+        // Click outside to close
+        if (this.elements.friendSearchPopupOverlay) {
+            this.elements.friendSearchPopupOverlay.addEventListener('click', (e) => {
+                if (e.target === this.elements.friendSearchPopupOverlay) {
+                    this.closePopup();
+                }
+            });
+        }
+        
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.elements.friendSearchPopupOverlay?.style.display === 'flex') {
+                this.closePopup();
+            }
+        });
+    }
+
+    //
+    private showPopup(user: any): void {
+        // Ensure popup exists
+        if (!this.elements.friendSearchPopupOverlay) {
+            this.createFriendActionPopup();
+        }
+
+        this.currentPopupUser = user; // FIXED: Set current user
+        
+        // Update username
+        if (this.elements.friendSearchPopupUsername) {
+            this.elements.friendSearchPopupUsername.textContent = user.username;
+        }
+
+        // Update buttons based on block status
+        const isBlocked = this.isUserBlocked(user.id);
+        
+        // Update Add Friend button
+        if (this.elements.friendSearchPopupAddBtn) {
+            if (isBlocked) {
+                (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = true;
+                this.elements.friendSearchPopupAddBtn.style.opacity = '0.5';
+                this.elements.friendSearchPopupAddBtn.style.cursor = 'not-allowed';
+                this.elements.friendSearchPopupAddBtn.textContent = 'User Blocked';
+            } else {
+                (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = false;
+                this.elements.friendSearchPopupAddBtn.style.opacity = '1';
+                this.elements.friendSearchPopupAddBtn.style.cursor = 'pointer';
+                this.elements.friendSearchPopupAddBtn.textContent = 'Add Friend';
+            }
+        }
+
+        // Update Block/Unblock button
+        if (this.elements.friendSearchPopupBlockBtn) {
+            if (isBlocked) {
+                this.elements.friendSearchPopupBlockBtn.textContent = 'Unblock User';
+                this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+            } else {
+                this.elements.friendSearchPopupBlockBtn.textContent = 'Block User';
+                this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #ff0040, #ff4444)';
+            }
+        }
+        
+        // Show popup
+        if (this.elements.friendSearchPopupOverlay) {
+            this.elements.friendSearchPopupOverlay.style.display = 'flex';
+        }
+    }
+
+    private closePopup(): void {
+        if (this.elements.friendSearchPopupOverlay) {
+            this.elements.friendSearchPopupOverlay.style.display = 'none';
+        }
+        this.currentPopupUser = null;
+    }
+
+
+
     // Cleanup method
     destroy(): void {
           // ADD THIS LINE at the start
@@ -1289,6 +1601,143 @@ class Chat {
             this.socketService.disconnect();
         }
     }
+
+
+     // ===== BLOCKED USERS FUNCTIONALITY =====
+
+    private async loadBlockedUsers(): Promise<void> {
+        try {
+            const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks`, {
+                credentials: 'include'
+            });
+            
+            if (result.ok) {
+                this.blockedUsersList = await result.json();
+                
+                // Update cache
+                this.blockedUsersCache.clear();
+                this.blockedUsersList.forEach(user => {
+                    this.blockedUsersCache.add(user.id.toString());
+                });
+                
+                // Update UI
+                this.renderBlockedUsersList();
+                // this.updateBlockedUsersBadge();
+                
+                console.log(`Loaded ${this.blockedUsersList.length} blocked users`);
+            } else {
+                console.error('Failed to load blocked users:', result.status);
+            }
+        } catch (error) {
+            console.error('Error loading blocked users:', error);
+        }
+    }
+
+    private renderBlockedUsersList(): void {
+        if (!this.elements.blockedUsersList) return;
+
+        this.elements.blockedUsersList.innerHTML = '';
+
+        if (this.blockedUsersList.length === 0) {
+            const li = document.createElement('li');
+            li.style.cssText = 'color: #999; padding: 8px; text-align: center; font-style: italic; background: none;';
+            li.textContent = 'No blocked users';
+            this.elements.blockedUsersList.appendChild(li);
+            return;
+        }
+
+        this.blockedUsersList.forEach(user => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="blocked-user-info">
+                    <span class="blocked-user-icon">🚫</span>
+                    <span>${user.username}</span>
+                </div>
+                <button class="unblock-btn" onclick="window.chat.unblockUser('${user.id}')">
+                    Unblock
+                </button>
+            `;
+            this.elements.blockedUsersList!.appendChild(li);
+        });
+    }
+
+
+    private isUserBlocked(userId: string): boolean {
+        return this.blockedUsersCache.has(userId.toString());
+    }
+
+    // ===== BLOCKING/UNBLOCKING ACTIONS =====
+
+    private async handleBlockUser(user: any): Promise<void> {
+        try {
+            const confirmed = confirm(`Are you sure you want to block ${user.username}? This will prevent them from sending you messages or friend requests.`);
+            if (!confirmed) return;
+            
+            components.showToast('info', 'Blocking User', `Blocking ${user.username}...`, 2000);
+            
+            const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    blockRecipientId: user.id // Adjust based on your API requirements
+                })
+            });
+            
+            if (result.ok) {
+                this.blockedUsersCache.add(user.id.toString());
+                console.log(`User blocked successfully: ${user.username}`);
+                components.showToast('success', 'User Blocked', `${user.username} has been blocked successfully!`, 3000);
+                await this.loadBlockedUsers();
+                this.loadFriendData();
+            } else {
+                const errorText = await result.text();
+                components.showToast('error', 'Block Failed', errorText || 'Failed to block user', 3000);
+            }
+        } catch (error) {
+            console.error('Error blocking user:', error);
+            components.showToast('error', 'Block Failed', 'An error occurred while blocking the user', 3000);
+        }
+    }
+
+    private async handleUnblockUser(user: any): Promise<void> {
+        try {
+            const confirmed = confirm(`Are you sure you want to unblock ${user.username}? They will be able to send you messages and friend requests again.`);
+            if (!confirmed) return;
+            
+            components.showToast('info', 'Unblocking User', `Unblocking ${user.username}...`, 2000);
+            console.log(`Unblocking user with ID: ${user.id}`);
+            const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${user.id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            
+            if (result.ok) {
+                this.blockedUsersCache.delete(user.id.toString());
+                components.showToast('success', 'User Unblocked', `${user.username} has been unblocked successfully!`, 3000);
+                await this.loadBlockedUsers();
+                this.loadFriendData();
+            } else {
+                const errorText = await result.text();
+                components.showToast('error', 'Unblock Failed', errorText || 'Failed to unblock user', 3000);
+            }
+        } catch (error) {
+            console.error('Error unblocking user:', error);
+            components.showToast('error', 'Unblock Failed', 'An error occurred while unblocking the user', 3000);
+        }
+    }
+
+    public async unblockUser(userId: string): Promise<void> {
+        const user = this.blockedUsersList.find(u => u.id.toString() === userId);
+        if (user) {
+            await this.handleUnblockUser(user);
+        } else {
+            components.showToast('error', 'User Not Found', 'Blocked user not found', 3000);
+        }
+    }
+
+
+
     
 }
 
