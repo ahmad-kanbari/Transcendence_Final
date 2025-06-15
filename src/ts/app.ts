@@ -20,7 +20,8 @@ import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
 // Define interfaces for state and user
 interface User {
-  profile_image?: string;
+  id?: string;
+  profile_picture?: string;
   username?: string;
   email?: string;
   is_oauth_user?: boolean;
@@ -597,7 +598,7 @@ class App {
   }
 
   getUserImg(): string {
-    return this.state.user?.profile_image || '';
+    return this.state.user?.profile_picture || '';
   }
 
   getUsername(): string {

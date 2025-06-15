@@ -3,7 +3,7 @@ import app from './app';
 import utils from './utils';
 import components from './components';
 import { VALIDATION_INPUTS } from './constants';
-
+import { baseURL } from './constants';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
@@ -15,6 +15,9 @@ interface ProfileForm {
   statsLosses?: HTMLElement | null;
   statsWinRate?: HTMLElement | null;
   statsRank?: HTMLElement | null;
+  profilePictureInput?: HTMLInputElement | null;
+  uploadBtn?: HTMLButtonElement | null;
+  removeBtn?: HTMLButtonElement | null;
 }
 
 // Interface for match entry
@@ -35,11 +38,18 @@ interface Tournament {
 class Profile {
   profileForm: ProfileForm;
   initialized: boolean;
+  socket: any;
+  baseURL: string;
+ 
   
   constructor() {
     this.profileForm = {};
     this.initialized = false;
+    this.baseURL = baseURL;
+
+
   }
+
   
   init(): void {
     if (this.initialized) return;
@@ -49,7 +59,6 @@ class Profile {
       if (customEvent.detail.page === 'profile')
         this.initProfilePage();
     });
-      
     
     this.initialized = true;
   }
@@ -64,16 +73,19 @@ class Profile {
       statsWins: document.getElementById('statsWins'),
       statsLosses: document.getElementById('statsLosses'),
       statsWinRate: document.getElementById('statsWinRate'),
-      statsRank: document.getElementById('statsRank')
+      statsRank: document.getElementById('statsRank'),
+      profilePictureInput: document.getElementById('profilePictureInput') as HTMLInputElement | null,
+      uploadBtn: document.getElementById('uploadBtn') as HTMLButtonElement | null,
+      removeBtn: document.getElementById('removeBtn') as HTMLButtonElement | null
     };
   }
   
   initProfilePage(): void {
     this.profileForm = this.getProfileForm();
     
-    this.populateProfileData();
-    
-    // this.init2FA();
+    this.loadProfileData();
+    this.setupProfilePictureHandlers();
+    this.init2FA();
     
     if (this.profileForm.displayNameField) 
       utils.setupInputField(this.profileForm.displayNameField, 'username', components);
@@ -81,24 +93,78 @@ class Profile {
     if (this.profileForm.emailField) 
       utils.setupInputField(this.profileForm.emailField, 'email', components);
   }
+
+   async loadProfileData(): Promise<void> {
+    try {
+      // Check authentication first
+      const authRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/showUser`);
+      if (!authRes.ok) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Make body visible
+      document.body.style.visibility = 'visible';
+      document.body.style.opacity = '1';
+
+      // Get user ID from URL params or current user
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      
+      let userData;
+      if (userId) {
+        // Loading another user's profile
+        const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
+        if (!userRes.ok) throw new Error('Failed to fetch user data');
+        userData = await userRes.json();
+      } else {
+        // Loading current user's profile
+        userData = await authRes.json();
+        console.log('Current user data in the profile: ', userData.user.user);
+        userData = userData.user.user;
+      }
+
+      this.populateProfileData(userData);
+      
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      components.showToast('error', 'Profile Error', 'Failed to load profile data');
+    }
+  }
   
-  populateProfileData(): void {
-    if (!app.state.user) {
-      console.warn('No user state found, cannot populate profile data');
+  populateProfileData(userData?: any): void {
+    const user = userData || app.state.user;
+    
+    if (!user) {
+      console.warn('No user data found, cannot populate profile data');
       return;
     }
     
     if (this.profileForm.profileUsername)
-      this.profileForm.profileUsername.textContent = app.getUsername() || 'Username';
+      this.profileForm.profileUsername.textContent = user.username || app.getUsername() || 'Username';
     
-    if (this.profileForm.profileAvatar)
-      this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/avatar.svg';
+    if (this.profileForm.profileAvatar) {
+      // First check localStorage for cached profile picture
+      const cachedImage = this.getProfilePictureFromLocalStorage();
+      
+      if (cachedImage) {
+        this.profileForm.profileAvatar.src = cachedImage;
+        console.log('Using cached profile picture from localStorage');
+      } else if (user.profile_picture) {
+        // Use server URL if no cached version
+        this.profileForm.profileAvatar.src = user.profile_picture;
+      } else {
+        // Fallback to default
+        this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/user.png';
+      }
+    }
     
     if (this.profileForm.displayNameField)
-      this.profileForm.displayNameField.value = app.getUsername() || '';
+      this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
     
     if (this.profileForm.emailField)
-      this.profileForm.emailField.value = app.getEmail() || '';
+      console.log('Setting email field value:', app.state.user!.email,'another way : ', app.getEmail());
+      this.profileForm.emailField!.value = app.state.user!.email || app.getEmail() || '';
     
     if (this.profileForm.statsTotalGames)
       this.profileForm.statsTotalGames.textContent = app.getTotalGamesPlayed().toString() || '0';
@@ -115,12 +181,189 @@ class Profile {
     if (this.profileForm.statsRank)
       this.profileForm.statsRank.textContent = app.getRank() || 'Beginner';
     
-    this.update2FAUI();
+    this.update2FAUI(user);
     this.renderMatchHistory();
   }
+
+  setupProfilePictureHandlers(): void {
+    const { uploadBtn, removeBtn, profilePictureInput, profileAvatar } = this.profileForm;
+
+    if (!uploadBtn || !profilePictureInput) return;
+
+    uploadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      profilePictureInput.click();
+    });
+
+    profilePictureInput.addEventListener('change', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        components.showToast('error', 'File Too Large', 'Please select an image smaller than 5MB');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await this.fetchWithAutoRefresh(
+          `${this.baseURL}/users/uploads/profile-picture`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            body: formData,
+          }
+        );
+
+        if (!res.ok) throw new Error('Failed to upload profile picture');
+
+        const data = await res.json();
+        // Convert file to base64 and save to localStorage
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64String = event.target?.result as string;
+          this.saveProfilePictureToLocalStorage(base64String);
+          
+          if (profileAvatar) {
+            profileAvatar.src = base64String;
+          }
+          
+          // Update user state if available
+          if (app.state.user) {
+            app.state.user.profile_picture = data.url;
+            localStorage.setItem('user', JSON.stringify(app.state.user));
+          }
+        };
+        reader.readAsDataURL(file);
+        
+        components.showToast('success', 'Success', 'Profile picture updated successfully');
+      } catch (err) {
+        console.error('Error uploading profile picture:', err);
+        components.showToast('error', 'Upload Error', 'Failed to upload profile picture');
+      }
+    });
+
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        try {
+          const res = await this.fetchWithAutoRefresh(
+            `${this.baseURL}/users/uploads/profile-picture`,
+            {
+              method: 'DELETE',
+              credentials: 'include',
+            }
+          );
+
+          if (!res.ok) throw new Error('Failed to remove profile picture');
+
+          // Remove from localStorage
+          this.removeProfilePictureFromLocalStorage();
+
+          if (profileAvatar) {
+            profileAvatar.src = 'src/assets/icons/user.png';
+          }
+
+          // Update user state if available
+          if (app.state.user) {
+            app.state.user.profile_picture = 'src/assets/icons/user.svg';
+            localStorage.setItem('user', JSON.stringify(app.state.user));
+          }
+          
+          components.showToast('success', 'Success', 'Profile picture removed successfully');
+        } catch (err) {
+          console.error('Error removing profile picture:', err);
+          components.showToast('error', 'Remove Error', 'Failed to remove profile picture');
+        }
+      });
+    }
+  }
+saveProfilePictureToLocalStorage(base64String: string): void {
+    try {
+      const userId = app.state.user?.id || 'default';
+      const storageKey = `profile_picture_${userId}`;
+      
+      // Store with timestamp for cache management
+      const profilePictureData = {
+        image: base64String,
+        timestamp: Date.now(),
+        userId: userId
+      };
+      
+      localStorage.setItem(storageKey, JSON.stringify(profilePictureData));
+      
+      // Also store the current active profile picture key
+      localStorage.setItem('current_profile_picture_key', storageKey);
+      
+      console.log('Profile picture saved to localStorage');
+    } catch (error) {
+      console.error('Failed to save profile picture to localStorage:', error);
+      // Handle localStorage quota exceeded
+      if (error instanceof DOMException && error.code === 22) {
+        components.showToast('warning', 'Storage Full', 'Unable to cache profile picture locally');
+      }
+    }
+  }
+
+  removeProfilePictureFromLocalStorage(): void {
+    try {
+      const userId = app.state.user?.id || 'default';
+      const storageKey = `profile_picture_${userId}`;
+      
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem('current_profile_picture_key');
+      
+      console.log('Profile picture removed from localStorage');
+    } catch (error) {
+      console.error('Failed to remove profile picture from localStorage:', error);
+    }
+  }
+
+  getProfilePictureFromLocalStorage(): string | null {
+    try {
+      console.log('Checking localStorage for profile picture...', app.state.user);
+      const userId = app.state.user?.id || app.state.user?.id || 'default';
+      const storageKey = `profile_picture_${userId}`;
+      
+      const savedData = localStorage.getItem(storageKey);
+      if (!savedData) return null;
+      
+      const profilePictureData = JSON.parse(savedData);
+      
+      // Check if data is less than 7 days old (optional cache expiration)
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - profilePictureData.timestamp > sevenDaysInMs) {
+        this.removeProfilePictureFromLocalStorage();
+        return null;
+      }
+      
+      return profilePictureData.image;
+    } catch (error) {
+      console.error('Failed to get profile picture from localStorage:', error);
+      return null;
+    }
+  }
+
+ 
+
+  async fetchWithAutoRefresh(url: string, options: RequestInit = {}): Promise<Response> {
+    // Implement your fetch with auto refresh logic here
+    // This should handle authentication and token refresh
+    return fetch(url, {
+      credentials: 'include',
+      ...options
+    });
+  }
   
-  update2FAUI(): void {
-    const is2FAEnabled = app.get2FAState() || false;
+  update2FAUI(userData?: any): void {
+    const user = userData || app.state.user;
+    const is2FAEnabled = user?.two_factor_enabled || user?.is_two_factor_enabled || app.get2FAState() || false;
+    
     const twoFAStatus = document.getElementById('twoFAStatus');
     const enableTwoFABtn = document.getElementById('enableTwoFABtn');
     const disableTwoFABtn = document.getElementById('disableTwoFABtn');
@@ -128,22 +371,23 @@ class Profile {
     if (twoFAStatus) {
       if (is2FAEnabled) {
         twoFAStatus.textContent = 'Enabled';
-        twoFAStatus.classList.remove('bg-danger');
-        twoFAStatus.classList.add('bg-success');
+        twoFAStatus.className = 'font-cyber bg-cyber-green text-cyber-dark px-2 py-1 rounded text-sm';
       } else {
         twoFAStatus.textContent = 'Disabled';
-        twoFAStatus.classList.remove('bg-success');
-        twoFAStatus.classList.add('bg-danger');
+        twoFAStatus.className = 'font-cyber bg-cyber-pink text-cyber-dark px-2 py-1 rounded text-sm';
       }
     }
     
     if (enableTwoFABtn && disableTwoFABtn) {
       if (is2FAEnabled) {
-        enableTwoFABtn.classList.add('d-none');
-        disableTwoFABtn.classList.remove('d-none');
+        enableTwoFABtn.style.display = 'none';
+        disableTwoFABtn.style.display = 'block';
+        disableTwoFABtn.classList.remove('hidden');
       } else {
-        enableTwoFABtn.classList.remove('d-none');
-        disableTwoFABtn.classList.add('d-none');
+        enableTwoFABtn.style.display = 'block';
+        enableTwoFABtn.classList.remove('hidden');
+        disableTwoFABtn.style.display = 'none';
+        disableTwoFABtn.classList.add('hidden');
       }
     }
   }
@@ -160,20 +404,19 @@ class Profile {
         event.preventDefault();
         event.stopPropagation();
         
-        let parentForm = enableBtn.closest('form');
+        const parentForm = enableBtn.closest('form');
         if (parentForm) 
           parentForm.onsubmit = (e: Event) => e.preventDefault();
         
         if (modal) {
           const qrSection = document.getElementById('qrCodeSection');
-          if (qrSection) 
-            qrSection.classList.remove('d-none');
+          if (qrSection) {
+            qrSection.classList.remove('hidden');
+            qrSection.style.display = 'block';
+          }
           
-          const modalText = document.querySelector('.two-fa-text');
-          if (modalText)
-            modalText.textContent = 'After scanning the QR code, enter the 6-digit verification code from your authenticator app.';
-          
-          modal.classList.remove('d-none');
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
           
           this.setup2FA();
         }
@@ -187,20 +430,19 @@ class Profile {
         event.preventDefault();
         event.stopPropagation();
         
-        let parentForm = disableBtn.closest('form');
+        const parentForm = disableBtn.closest('form');
         if (parentForm) 
           parentForm.onsubmit = (e: Event) => e.preventDefault();
         
         if (modal) {
           const qrSection = document.getElementById('qrCodeSection');
-          if (qrSection) 
-            qrSection.classList.add('d-none');
+          if (qrSection) {
+            qrSection.classList.add('hidden');
+            qrSection.style.display = 'none';
+          }
           
-          const modalText = document.querySelector('.two-fa-text');
-          if (modalText)
-            modalText.textContent = 'Enter the 6-digit verification code from your authenticator app to disable 2FA.';
-          
-          modal.classList.remove('d-none');
+          modal.classList.remove('hidden');
+          modal.style.display = 'flex';
         }
         
         return false;
@@ -210,24 +452,29 @@ class Profile {
     if (form) {
       form.addEventListener('submit', (e: Event) => {
         e.preventDefault();
-        
-        if (enableBtn && !enableBtn.classList.contains('d-none')) 
+        e.stopPropagation();
+        if (enableBtn && !enableBtn.classList.contains('hidden') && enableBtn.style.display !== 'none') 
           this.verify2FACode();
         else 
           this.disable2FA();
-        
       });
     }
     
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
-        if (modal) modal.classList.add('d-none');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
       });
     }
     
     if (modal) {
       modal.addEventListener('click', (e: MouseEvent) => {
-        if (e.target === modal) modal.classList.add('d-none');
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
       });
     }
   }
@@ -245,36 +492,49 @@ class Profile {
       return;
     }
     
-    
-    qrCodeContainer.innerHTML = `<div class="spinner-border text-gold" role="status">
-      <span class="visually-hidden">Loading...</span>
+    qrCodeContainer.innerHTML = `<div class="animate-spin text-cyber-blue h-12 w-12 border-4 border-cyber-blue border-t-transparent rounded-full mx-auto" role="status">
+      <span class="sr-only">Loading...</span>
     </div>`;
     secretKeyElement.textContent = 'Loading...';
     
-    if (errorElement) errorElement.classList.add('d-none');
+    if (errorElement) {
+      errorElement.classList.add('hidden');
+      errorElement.style.display = 'none';
+    }
     
     try {
-      const response = await api.setup2FA();
+      const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/setup`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start 2FA setup');
+      }
+
+      const data = await response.json();
       
-      if (!response || !response.qr_code || !response.secret_key) 
-        components.showToast('error', '2FA Setup Error', response.error || 'Failed to set up 2FA');
+      if (!data || !data.qrCode || !data.secret) {
+        throw new Error(data.error || 'Failed to set up 2FA');
+      }
       
       const qrImg = document.createElement('img');
-      qrImg.src = response.qr_code;
+      qrImg.src = data.qrCode;
       qrImg.alt = 'QR Code for 2FA';
-      qrImg.className = 'qr-code';
+      qrImg.className = 'qr-code max-w-full';
       
       qrCodeContainer.innerHTML = '';
       qrCodeContainer.appendChild(qrImg);
       
-      secretKeyElement.textContent = response.secret_key;
+      secretKeyElement.textContent = data.secret;
     } catch (error: any) {
-      qrCodeContainer.innerHTML = '<div class="text-danger">Failed to load QR code</div>';
+      qrCodeContainer.innerHTML = '<div class="text-cyber-pink">Failed to load QR code</div>';
       secretKeyElement.textContent = 'Error loading secret key';
       
       if (errorElement) {
         errorElement.textContent = error.message || 'Failed to set up 2FA';
-        errorElement.classList.remove('d-none');
+        errorElement.classList.remove('hidden');
+        errorElement.style.display = 'block';
       }
     }
   }
@@ -282,7 +542,7 @@ class Profile {
   async verify2FACode(): Promise<void> {
     const codeInput = document.getElementById('twoFACode') as HTMLInputElement | null;
     const errorElement = document.getElementById('twofa-error');
-    const submitButton = document.querySelector('#twoFAForm button[type="submit"]');
+    const submitButton = document.querySelector('#twoFAForm button[type="submit"]') as HTMLButtonElement;
     
     if (!codeInput) return;
     
@@ -291,17 +551,29 @@ class Profile {
     if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
       if (errorElement) {
         errorElement.textContent = 'Please enter a valid 6-digit code';
-        errorElement.classList.remove('d-none');
+        errorElement.classList.remove('hidden');
+        errorElement.style.display = 'block';
       }
       return;
     }
     
-    utils.setFormLoading((submitButton as HTMLElement | null) , true);
+    utils.setFormLoading(submitButton, true);
     
     try {
-      const data = await api.verify2FA(code);
+      const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token: code }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid verification code');
+      }
+
+      const data = await response.json();
       
-      utils.setFormLoading(submitButton as HTMLElement | null, false);
+      utils.setFormLoading(submitButton, false);
       
       if (data.success) {
         if (app.state.user) {
@@ -314,21 +586,31 @@ class Profile {
         components.showToast('success', '2FA Enabled', 'Two-factor authentication has been successfully enabled.');
         
         const modal = document.getElementById('twoFAModal');
-        if (modal) modal.classList.add('d-none');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
+
+        // Reload profile data to update UI
+        setTimeout(() => {
+          this.loadProfileData();
+        }, 1500);
       } else {
         if (errorElement) {
           errorElement.textContent = data.error || 'Verification failed';
-          errorElement.classList.remove('d-none');
+          errorElement.classList.remove('hidden');
+          errorElement.style.display = 'block';
         }
       }
     } catch (error: any) {
       components.showToast('error', '2FA Verification Error', error.message || 'Failed to verify 2FA');
       
-      utils.setFormLoading(submitButton as HTMLElement, false);
+      utils.setFormLoading(submitButton, false);
       
       if (errorElement) {
         errorElement.textContent = error.message || 'Failed to enable 2FA';
-        errorElement.classList.remove('d-none');
+        errorElement.classList.remove('hidden');
+        errorElement.style.display = 'block';
       }
     }
   }
@@ -336,7 +618,7 @@ class Profile {
   async disable2FA(): Promise<void> {
     const codeInput = document.getElementById('twoFACode') as HTMLInputElement | null;
     const errorElement = document.getElementById('twofa-error');
-    const submitButton = document.querySelector('#twoFAForm button[type="submit"]');
+    const submitButton = document.querySelector('#twoFAForm button[type="submit"]') as HTMLButtonElement;
     
     if (!codeInput) return;
     
@@ -345,17 +627,27 @@ class Profile {
     if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
       if (errorElement) {
         errorElement.textContent = 'Please enter a valid 6-digit code';
-        errorElement.classList.remove('d-none');
+        errorElement.classList.remove('hidden');
+        errorElement.style.display = 'block';
       }
       return;
     }
     
-    utils.setFormLoading(submitButton as HTMLElement, true);
+    utils.setFormLoading(submitButton, true);
     
     try {
-      const data = await api.disable2FA(code);
+      const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/disable`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to disable 2FA');
+      }
+
+      const data = await response.json();
       
-      utils.setFormLoading(submitButton as HTMLElement, false);
+      utils.setFormLoading(submitButton, false);
       
       if (data.success) {
         if (app.state.user) {
@@ -368,21 +660,29 @@ class Profile {
         components.showToast('success', '2FA Disabled', 'Two-factor authentication has been successfully disabled.');
         
         const modal = document.getElementById('twoFAModal');
-        if (modal) modal.classList.add('d-none');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.style.display = 'none';
+        }
+
+        // Reload profile to update UI
+        this.loadProfileData();
       } else {
         if (errorElement) {
           errorElement.textContent = data.error || 'Failed to disable 2FA';
-          errorElement.classList.remove('d-none');
+          errorElement.classList.remove('hidden');
+          errorElement.style.display = 'block';
         }
       }
     } catch (error: any) {
       components.showToast('error', '2FA Disable Error', error.message || 'Failed to disable 2FA');
       
-      utils.setFormLoading(submitButton as HTMLElement, false);
+      utils.setFormLoading(submitButton, false);
       
       if (errorElement) {
         errorElement.textContent = error.message || 'Failed to disable 2FA';
-        errorElement.classList.remove('d-none');
+        errorElement.classList.remove('hidden');
+        errorElement.style.display = 'block';
       }
     }
   }
@@ -398,10 +698,10 @@ class Profile {
     if (!tableHead) return;
 
     tableHead.innerHTML = `<tr>
-      <th>Type</th>
-      <th>Vs</th>
-      <th>Score</th>
-      <th>Winner</th>
+      <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Type</th>
+      <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Vs</th>
+      <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Score</th>
+      <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Result</th>
     </tr>`;
 
     const currentUser = app.getUsername();
@@ -410,7 +710,7 @@ class Profile {
 
     tableBody.innerHTML = '';
     if (entries.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="4" class="text-center">No match history available</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No match history available</td></tr>`;
     } else {
       entries.forEach(entry => {
         const tr = document.createElement('tr');
@@ -420,10 +720,10 @@ class Profile {
           tr.classList.add('match-loss');
         }
         tr.innerHTML = `
-          <td>${entry.type}</td>
-          <td>${entry.vs}</td>
-          <td>${entry.score}</td>
-          <td>${entry.winner}</td>
+          <td class="px-4 py-3">${entry.type}</td>
+          <td class="px-4 py-3">${entry.vs}</td>
+          <td class="px-4 py-3">${entry.score}</td>
+          <td class="px-4 py-3">${entry.winner}</td>
         `;
         tableBody.appendChild(tr);
       });
@@ -439,9 +739,9 @@ class Profile {
     tournaments.forEach((tournament: Tournament) => {
       // Tournament summary row (ID and winner)
       const summary = document.createElement('tr');
-      summary.classList.add('table-warning');
+      summary.classList.add('bg-cyber-blue', 'bg-opacity-20');
       summary.innerHTML = `
-        <td colspan="4" class="text-center fw-bold">
+        <td colspan="4" class="text-center font-cyber text-cyber-blue px-4 py-3">
           Tournament #${tournament.tournament_id} — Winner: ${tournament.winner}
         </td>`;
       tableBody.appendChild(summary);
@@ -453,10 +753,10 @@ class Profile {
         if (tournament.winner === currentUser) tr.classList.add('match-win');
         else tr.classList.add('match-loss');
         tr.innerHTML = `
-          <td>${entry.type}</td>
-          <td>${entry.vs}</td>
-          <td>${entry.score}</td>
-          <td>${tournament.winner}</td>
+          <td class="px-4 py-3">${entry.type}</td>
+          <td class="px-4 py-3">${entry.vs}</td>
+          <td class="px-4 py-3">${entry.score}</td>
+          <td class="px-4 py-3">${tournament.winner}</td>
         `;
         tableBody.appendChild(tr);
       });

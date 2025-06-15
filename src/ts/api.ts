@@ -573,7 +573,7 @@ class API {
       const isAuthenticated = true; // Simulate the user being authenticated
       
       const fakeUser: User = {
-        profile_image: "https://via.placeholder.com/150",
+        profile_picture: "scr/assets/icons/user.png",
         username: "FakeUser123",
         email: "fakeuser123@example.com",
         is_oauth_user: false,

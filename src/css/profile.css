@@ -74,20 +74,10 @@ body.profile-page {
 
 /* Read-only form controls - specifically for text inputs */
 input[type="text"].form-control[readonly],
-input[type="email"].form-control[readonly] {
-    background-color: rgba(0, 0, 0, 0.5);
-    border-color: rgba(212, 175, 55, 0.2);
-    color: var(--white);
-    cursor: default;
-    pointer-events: none;
-}
+input[type="email"].form-control[readonly]
 
 input[type="text"].form-control[readonly]:focus,
-input[type="email"].form-control[readonly]:focus {
-    box-shadow: none;
-    border-color: rgba(212, 175, 55, 0.2);
-}
-
+input[type="email"].form-control[readonly]:focus
 .border-gold {
     border-color: var(--gold) !important;
 }
