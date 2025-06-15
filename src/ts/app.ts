@@ -722,7 +722,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Initialize the application
     await app.init();
-    
+
     // Apply localization to the page after initialization
     document.dispatchEvent(new CustomEvent('languageChanged', {
       detail: { 
