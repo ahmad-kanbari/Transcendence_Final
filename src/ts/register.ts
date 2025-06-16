@@ -86,26 +86,30 @@ class Register {
     }
   }
   
-  showRegisterForm(): void {
-    const loginTab = document.getElementById('loginTab');
-    const registerTab = document.getElementById('registerTab');
-    const loginContainer = document.getElementById('loginFormContainer');
-    const registerContainer = document.getElementById('registerFormContainer');
-    
-    if (!loginTab || !loginContainer || !registerTab || !registerContainer) {
-      console.warn('Register: Cannot switch tabs - missing elements');
-      return;
-    }
-    
-    registerTab.classList.add('active');
-    loginTab.classList.remove('active');
-    
-    registerContainer.classList.add('show', 'active');
-    registerContainer.classList.remove('fade');
-    
-    loginContainer.classList.remove('show', 'active');
-    loginContainer.classList.add('fade');
+showRegisterForm(): void {
+  const loginTab = document.getElementById('loginTab');
+  const registerTab = document.getElementById('registerTab');
+  const loginContainer = document.getElementById('loginFormContainer');
+  const registerContainer = document.getElementById('registerFormContainer');
+  
+  if (!loginTab || !loginContainer || !registerTab || !registerContainer) {
+    console.warn('Register: Cannot switch tabs - missing elements');
+    return;
   }
+  
+  registerTab.classList.add('active');
+  loginTab.classList.remove('active');
+  
+  // Show register form
+  registerContainer.classList.add('show', 'active');
+  registerContainer.classList.remove('fade');
+  registerContainer.hidden = false;
+  
+  // Hide login form
+  loginContainer.classList.remove('show', 'active');
+  loginContainer.classList.add('fade');
+  loginContainer.hidden = true;
+}
   
   async handleRegisterBtnClick(event: MouseEvent | null): Promise<void> {
     if (event)

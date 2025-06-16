@@ -64,6 +64,7 @@ class Profile {
   }
   
   getProfileForm(): ProfileForm {
+  
     return {
       profileUsername: document.getElementById('profileUsername'),
       profileAvatar: document.getElementById('profileAvatar') as HTMLImageElement | null,
@@ -86,7 +87,7 @@ class Profile {
     this.loadProfileData();
     this.setupProfilePictureHandlers();
     this.init2FA();
-    
+
     if (this.profileForm.displayNameField) 
       utils.setupInputField(this.profileForm.displayNameField, 'username', components);
     
@@ -110,7 +111,9 @@ class Profile {
       // Get user ID from URL params or current user
       const urlParams = new URLSearchParams(window.location.search);
       const userId = urlParams.get('userId');
-      
+
+       let usertest =await api.getUserById('10');
+        console.log('User test data:', usertest);
       let userData;
       if (userId) {
         // Loading another user's profile
@@ -124,7 +127,9 @@ class Profile {
         userData = userData.user.user;
       }
 
-      this.populateProfileData(userData);
+      let userFullData = await api.getUserById(userData.id);
+
+      this.populateProfileData(userFullData);
       
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -133,13 +138,18 @@ class Profile {
   }
   
   populateProfileData(userData?: any): void {
-    const user = userData || app.state.user;
     
+    const user = userData || app.state.user;
+        
+    console.log('populate with userData:', userData, "app user data: ", app.state.user);
+
     if (!user) {
       console.warn('No user data found, cannot populate profile data');
       return;
     }
-    
+
+    //get full user Data
+
     if (this.profileForm.profileUsername)
       this.profileForm.profileUsername.textContent = user.username || app.getUsername() || 'Username';
     
@@ -361,6 +371,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
   }
   
   update2FAUI(userData?: any): void {
+    console.log('Updating 2FA UI with userData:', userData, "app user data: ", app.state.user);
     const user = userData || app.state.user;
     const is2FAEnabled = user?.two_factor_enabled || user?.is_two_factor_enabled || app.get2FAState() || false;
     
@@ -599,6 +610,7 @@ init2FA(): void {
         if (app.state.user) {
           app.state.user.is_two_factor_enabled = true;
           localStorage.setItem('user', JSON.stringify(app.state.user));
+     
         }
         
         this.update2FAUI();

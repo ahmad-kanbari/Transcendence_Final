@@ -199,11 +199,15 @@ class Login {
     loginTab.classList.add('active');
     registerTab.classList.remove('active');
     
+    // Show login form
     loginContainer.classList.add('show', 'active');
     loginContainer.classList.remove('fade');
+    loginContainer.removeAttribute('hidden');
     
+    // Hide register form
     registerContainer.classList.remove('show', 'active');
     registerContainer.classList.add('fade');
+    registerContainer.setAttribute('hidden', '');
   }
   
   async handleLoginBtnClick(event: MouseEvent | null): Promise<void> {
