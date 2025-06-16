@@ -69,7 +69,7 @@ class Profile {
       profileUsername: document.getElementById('profileUsername'),
       profileAvatar: document.getElementById('profileAvatar') as HTMLImageElement | null,
       displayNameField: document.getElementById('settingDisplayName') as HTMLInputElement | null,
-      emailField: document.getElementById('settingEmail') as HTMLInputElement | null,
+      // emailField: document.getElementById('settingEmail') as HTMLInputElement | null,
       statsTotalGames: document.getElementById('statsTotalGames'),
       statsWins: document.getElementById('statsWins'),
       statsLosses: document.getElementById('statsLosses'),
@@ -91,8 +91,9 @@ class Profile {
     if (this.profileForm.displayNameField) 
       utils.setupInputField(this.profileForm.displayNameField, 'username', components);
     
-    if (this.profileForm.emailField) 
-      utils.setupInputField(this.profileForm.emailField, 'email', components);
+    // if (this.profileForm.emailField) 
+    //   // utils.setupInputField(this.profileForm.emailField, 'email', components);
+    //   console('Email field setup is commented out for now, uncomment if needed');
   }
 
    async loadProfileData(): Promise<void> {
@@ -139,9 +140,9 @@ class Profile {
   
   populateProfileData(userData?: any): void {
     
-    const user = userData || app.state.user;
+    const user = userData.data || app.state.user;
         
-    console.log('populate with userData:', userData, "app user data: ", app.state.user);
+    console.log('populate with userData:', userData.data, "app user data: ", app.state.user);
 
     if (!user) {
       console.warn('No user data found, cannot populate profile data');
@@ -172,9 +173,9 @@ class Profile {
     if (this.profileForm.displayNameField)
       this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
     
-    if (this.profileForm.emailField)
-      console.log('Setting email field value:', app.state.user!.email,'another way : ', app.getEmail());
-      this.profileForm.emailField!.value = app.state.user!.email || app.getEmail() || '';
+    // if (this.profileForm.emailField)
+    //   console.log('Setting email field value:', app.state.user!.email,'another way : ', app.getEmail());
+    //   this.profileForm.emailField!.value = app.state.user!.email || app.getEmail() || '';
     
     if (this.profileForm.statsTotalGames)
       this.profileForm.statsTotalGames.textContent = app.getTotalGamesPlayed().toString() || '0';
@@ -373,8 +374,8 @@ saveProfilePictureToLocalStorage(base64String: string): void {
   update2FAUI(userData?: any): void {
     console.log('Updating 2FA UI with userData:', userData, "app user data: ", app.state.user);
     const user = userData || app.state.user;
-    const is2FAEnabled = user?.two_factor_enabled || user?.is_two_factor_enabled || app.get2FAState() || false;
-    
+    const is2FAEnabled = user?.two_factor_enabled || user?.two_factor_enabled|| app.get2FAState() || false;
+    console.log('2FA Enabled:', is2FAEnabled);
     const twoFAStatus = document.getElementById('twoFAStatus');
     const enableTwoFABtn = document.getElementById('enableTwoFABtn');
     const disableTwoFABtn = document.getElementById('disableTwoFABtn');
