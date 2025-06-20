@@ -3,6 +3,7 @@ import components from './components';
 import utils from './utils';
 import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
+import notificationManager from './NotificationManager';
 
 // Declare socket.io global
 declare const io: any;
@@ -296,11 +297,14 @@ class Chat {
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
             toastManager.addToQueue('Friend Request', data.message);
+            notificationManager.incrementNotificationCount();
             this.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
+
             toastManager.addToQueue('Friend Request', data.message);
+            notificationManager.incrementNotificationCount();
             this.loadFriendData();
         });
     }
@@ -886,7 +890,7 @@ class Chat {
 
      async loadFriendsList(): Promise<void> {
         if (!this.elements.friendsList) return;
-
+        console.log('Loading friends list...');
         try {
             const friends = await api.getFriendships();
             
@@ -921,6 +925,23 @@ class Chat {
             console.error('Error loading friends list:', error);
         }
     }
+    public async refreshAllFriendData(): Promise<void> {
+    try {
+        // Load all friend data
+        await this.loadFriendData();
+        
+        // Update dashboard
+        this.updateDashboardStats();
+        
+        
+        // Reload chats (in case friend status affects available chats)
+        await this.loadChats();
+        
+        console.log('All friend data refreshed successfully');
+    } catch (error) {
+        console.error('Error refreshing friend data:', error);
+    }
+}
 
     // ===== PUBLIC METHODS FOR GLOBAL ACCESS =====
     public async handleFriendRequest(friendshipId: string, action: 'accept' | 'reject'): Promise<void> {
@@ -929,7 +950,14 @@ class Chat {
             
             if (result.ok) {
                 components.showToast('success', 'Request Updated', `Friend request ${action}ed successfully!`, 3000);
-                this.loadFriendData();
+                await this.loadFriendData();
+                this.updateDashboardStats();
+                // Decrement notification count through NotificationManager
+                notificationManager.decrementNotificationCount();
+                // Decrement notification count if accepting/rejecting
+       
+                await this.loadChats();
+                await this.refreshAllFriendData();
             } else {
                 const errorText = await result.text();
                 components.showToast('error', 'Update Failed', errorText || `Failed to ${action} friend request`, 3000);
@@ -965,7 +993,7 @@ class Chat {
             
             if (result.ok) {
                 components.showToast('success', 'Friend Removed', 'Friend removed successfully!', 3000);
-                this.loadFriendData();
+                this.refreshAllFriendData()
             } else {
                 const errorText = await result.text();
                 components.showToast('error', 'Remove Failed', errorText || 'Failed to remove friend', 3000);
@@ -974,6 +1002,8 @@ class Chat {
             console.error('Error removing friend:', error);
         }
     }
+
+
 
     public async startChatWithFriend(friendId: string): Promise<void> {
         try {

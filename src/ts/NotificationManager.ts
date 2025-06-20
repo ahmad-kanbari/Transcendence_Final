@@ -39,7 +39,10 @@ class NotificationManager {
         if (this.initialized) return;
         
         console.log('NotificationManager: Starting initialization...');
-        
+            // Add this line to get the socket service from chat
+        if (!this.socketService && window.chat?.socketService) {
+            this.socketService = window.chat.socketService;
+        }
         // Use longer delay and retry mechanism for DOM elements
         this.retryInitialization();
     }
@@ -83,51 +86,6 @@ class NotificationManager {
     }
 
     private async setupNotificationEventListeners(): Promise<void> {
-        // Bell button event listener
-        // if (this.elements.bellBtn) {
-        //     this.elements.bellBtn.addEventListener('click', async (e) => {
-        //          e.preventDefault();
-        //          e.stopPropagation();
-        //         const visible = this.elements.generalNotifications?.style.display === 'block';
-                
-        //         if (this.elements.generalNotifications) {
-        //             this.elements.generalNotifications.style.display = visible ? 'none' : 'block';
-        //         }
-                
-        //         if (this.elements.messageNotifications) {
-        //             this.elements.messageNotifications.style.display = 'none';
-        //         }
-        //         if (!visible) {
-        //             try {
-        //                 // Mark notifications as opened
-        //                 await api.markNotificationsAsOpened('others');
-        //                 // await api.fetchWithAutoRefresh(`${this.baseURL}/notifications/others`, {
-        //                 //     method: "PATCH",
-        //                 //     credentials: "include",
-        //                 // });
-            
-        //                 this.notificationCount = 0;
-        //                 if (this.elements.bellBtn) {
-        //                     this.elements.bellBtn.setAttribute('data-count', '0');
-        //                 }
-        //             } catch (error) {
-        //                 console.error('Error marking notifications as opened:', error);
-        //             }
-        //         }
-
-        //         // Load and render notifications
-        //         try {
-        //             const page = 1;
-        //             const limit = 5;
-        //             const notifications = await api.getNotifications('others', page, limit);
-        //             if (this.elements.generalNotifications) {
-        //                 this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
-        //             }
-        //         } catch (error) {
-        //             console.error('Error loading notifications:', error);
-        //         }
-        //     });
-        // }
 
         // ENHANCED VERSION: With click outside to close
         if (this.elements.bellBtn) {
@@ -201,33 +159,6 @@ class NotificationManager {
         }
     }
 
-
-    // private renderNotificationList(container: HTMLElement, notifications: any[], type : "messages" | "others"): void {
-    //     container.innerHTML = '';
-    
-    //     if (notifications.length === 0) {
-    //         container.innerHTML = '<em style="color: #999; padding: 10px; display: block;">No notifications</em>';
-    //         return;
-    //     }
-    //     // console.log('Rendering notifications:', notifications, "HtmlElement:", container);
-    //     notifications.forEach((notification: any) => {
-    //         const div = document.createElement('div');
-    //         div.className = 'notification';
-    //         div.style.cssText = 'padding: 10px; border-bottom: 1px solid #333; cursor: pointer;';
-            
-    //         const time = new Date(notification.created_at).toLocaleString();
-    //         div.innerHTML = `
-    //             <div style="font-weight: bold; margin-bottom: 5px;">${notification.type || 'Notification'}</div>
-    //             <div style="margin-bottom: 5px;">${notification.message || notification.content}</div>
-    //             <div style="font-size: 11px; color: #999;">${time}</div>
-    //         `;
-    //         div.addEventListener('click', async () => {
-                
-    //         });
-            
-    //         container.appendChild(div);
-    //     });
-    // }
     // HELPER METHODS for the enhanced version
         private closeGeneralNotifications(): void {
             if (this.elements.generalNotifications) {
@@ -319,7 +250,7 @@ class NotificationManager {
             try {
                 if (type === 'messages') {
                     // For message notifications, open the specific chat
-                    await this.handleMessageNotificationClick(notification);
+                    await this.handleMessageNotificationClick(notification, e);
                 } else {
                     // For other notifications, navigate to chat page
                     await this.handleGeneralNotificationClick(notification);
@@ -342,9 +273,11 @@ class NotificationManager {
     });
 }
 
-private async handleMessageNotificationClick(notification: any): Promise<void> {
+private async handleMessageNotificationClick(notification: any, e: Event): Promise<void> {
+    e.preventDefault();
+    e.stopPropagation();
     try {
-      
+        
         // Get the sender ID from the notification
         const senderId = notification.sender_id || notification.from_user_id;
         
@@ -360,15 +293,39 @@ private async handleMessageNotificationClick(notification: any): Promise<void> {
         );
         
         if (existingChatRes.ok) {
+    
             const chatData = await existingChatRes.json();
             const chatId = chatData.chat_id;
-            
+        
             // Navigate to chat page if not already there
             if (window.location.pathname !== '/chat') {
-                window.location.href = `/chat?chatId=${chatId}`;
-                return;
-            }
+  
+                window.history.pushState({}, '',  `/chat?chatId=${chatId}`);
+                pages.showPage('chat');
             
+                       // Wait for chat page to initialize, then join room
+                setTimeout(async () => {
+                    await chat.loadChats();
+                    await chat.forceJoinRoom(chatId);
+                }, 100);
+                
+                    await api.fetchWithAutoRefresh(
+                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+                    {
+                        method: 'PATCH',
+                        credentials: 'include',
+                    }
+                );
+                
+                // // Update mailbox notification count
+                // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+                // this.updateMailboxNotificationCount();
+                notificationManager.decrementMailboxCount();
+                return;
+       
+                // return;
+            }
+            console.log('Already on chat page, loading chat with ID:', chatId);
             // If already on chat page, load chats and join the specific chat
             await chat.loadChats();
             await chat.forceJoinRoom(chatId);
@@ -383,9 +340,11 @@ private async handleMessageNotificationClick(notification: any): Promise<void> {
                     }
                 );
                 
-                // Update mailbox notification count
-                this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
-                this.updateMailboxNotificationCount();
+                // // Update mailbox notification count
+                // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+                // this.updateMailboxNotificationCount();
+                notificationManager.decrementMailboxCount();
+
                 
             } catch (error) {
                 console.error('Error marking messages as read:', error);
@@ -408,7 +367,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     try {
         // Navigate to chat page if not already there
         if (window.location.pathname !== '/chat') {
-        
+            console.log('Navigating to chat page from notification');
+            // window.location.href = `/chat`;
+            // Ensure the chat page is shown
+            window.history.pushState({}, '', '/chat');
             pages.showPage('chat');
             return;
         }
@@ -445,16 +407,6 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 
         private setupSocketHandlers(): void {
         if (!this.socketService) return;
-
-        // Handle new messages
-        // this.socketService.on('newMessage', (message: any) => {
-        //     // if (message.chat_id === chat.currentChatId) {
-        //     //     chat.appendMessage(message);
-        //     // }
-        //     // chat.loadChats(); // Refresh chat list
-        //     // chat.messagesCount++;
-        //     // chat.updateDashboardStats();
-        // });
 
         // Handle message notifications
         this.socketService.on('messageReceivedInform', async (data: any) => {
@@ -586,28 +538,48 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         this.updateMailboxNotificationCount();
     }
 
-    // private initializeParticles(): void {
-    //     const particlesContainer = document.getElementById('particles');
-    //     if (!particlesContainer) return;
+    // Add these methods to your NotificationManager class
 
-    //     const particleCount = 20;
-    //     particlesContainer.innerHTML = ''; // Clear existing particles
-        
-    //     for (let i = 0; i < particleCount; i++) {
-    //         const particle = document.createElement('div');
-    //         particle.className = 'particle';
-    //         particle.style.left = Math.random() * 100 + '%';
-    //         particle.style.animationDelay = Math.random() * 10 + 's';
-    //         particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
-            
-    //         // Random colors
-    //         const colors = ['var(--cyber-blue)', 'var(--cyber-pink)', 'var(--cyber-purple)', 'var(--cyber-green)'];
-    //         particle.style.background = colors[Math.floor(Math.random() * colors.length)];
-            
-    //         particlesContainer.appendChild(particle);
-    //     }
-    // }
+public incrementNotificationCount(): void {
+    this.notificationCount++;
+    this.updateBellBadge();
+}
 
+public decrementNotificationCount(): void {
+    this.notificationCount = Math.max(0, this.notificationCount - 1);
+    this.updateBellBadge();
+}
+
+public incrementMailboxCount(): void {
+    this.mailboxNotificationCount++;
+    this.updateMailboxBadge();
+}
+
+public decrementMailboxCount(): void {
+    this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+    this.updateMailboxBadge();
+}
+
+private updateBellBadge(): void {
+    if (this.elements.bellBtn) {
+        this.elements.bellBtn.setAttribute('data-count', this.notificationCount.toString());
+    }
+}
+
+private updateMailboxBadge(): void {
+    if (this.elements.mailboxBtn) {
+        this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+    }
+}
+
+// Make this method public so Chat can call it
+public getNotificationCount(): number {
+    return this.notificationCount;
+}
+
+public getMailboxCount(): number {
+    return this.mailboxNotificationCount;
+}
 
 }
 
