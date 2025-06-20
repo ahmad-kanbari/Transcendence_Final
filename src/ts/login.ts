@@ -478,6 +478,7 @@ show2FAModal(): void {
   
   updateUIAuthState(): void {
     const loginNavBtn = document.getElementById('loginNavBtn');
+    const loginNavBtnMobile = document.getElementById('loginNavBtnMobile');
     const loginBtn = document.getElementById('loginBtn');
     const loginDropdown = document.getElementById('loginDropdown');
     const loggedInUserImg = document.getElementById('loggedInUserImg') as HTMLImageElement | null;
@@ -487,6 +488,7 @@ show2FAModal(): void {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'none';
       if (loginBtn) loginBtn.style.display = 'none';
       if (loginDropdown) loginDropdown.style.display = 'block';
+      if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
       
       if (typeof app.getIs42User === 'function' && app.getIs42User()) {
         if (typeof app.getUserImg === 'function' && app.getUserImg() && loggedInUserImg) {
@@ -507,6 +509,7 @@ show2FAModal(): void {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
       if (loginBtn) loginBtn.style.display = 'block';
       if (loginDropdown) loginDropdown.style.display = 'none';
+      if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
     }
   }
 
