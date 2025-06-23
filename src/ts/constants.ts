@@ -47,9 +47,14 @@ export const ENDPOINTS = {
         // This will be used with userId appended
     },
     game: {
-        tournament: '/tournaments/tournament/',
-        match_history: '/tournaments/match_history/',
-        match: '/tournaments/match/',
+        create_tournament: `${baseURL}/tournaments/`, //post create a tournament
+        get_tournament: `${baseURL}/tournaments/`, //get specific tounament :tournamentId
+        get_all_tournaments: `${baseURL}/tournaments`, //get all tournaments
+        create_match_inTournament: `${baseURL}/tournaments/`, //post create a match in tournament /:tournamentId/matches
+        create_match: `${baseURL}/matches`,  // post match 
+        adjust_match: `${baseURL}/matches` // pathch :matchId
+
+
     },
 }; 
 

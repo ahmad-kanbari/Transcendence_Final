@@ -3,6 +3,8 @@
  * A class-based implementation of the classic Pong game with multiple game modes
  */
 
+import api from "./api";
+
 class PongGame {
     // Game state
     userName: string | null = null;
@@ -88,19 +90,30 @@ class PongGame {
 
        // Prepare match data for backend submission
     matchObj: {
-        player1Name: string;
-        player2Name: string;
-        player1Score: number;
-        player2Score: number;
-        winner: string;
-        matchType: string;
+    // Match data structure
+    matchId: number | null;
+    player1_id: number;
+    player2_id: number | null;
+    player1_name: string;
+    player2_name: string;
+    player1_score: number;
+    player2_score: number;
+    winner: string;
+    match_type: string;
+    tournamentId?: number | null;
+   
+
     } = {
-        player1Name: '',
-        player2Name: '',
-        player1Score: 0,
-        player2Score: 0,
+        matchId: null,
+        player1_id: 0,
+        player2_id: null,
+        player1_name: '',
+        player2_name: '',
+        player1_score: 0,
+        player2_score: 0,
         winner: '',
-        matchType: ''
+        match_type: '',
+        tournamentId: null
     };
 
       // Array of matches for tournament mode
@@ -151,8 +164,9 @@ class PongGame {
     aiCenteringProbability: number = 0.6;
     shouldReturnToCenter: boolean = false;
 
-    // Track current screen mode: 'menu', 'pvp', 'ai', 'multiplayer', 'tournament'
+    // Track current screen mode: 'menu', '1v1', '1vAi', 'multiplayer', 'tournament'
     currentMode: string = 'menu';
+    tournamentId: number | null | undefined;
 
     /**
      * Initialize the game when the document is ready
@@ -248,7 +262,7 @@ class PongGame {
                 // On 1 VS 1, set Player 1's name to current user and Player 2's name to RANDOM
                 this.player1Name!.textContent = this.userName;
                 this.player2Name!.textContent = 'RANDOM';
-                this.setGameMode('pvp');
+                this.setGameMode('1v1');
             });
         } else {
             console.error('pvpButton not found in DOM');
@@ -260,7 +274,7 @@ class PongGame {
                 // On 1 VS AI, set Player 1's name to current user and Player 2's name to AI
                 this.player1Name!.textContent = this.userName;
                 this.player2Name!.textContent = 'AI';
-                this.setGameMode('ai');
+                this.setGameMode('1vAi');
             });
         } else {
             console.error('pveButton not found in DOM');
@@ -538,12 +552,12 @@ class PongGame {
         let activeButton : HTMLElement | null = null;
         
         switch (mode) {
-            case 'pvp':
+            case '1v1':
                 // Player vs Player mode
                 activeButton = document.getElementById('pvpButton');
                 break;
                 
-            case 'ai':
+            case '1vAi':
                 // Player vs AI mode
                 this.isAIMode = true;
                 activeButton = document.getElementById('pveButton');
@@ -636,7 +650,39 @@ class PongGame {
         // Start the game loop
         this.gameRunning = true;
         this.lastTime = performance.now();
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);        
+        this.animationFrameId = requestAnimationFrame(this.gameLoop);
+        
+        const storedUser = localStorage.getItem('user');
+        const userData = JSON.parse(storedUser ?? '{}');
+        //create a match object  
+        console.log("userData in game before creating match:", userData);
+        this.matchObj = {
+            matchId: null,
+            player1_id: Number(userData.user.id),
+            player2_id: null,
+            player1_name: userData.user.username || this.player1Name!.textContent || 'PLAYER 1',
+            player2_name: this.player2Name!.textContent || 'PLAYER 2',
+            player1_score: 0,
+            player2_score: 0,
+            winner: '',
+            match_type: this.isMultiplayerMode ? 'multiplayer' : (this.isAIMode ? '1vAi' : (this.isTournamentMode) ? 'tournament': '1v1'),
+        };
+        api.createMatch(this.matchObj, 2).then((response: any) => {
+            console.log('Response from createMatch:', response);
+            if (response && response.success) {
+                this.matchObj.matchId = Number(response.data.match.id) || null;
+                this.matchObj.player1_id = response.data.match.player1_id;
+                this.matchObj.player2_id = (typeof response.data.match.player2_id === 'number') ? response.data.player2_id : null;
+                this.matchObj.player1_name = response.data.match.player1_name;
+                this.matchObj.player2_name = response.data.match.player2_name;
+                this.matchObj.tournamentId = response.data.match.tournamentId || null;
+                console.log('Match created successfully:', this.matchObj);
+            } else {
+                console.error('Failed to create match:', response);
+            }
+        }).catch((error: any) => {
+            console.error('Error creating match:', error);
+        });
     }
 
     /**
@@ -1194,7 +1240,7 @@ class PongGame {
         }
         
         // Capture this match data into matchObj
-        this.fillMatchObj(winnerName);
+        this.fillMatchObj(winnerName, this.matchObj.matchId); // matchId can be null for single matches
         
         // Tournament logic: record and show next match button
         if (this.isTournamentMode) {
@@ -1226,19 +1272,28 @@ class PongGame {
                     this.submitMatch(this.matchObj!);
                 }
             }
-            this.matchObj = { player1Name: '', player2Name: '', player1Score: 0, player2Score: 0, winner: '', matchType: '' };
+          
+       
         }      
     }
 
 
-    fillMatchObj(winnerName: string): void {
-        this.matchObj.player1Name  = this.player1Name!.textContent ?? 'Unknown Player';
-        this.matchObj.player2Name  = this.player2Name!.textContent ?? 'Unknown Player';
-        this.matchObj.player1Score = parseInt(this.player1Score!.textContent!, 10);
-        this.matchObj.player2Score = parseInt(this.player2Score!.textContent!, 10);
+    fillMatchObj(winnerName: string, matchId: number | null): void {
+        const storedUser = localStorage.getItem('user');
+
+        this.matchObj.matchId = matchId !== null && matchId !== undefined ? Number(matchId) : null; // Use provided matchId or empty string
+        const user = JSON.parse(storedUser ?? '{}');
+        // this.matchObj.player1_id = typeof user.id === 'number' ? user.id : 0;
+        // this.matchObj.player2_id = null; // Placeholder for AI or random player ID
+        console.log("Match Object:", this.matchObj);
+        // this.matchObj.player1_name  = this.player1Name!.textContent ?? 'Unknown Player';
+        // this.matchObj.player2_name  = this.player2Name!.textContent ?? 'Unknown Player';
+        this.matchObj.player1_score = parseInt(this.player1Score!.textContent!, 10);
+        this.matchObj.player2_score = parseInt(this.player2Score!.textContent!, 10);
         this.matchObj.winner       = winnerName;
+        this.matchObj.tournamentId = this.isTournamentMode ? this.tournamentId : null;
         // Determine match type
-        this.matchObj.matchType = this.getMatchType();
+        // this.matchObj.match_type = this.getMatchType();
     }
 
     getMatchType(): string {
@@ -1246,11 +1301,11 @@ class PongGame {
             case this.isTournamentMode:
               return 'tournament';
             case this.isAIMode:
-              return '1 vs AI';
+              return '1vsAi';
             case this.isMultiplayerMode:
               return 'multiplayer';
             default:
-              return '1 vs 1';
+              return '1v1';
           }
     }
 
@@ -1522,8 +1577,11 @@ class PongGame {
         document.getElementById('semi2Player2')!.textContent = this.tournamentPlayers[3];
         document.getElementById('finalPlayer1')!.textContent = 'TBD';
         document.getElementById('finalPlayer2')!.textContent = 'TBD';
+
+        //api to create the tournament in the backend
         
         // Start first match
+        
         this.setupNextTournamentMatch();
     }
 
@@ -1738,4 +1796,5 @@ class PongGame {
 const game = new PongGame();
 
 export default game;
+
 

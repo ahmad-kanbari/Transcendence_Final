@@ -41,12 +41,16 @@ interface AppState {
 }
 
 interface MatchObject {
-  player1Name: string;
-  player2Name: string;
-  player1Score: number;
-  player2Score: number;
+  matchId?: number | null;
+  player1_id: number;
+  player2_id?: number | null; // Optional for tournament matches
+  player1_name: string;
+  player2_name: string;
+  player1_score: number;
+  player2_score: number;
   winner: string;
-  matchType: string;
+  match_type: string;
+  tournamentId?: number | null; // Optional for tournament matches
 }
 
 class App {
@@ -322,8 +326,8 @@ class App {
             // login.updateUIAuthState();
             game.init(
               this.getUsername(),
-              this.setMatch.bind(this),
-              this.setTournament.bind(this)
+              this.setSubmitMatchFunction.bind(this),
+              this.setSubmitTournamentFunction.bind(this)
             );
             return;
           }
@@ -338,8 +342,8 @@ class App {
             pages.showPage('game');
             game.init(
               this.getUsername(),
-              this.setMatch.bind(this),
-              this.setTournament.bind(this)
+              this.setSubmitMatchFunction.bind(this),
+              this.setSubmitTournamentFunction.bind(this)
             );
           } else {
             components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
@@ -649,8 +653,20 @@ class App {
     }
   }
 
-  async setMatch(matchObj: MatchObject): Promise<void> {
-    const result = await api.submitMatch(matchObj);
+  async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
+    // Construct MatchData with required Player1Id and Player2Id
+    const matchData = {
+      matchId: matchObj.matchId || null,
+      player1_id: matchObj.player1_id || Number(this.state.user?.id),
+      player2_id: matchObj.player2_id || null, // Default to 0 if not provided
+      player1_name: matchObj.player1_name,
+      player2_name: matchObj.player2_name,
+      player1_score: matchObj.player1_score,
+      player2_score: matchObj.player2_score,
+      winner: matchObj.winner,
+      match_type: matchObj.match_type
+    };
+    const result = await api.submitMatch(matchData, 2);
 
     if (!result.success) {
       components.showToast('error', 'Match Submission Error', 'An error occurred while submitting the match.', 5000);
@@ -662,15 +678,17 @@ class App {
       this.state.user.matchHistory.push(matchObj);
       localStorage.setItem('user', JSON.stringify(this.state.user));
     }
+    console.log('Match submitted successfully:', result.data);
+   return result.data.matchId || null;
   }
 
-  async setTournament(matchArray: MatchObject[]): Promise<void> {
-    const result = await api.createTournament(matchArray);
+  async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
+    // const result = await api.createTournament(matchArray | [], 2);
 
-    if (!result.success) {
-      components.showToast('error', 'Tournament Submission Error', 'An error occurred while submitting the tournament.');
-      return;
-    }
+    // if (!result.success) {
+    //   components.showToast('error', 'Tournament Submission Error', 'An error occurred while submitting the tournament.');
+    //   return;
+    // }
 
     this.initmatchHistoryArray();
     if (this.state.user && this.state.user.matchHistory) {

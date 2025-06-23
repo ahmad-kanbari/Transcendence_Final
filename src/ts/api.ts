@@ -45,13 +45,15 @@ interface PagesCollection {
 }
 
 interface MatchData {
-  player1Name: string;
-  player2Name: string;
-  player1Score: number;
-  player2Score: number;
+  matchId: number | null;
+  player1_id: number;
+  player2_id: number | null;
+  player1_name: string;
+  player2_name: string;
+  player1_score: number;
+  player2_score: number;
   winner: string;
-  matchType: string;
-  [key: string]: any;
+  match_type: string;
 }
 
 class API {
@@ -505,9 +507,9 @@ class API {
     }
   }
 
-  async submitMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
+  async createMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(ENDPOINTS.game.match, {
+      const response = await fetch(ENDPOINTS.game.create_match, {
         method: 'POST',
         credentials: 'include',
         headers: { 
@@ -536,9 +538,42 @@ class API {
     }
   }
 
+
+    async submitMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${ENDPOINTS.game.adjust_match}/${Number(matchData.matchId)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+              'Content-Type': 'application/json'
+          },
+        body: JSON.stringify(matchData)
+
+      });
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.submitMatch(matchData, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { success: false, error: 'Authentication expired. Please log in again.', authExpired: true };
+        }
+      }
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to create match' };
+      }
+      return { success: true, data };
+    } catch (error: any) {
+      console.error(`submitMatch error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
   async createTournament(tournamentData: MatchData[], retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(ENDPOINTS.game.tournament, {
+      const response = await fetch(ENDPOINTS.game.create_tournament, {
         method: 'POST',
         credentials: 'include',
         headers: { 
