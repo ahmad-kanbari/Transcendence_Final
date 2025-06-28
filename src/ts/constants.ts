@@ -47,17 +47,45 @@ export const ENDPOINTS = {
         // This will be used with userId appended
     },
     game: {
-        create_tournament: `${baseURL}/tournaments/`, //post create a tournament
-        get_tournament: `${baseURL}/tournaments/`, //get specific tounament :tournamentId
-        get_all_tournaments: `${baseURL}/tournaments`, //get all tournaments
-        create_match_inTournament: `${baseURL}/tournaments/`, //post create a match in tournament /:tournamentId/matches
-        create_match: `${baseURL}/matches`,  // post match 
-        adjust_match: `${baseURL}/matches` // pathch :matchId
-
-
+        // Tournament endpoints
+        create_tournament: `${baseURL}/tournaments`,              // POST /tournaments
+        get_tournament: `${baseURL}/tournaments`,                 // GET /tournaments/:tournamentId  
+        get_all_tournaments: `${baseURL}/tournaments`,            // GET /tournaments?page=1&limit=10
+        create_match_inTournament: `${baseURL}/tournament`,       // POST /tournament/:tournamentId/matches
+        adjust_match_inTournament: `${baseURL}/tournament`,       // PATCH /tournament/:tournamentId/matches/:matchId
+        
+        // Regular match endpoints  
+        create_match: `${baseURL}/matches`,                       // POST /matches
+        adjust_match: `${baseURL}/matches`,                       // PATCH /matches/:matchId
     },
 }; 
+// Usage examples based on your documentation:
 
+// 1. Create tournament: POST /tournaments
+// URL: `${ENDPOINTS.game.create_tournament}`
+// Body: { "player_capacity": 4 }
+
+// 2. Get specific tournament: GET /tournaments/:tournamentId  
+// URL: `${ENDPOINTS.game.get_tournament}/${tournamentId}`
+
+// 3. Get all tournaments: GET /tournaments?page=1&limit=10
+// URL: `${ENDPOINTS.game.get_all_tournaments}?page=${page}&limit=${limit}`
+
+// 4. Create tournament match: POST /tournament/:tournamentId/matches
+// URL: `${ENDPOINTS.game.create_match_inTournament}/${tournamentId}/matches`
+// Body: { "player1_id": 4, "player2_id": null, "player1_name": "mr1", "player2_name": "Morgan" }
+
+// 5. Update tournament match: PATCH /tournament/:tournamentId/matches/:matchId  
+// URL: `${ENDPOINTS.game.adjust_match_inTournament}/${tournamentId}/matches/${matchId}`
+// Body: { "player1_score": 3, "player2_score": 2 }
+
+// 6. Create regular match: POST /matches
+// URL: `${ENDPOINTS.game.create_match}`
+// Body: { "player1_id": 5, "player2_id": null, "player1_name": "mr2", "player2_name": "mr.random", "match_type": "1v1" }
+
+// 7. Update regular match: PATCH /matches/:matchId
+// URL: `${ENDPOINTS.game.adjust_match}/${matchId}`  
+// Body: { "player1_score": 3, "player2_score": 1, "is_multiplayer": false }
 export const VALIDATION_INPUTS = {
     username: {
         minLength: 3,

@@ -56,6 +56,8 @@ interface MatchData {
   match_type: string;
 }
 
+
+
 class API {
   generateDeviceId() {
     return crypto.randomUUID();
@@ -520,7 +522,7 @@ class API {
       if (response.status === 401 && retryCount < 1) {
         const refreshResult = await this.refreshToken();
         if (refreshResult.success) {
-          return await this.submitMatch(matchData, retryCount + 1);
+          return await this.createMatch(matchData, retryCount + 1);
         } else {
           console.error('Token refresh failed:', refreshResult.error);
           utils.cleanUp();
@@ -539,62 +541,139 @@ class API {
   }
 
 
-    async submitMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
-    try {
-      const response = await fetch(`${ENDPOINTS.game.adjust_match}/${Number(matchData.matchId)}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: {
-              'Content-Type': 'application/json'
+  
+    /**
+     * Submit a regular match (1v1 or 1vAi)
+     */
+    async submitRegularMatch(matchData: {
+      matchId: number;
+      player1_score: number;
+      player2_score: number;
+      is_multiplayer: boolean;
+    }, retryCount: number = 0): Promise<ApiResponse> {
+      try {
+        const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.game.adjust_match}/${matchData.matchId}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
           },
-        body: JSON.stringify(matchData)
+          body: JSON.stringify({
+            player1_score: matchData.player1_score,
+            player2_score: matchData.player2_score,
+            is_multiplayer: matchData.is_multiplayer
+          })
+        });
 
-      });
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
-        if (refreshResult.success) {
-          return await this.submitMatch(matchData, retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp();
-          return { success: false, error: 'Authentication expired. Please log in again.', authExpired: true };
+        if (response.status === 401) {
+        
+            console.error('Token refresh failed:', response.statusText);
+            utils.cleanUp();
+            return { 
+              success: false, 
+              error: 'Authentication expired. Please log in again.',
+              authExpired: true 
+            };
         }
-      }
-      const data = await response.json();
-      if (!response.ok) {
-        return { success: false, error: data.error || 'Failed to create match' };
-      }
-      return { success: true, data };
-    } catch (error: any) {
-      console.error(`submitMatch error (attempt ${retryCount + 1}):`, error);
-      return { success: false, error: error.message };
-    }
-  }
 
-  async createTournament(tournamentData: MatchData[], retryCount: number = 0): Promise<ApiResponse> {
+        const data = await response.json();
+        if (!response.ok) {
+          return { success: false, error: data.error || 'Failed to submit Regular match' };
+        }
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error(`submitRegularMatch error (attempt ${retryCount + 1}):`, error);
+        return { success: false, error: error.message };
+      }
+    }
+
+      /**
+     * Submit a multiplayer match
+     */
+    async submitMultiplayerMatch(matchData: {
+      matchId: number;
+      team1_score: number;
+      team2_score: number;
+      is_multiplayer: boolean;
+    }, retryCount: number = 0): Promise<ApiResponse> {
+      try {
+        const response = await fetch(`${ENDPOINTS.game.adjust_match}/${matchData.matchId}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            team1_score: matchData.team1_score,
+            team2_score: matchData.team2_score,
+            is_multiplayer: matchData.is_multiplayer
+          })
+        });
+
+        if (response.status === 401 && retryCount < 1) {
+          const refreshResult = await this.refreshToken();
+          if (refreshResult.success) {
+            return await this.submitMultiplayerMatch(matchData, retryCount + 1);
+          } else {
+            console.error('Token refresh failed:', refreshResult.error);
+            utils.cleanUp();
+            return { 
+              success: false, 
+              error: 'Authentication expired. Please log in again.',
+              authExpired: true 
+            };
+          }
+        }
+
+        const data = await response.json();
+        if (!response.ok) {
+          return { success: false, error: data.error || 'Failed to submit multiplayer match' };
+        }
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error(`submitMultiplayerMatch error (attempt ${retryCount + 1}):`, error);
+        return { success: false, error: error.message };
+      }
+    }
+
+  /**
+   * Create a tournament
+   */
+  async createTournament(playerCapacity: number = 4, retryCount: number = 0): Promise<ApiResponse> {
     try {
       const response = await fetch(ENDPOINTS.game.create_tournament, {
         method: 'POST',
         credentials: 'include',
-        headers: { 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(tournamentData)
+        body: JSON.stringify({
+          player_capacity: playerCapacity
+        })
       });
+
       if (response.status === 401 && retryCount < 1) {
         const refreshResult = await this.refreshToken();
         if (refreshResult.success) {
-          return await this.createTournament(tournamentData, retryCount + 1);
+          return await this.createTournament(playerCapacity, retryCount + 1);
         } else {
           console.error('Token refresh failed:', refreshResult.error);
           utils.cleanUp();
-          return { success: false, error: 'Authentication expired. Please log in again.', authExpired: true };
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
         }
       }
+
       const data = await response.json();
       if (!response.ok) {
         return { success: false, error: data.error || 'Failed to create tournament' };
       }
+
       return { success: true, data };
     } catch (error: any) {
       console.error(`createTournament error (attempt ${retryCount + 1}):`, error);
@@ -602,6 +681,257 @@ class API {
     }
   }
 
+  /**
+   * Create a tournament match
+   */
+  async createTournamentMatch(tournamentId: number, matchData: {
+    player1_id?: number | null;
+    player2_id?: number | null;
+    player1_name: string;
+    player2_name: string;
+  }, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${baseURL}/tournament/${tournamentId}/matches`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          player1_id: matchData.player1_id,
+          player2_id: matchData.player2_id,
+          player1_name: matchData.player1_name,
+          player2_name: matchData.player2_name
+        })
+      });
+
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.createTournamentMatch(tournamentId, matchData, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to create tournament match' };
+      }
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error(`createTournamentMatch error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+
+    /**
+     * Submit a tournament match result
+     */
+    async submitTournamentMatch(tournamentId: number, matchId: number, matchData: {
+      player1_score: number;
+      player2_score: number;
+    }, retryCount: number = 0): Promise<ApiResponse> {
+      try {
+        const response = await fetch(`${baseURL}/tournament/${tournamentId}/matches/${matchId}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            player1_score: matchData.player1_score,
+            player2_score: matchData.player2_score
+          })
+        });
+
+        if (response.status === 401 && retryCount < 1) {
+          const refreshResult = await this.refreshToken();
+          if (refreshResult.success) {
+            return await this.submitTournamentMatch(tournamentId, matchId, matchData, retryCount + 1);
+          } else {
+            console.error('Token refresh failed:', refreshResult.error);
+            utils.cleanUp();
+            return { 
+              success: false, 
+              error: 'Authentication expired. Please log in again.',
+              authExpired: true 
+            };
+          }
+        }
+
+        const data = await response.json();
+        if (!response.ok) {
+          return { success: false, error: data.error || 'Failed to submit tournament match' };
+        }
+
+        return { success: true, data };
+      } catch (error: any) {
+        console.error(`submitTournamentMatch error (attempt ${retryCount + 1}):`, error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    /**
+   * Get all tournaments with pagination
+   */
+  async getAllTournaments(page: number = 1, limit: number = 10, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${baseURL}/tournaments?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.getAllTournaments(page, limit, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to get tournaments' };
+      }
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error(`getAllTournaments error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
+  /**
+ * Get detailed information for a specific tournament
+ * Based on GET /tournaments/:tournamentId endpoint
+ */
+  async getTournamentDetails(tournamentId: number, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      // Validate tournament ID
+      if (!tournamentId || isNaN(tournamentId)) {
+        return { 
+          success: false, 
+          error: 'Invalid tournament ID provided' 
+        };
+      }
+
+      const response = await fetch(`${ENDPOINTS.game.get_tournament}/${tournamentId}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Handle authentication errors with retry
+      if (response.status === 401 && retryCount < 1) {
+        const refreshResult = await this.refreshToken();
+        if (refreshResult.success) {
+          return await this.getTournamentDetails(tournamentId, retryCount + 1);
+        } else {
+          console.error('Token refresh failed:', refreshResult.error);
+          utils.cleanUp();
+          return { 
+            success: false, 
+            error: 'Authentication expired. Please log in again.',
+            authExpired: true 
+          };
+        }
+      }
+
+      // Handle other HTTP errors
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        return { 
+          success: false, 
+          error: errorData.error || `Failed to fetch tournament details: ${response.status} ${response.statusText}` 
+        };
+      }
+
+      const tournamentData = await response.json();
+      
+      return { 
+        success: true, 
+        data: tournamentData 
+      };
+
+    } catch (error: any) {
+      console.error(`getTournamentDetails error (attempt ${retryCount + 1}):`, error);
+      return { 
+        success: false, 
+        error: error.message || 'Network error occurred while fetching tournament details' 
+      };
+    }
+  }
+
+
+  /**
+   * Unified submit match function that routes to appropriate API based on match type
+   */
+  async submitMatchByType(matchData: {
+    matchId: number;
+    match_type: string;
+    player1_score: number;
+    player2_score: number;
+    tournamentId?: number | null;
+  }, retryCount: number = 0): Promise<ApiResponse> {
+    try {
+      switch (matchData.match_type) {
+        case 'multiplayer':
+          return await this.submitMultiplayerMatch({
+            matchId: matchData.matchId,
+            team1_score: matchData.player1_score,
+            team2_score: matchData.player2_score,
+            is_multiplayer: true
+          }, retryCount);
+
+        case 'tournament':
+          if (!matchData.tournamentId) {
+            return { success: false, error: 'Tournament ID is required for tournament matches' };
+          }
+          return await this.submitTournamentMatch(
+            matchData.tournamentId,
+            matchData.matchId,
+            {
+              player1_score: matchData.player1_score,
+              player2_score: matchData.player2_score
+            },
+            retryCount
+          );
+
+        case '1v1':
+        case '1vAi':
+        default:
+          return await this.submitRegularMatch({
+            matchId: matchData.matchId,
+            player1_score: matchData.player1_score,
+            player2_score: matchData.player2_score,
+            is_multiplayer: false
+          }, retryCount);
+      }
+    } catch (error: any) {
+      console.error(`submitMatchByType error (attempt ${retryCount + 1}):`, error);
+      return { success: false, error: error.message };
+    }
+  }
 
   GetFakeUserData(retryCount: number = 0):ApiResponse<UserData> {
     try {

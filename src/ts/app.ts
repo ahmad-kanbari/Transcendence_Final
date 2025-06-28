@@ -18,6 +18,7 @@ import notificationManager from './NotificationManager';
 // import friends from './friend';
 import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
+
 // Define interfaces for state and user
 interface User {
   id?: string;
@@ -653,49 +654,187 @@ class App {
     }
   }
 
-  async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
-    // Construct MatchData with required Player1Id and Player2Id
-    const matchData = {
-      matchId: matchObj.matchId || null,
-      player1_id: matchObj.player1_id || Number(this.state.user?.id),
-      player2_id: matchObj.player2_id || null, // Default to 0 if not provided
-      player1_name: matchObj.player1_name,
-      player2_name: matchObj.player2_name,
-      player1_score: matchObj.player1_score,
-      player2_score: matchObj.player2_score,
-      winner: matchObj.winner,
-      match_type: matchObj.match_type
-    };
-    const result = await api.submitMatch(matchData, 2);
-
-    if (!result.success) {
-      components.showToast('error', 'Match Submission Error', 'An error occurred while submitting the match.', 5000);
+  /**
+ * Submit a match result based on match type
+ * This function will be bound to the game and called when a match ends
+ */
+async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
+  try {
+    // Validate required match data
+    if (!matchObj.matchId) {
+      console.error('Match submission failed: Missing matchId');
+      components.showToast('error', 'Match Submission Error', 'Invalid match data - missing match ID.', 5000);
       return;
     }
 
+    // Prepare match data for submission
+    const matchData = {
+      matchId: Number(matchObj.matchId),
+      match_type: matchObj.match_type,
+      player1_score: matchObj.player1_score,
+      player2_score: matchObj.player2_score,
+      tournamentId: matchObj.tournamentId || null
+    };
+
+    console.log('Submitting match with data:', matchData);
+
+    // Use the unified submission API that routes based on match type
+    const result = await api.submitMatchByType(matchData);
+
+    if (!result.success) {
+      console.error('Match submission failed:', result.error);
+      components.showToast(
+        'error', 
+        'Match Submission Error', 
+        result.error || 'An error occurred while submitting the match.', 
+        5000
+      );
+      return;
+    }
+
+    // Success - update local state and storage
     this.initmatchHistoryArray();
     if (this.state.user && this.state.user.matchHistory) {
-      this.state.user.matchHistory.push(matchObj);
+      this.state.user.matchHistory.push({
+        ...matchObj,
+        submittedAt: new Date().toISOString()
+      });
       localStorage.setItem('user', JSON.stringify(this.state.user));
     }
+
     console.log('Match submitted successfully:', result.data);
-   return result.data.matchId || null;
+    
+    // Show success toast based on match type
+    const matchTypeDisplay = {
+      '1v1': 'Player vs Player',
+      '1vAi': 'Player vs AI',
+      'multiplayer': 'Multiplayer',
+      'tournament': 'Tournament'
+    }[matchObj.match_type] || 'Match';
+    
+    components.showToast(
+      'success', 
+      'Match Submitted', 
+      `${matchTypeDisplay} match result saved successfully!`, 
+      3000
+    );
+
+  } catch (error) {
+    console.error('Unexpected error during match submission:', error);
+    components.showToast(
+      'error', 
+      'Submission Error', 
+      'An unexpected error occurred while submitting the match.', 
+      5000
+    );
   }
+}
 
-  async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
-    // const result = await api.createTournament(matchArray | [], 2);
+/**
+ * Submit tournament results
+ * This function handles the submission of all tournament matches at once
+ */
+async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
+  try {
+    // Validate tournament data
+    if (!Array.isArray(matchArray) || matchArray.length === 0) {
+      console.error('Tournament submission failed: Invalid match array');
+      components.showToast('error', 'Tournament Submission Error', 'No tournament matches to submit.', 5000);
+      return;
+    }
 
-    // if (!result.success) {
-    //   components.showToast('error', 'Tournament Submission Error', 'An error occurred while submitting the tournament.');
-    //   return;
-    // }
+    // Get tournament ID from the first match
+    const tournamentId = matchArray[0]?.tournamentId;
+    if (!tournamentId) {
+      console.error('Tournament submission failed: Missing tournament ID');
+      components.showToast('error', 'Tournament Submission Error', 'Invalid tournament data - missing tournament ID.', 5000);
+      return;
+    }
 
+    console.log('Submitting tournament with matches:', matchArray);
+
+    // Submit each match individually using the tournament API
+    const submissionPromises = matchArray.map(async (match, index) => {
+      if (!match.matchId) {
+        throw new Error(`Match ${index + 1} is missing matchId`);
+      }
+
+      return await api.submitTournamentMatch(
+        Number(tournamentId),
+        Number(match.matchId),
+        {
+          player1_score: match.player1_score,
+          player2_score: match.player2_score
+        }
+      );
+    });
+
+    // Wait for all match submissions to complete
+    const results = await Promise.allSettled(submissionPromises);
+
+    // Check for any failures
+    const failures = results.filter(result => result.status === 'rejected');
+    const successes = results.filter(result => result.status === 'fulfilled');
+
+    if (failures.length > 0) {
+      console.error('Some tournament matches failed to submit:', failures);
+      components.showToast(
+        'warning', 
+        'Partial Tournament Submission', 
+        `${successes.length}/${matchArray.length} matches submitted successfully.`, 
+        5000
+      );
+    } else {
+      console.log('All tournament matches submitted successfully');
+      components.showToast(
+        'success', 
+        'Tournament Completed', 
+        'All tournament matches submitted successfully!', 
+        4000
+      );
+    }
+
+    // Update local state regardless of partial failures
     this.initmatchHistoryArray();
     if (this.state.user && this.state.user.matchHistory) {
-      this.state.user.matchHistory.push(matchArray);
+      // Add tournament data to match history
+      const tournamentData = {
+        type: 'tournament',
+        tournamentId: tournamentId,
+        matches: matchArray,
+        completedAt: new Date().toISOString(),
+        totalMatches: matchArray.length,
+        successfulSubmissions: successes.length
+      };
+      
+      this.state.user.matchHistory.push(tournamentData as any);
       localStorage.setItem('user', JSON.stringify(this.state.user));
     }
+
+    // Get tournament details to show final results
+    try {
+      const tournamentDetails = await api.getTournamentDetails(Number(tournamentId));
+      if (tournamentDetails.success) {
+        console.log('Tournament completed:', tournamentDetails.data);
+        
+        // You can add additional UI updates here based on tournament completion
+        // For example, showing the final bracket or winner announcement
+      }
+    } catch (detailsError) {
+      console.warn('Could not fetch tournament details:', detailsError);
+    }
+
+  } catch (error) {
+    console.error('Unexpected error during tournament submission:', error);
+    components.showToast(
+      'error', 
+      'Tournament Submission Error', 
+      'An unexpected error occurred while submitting the tournament.', 
+      5000
+    );
   }
+}
+
   destroy(): void {
         socketService.destroy();
         chat.destroy();

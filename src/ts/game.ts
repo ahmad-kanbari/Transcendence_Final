@@ -101,6 +101,8 @@ class PongGame {
     winner: string;
     match_type: string;
     tournamentId?: number | null;
+    team_1_score?: number;
+    team_2_score?: number;
    
 
     } = {
@@ -643,47 +645,51 @@ class PongGame {
     /**
      * Start the game
      */
-    startGame() : void {
-        // Hide the start text
-        document.getElementById('startText')!.style.display = 'none';
-        
-        // Start the game loop
-        this.gameRunning = true;
-        this.lastTime = performance.now();
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);
-        
-        const storedUser = localStorage.getItem('user');
-        const userData = JSON.parse(storedUser ?? '{}');
-        //create a match object  
-        console.log("userData in game before creating match:", userData);
-        this.matchObj = {
-            matchId: null,
-            player1_id: Number(userData.user.id),
-            player2_id: null,
-            player1_name: userData.user.username || this.player1Name!.textContent || 'PLAYER 1',
-            player2_name: this.player2Name!.textContent || 'PLAYER 2',
-            player1_score: 0,
-            player2_score: 0,
-            winner: '',
-            match_type: this.isMultiplayerMode ? 'multiplayer' : (this.isAIMode ? '1vAi' : (this.isTournamentMode) ? 'tournament': '1v1'),
-        };
-        api.createMatch(this.matchObj, 2).then((response: any) => {
-            console.log('Response from createMatch:', response);
-            if (response && response.success) {
-                this.matchObj.matchId = Number(response.data.match.id) || null;
-                this.matchObj.player1_id = response.data.match.player1_id;
-                this.matchObj.player2_id = (typeof response.data.match.player2_id === 'number') ? response.data.player2_id : null;
-                this.matchObj.player1_name = response.data.match.player1_name;
-                this.matchObj.player2_name = response.data.match.player2_name;
-                this.matchObj.tournamentId = response.data.match.tournamentId || null;
-                console.log('Match created successfully:', this.matchObj);
-            } else {
-                console.error('Failed to create match:', response);
+  /**
+ * Start the game
+ */
+async startGame(): Promise<void> {
+    // Hide the start text
+    document.getElementById('startText')!.style.display = 'none';
+    
+    // Start the game loop
+    this.gameRunning = true;
+    this.lastTime = performance.now();
+    this.animationFrameId = requestAnimationFrame(this.gameLoop);
+    
+    const storedUser = localStorage.getItem('user');
+    const userData = JSON.parse(storedUser ?? '{}');
+    
+    console.log("userData in game before creating match:", userData);
+    
+    // Initialize base match object
+    this.matchObj = {
+        matchId: null,
+        player1_id: Number(userData.user?.id) || 0,
+        player2_id: null,
+        player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER 1',
+        player2_name: this.player2Name!.textContent || 'PLAYER 2',
+        player1_score: 0,
+        player2_score: 0,
+        winner: '',
+        match_type: this.isMultiplayerMode ? 'multiplayer' : (this.isAIMode ? '1vAi' : (this.isTournamentMode ? 'tournament' : '1v1')),
+    };
+
+    // Submit single match if not in tournament
+    if (!this.isTournamentMode) {
+        if (this.matchObj && this.submitMatch) {
+            const response = await api.createMatch(this.matchObj);
+            console.log("Match created successfully:", response);
+            if (response.success) {
+                this.matchObj.matchId = response.data.id;
+                console.log("Match created successfully: with ID", this.matchObj.matchId);
+            }else{
+                console.error("Error creating match:", response.message);
             }
-        }).catch((error: any) => {
-            console.error('Error creating match:', error);
-        });
+        }
+
     }
+}
 
     /**
      * Reset the ball to the center
@@ -1266,15 +1272,32 @@ class PongGame {
         document.getElementById('winScreen')!.style.display = 'block';
         
         // Submit single match if not in tournament, then clear matchObj
-        if (!this.isTournamentMode) {
+        if (!this.isTournamentMode || !this.isMultiplayerMode) {
+            console.log("Submitting Regular match:", this.matchObj);
             if (this.matchObj){
-                if (this.submitMatch) {
-                    this.submitMatch(this.matchObj!);
-                }
+                    console.log("match ID OF REGUALR MATCH", this.matchObj.matchId);
+                    api.submitRegularMatch!({
+                        matchId: this.matchObj.matchId!,
+                        player1_score: this.matchObj.player1_score,
+                        player2_score: this.matchObj.player2_score,
+                        is_multiplayer: this.isMultiplayerMode,
+               
+                    });
+                
             }
-          
-       
-        }      
+        }   
+        if (this.isMultiplayerMode) {
+            // Reset multiplayer paddles for next match
+            if (this.matchObj) {
+                api.submitMultiplayerMatch({
+                    matchId: this.matchObj.matchId!, 
+                    team1_score: this.matchObj.player1_score!,
+                    team2_score: this.matchObj.player2_score!,
+                    is_multiplayer:true,
+                });
+            }
+        }
+
     }
 
 
