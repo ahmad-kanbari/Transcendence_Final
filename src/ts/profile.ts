@@ -35,6 +35,30 @@ interface Tournament {
   matches: any[];
 }
 
+// Add after existing interfaces
+interface TournamentHistory {
+  id: number;
+  player_capacity: number;
+  created_at: string;
+  participants: string[];
+  matches: any[];
+  isComplete: boolean;
+  winner?: string;
+}
+
+interface UserGameplayStats {
+  totalMatches: number;
+  tournamentMatches: number;
+  regularMatches: number;
+  multiplayerMatches: number;
+  aiMatches: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  tournamentsPlayed: number;
+  tournamentsWon: number;
+}
+
 class Profile {
   profileForm: ProfileForm;
   initialized: boolean;
@@ -128,8 +152,16 @@ class Profile {
         userData = userData.user.user;
       }
 
+
+
+      // ✅ WITH this expanded version:
       let userFullData = await api.getUserById(userData.id);
 
+      // Fetch user's match history and tournaments
+      const [matchHistory, tournamentHistory] = await Promise.all([
+        this.fetchUserMatchHistory(userData.id),
+        this.fetchUserTournamentHistory(userData.id)
+      ]);
       this.populateProfileData(userFullData);
       
     } catch (err) {
@@ -138,7 +170,90 @@ class Profile {
     }
   }
   
-  populateProfileData(userData?: any): void {
+  // ✅ ADD these new methods:
+async fetchUserMatchHistory(userId: string): Promise<any[]> {
+  try {
+    // This would be your API endpoint for user match history
+    const response = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}/matches`);
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.matches || [];
+  } catch (error) {
+    console.error('Error fetching match history:', error);
+    return [];
+  }
+}
+
+  async fetchUserTournamentHistory(userId: string): Promise<TournamentHistory[]> {
+    try {
+      // Get all tournaments the user participated in
+      const response = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}/tournaments`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.tournaments || [];
+    } catch (error) {
+      console.error('Error fetching tournament history:', error);
+      return [];
+    }
+  }
+
+  calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[]): UserGameplayStats {
+    const stats: UserGameplayStats = {
+      totalMatches: 0,
+      tournamentMatches: 0,
+      regularMatches: 0,
+      multiplayerMatches: 0,
+      aiMatches: 0,
+      wins: 0,
+      losses: 0,
+      winRate: 0,
+      tournamentsPlayed: tournamentHistory.length,
+      tournamentsWon: 0
+    };
+
+    const currentUser = app.getUsername();
+
+    // Process regular matches
+    matchHistory.forEach(match => {
+      stats.totalMatches++;
+      
+      switch(match.match_type) {
+        case 'tournament':
+          stats.tournamentMatches++;
+          break;
+        case 'multiplayer':
+          stats.multiplayerMatches++;
+          break;
+        case '1vAi':
+          stats.aiMatches++;
+          break;
+        default:
+          stats.regularMatches++;
+      }
+
+      if (match.winner === currentUser) {
+        stats.wins++;
+      } else {
+        stats.losses++;
+      }
+    });
+
+    // Process tournament matches and wins
+    tournamentHistory.forEach(tournament => {
+      if (tournament.winner === currentUser) {
+        stats.tournamentsWon++;
+      }
+      // Add tournament matches to total
+      stats.tournamentMatches += tournament.matches.length;
+      stats.totalMatches += tournament.matches.length;
+    });
+
+    // Calculate win rate
+    stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
+
+    return stats;
+  }
+  populateProfileData(userData?: any, matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
     
     const user = userData.data || app.state.user;
         
@@ -177,24 +292,37 @@ class Profile {
     //   console.log('Setting email field value:', app.state.user!.email,'another way : ', app.getEmail());
     //   this.profileForm.emailField!.value = app.state.user!.email || app.getEmail() || '';
     
-    if (this.profileForm.statsTotalGames)
-      this.profileForm.statsTotalGames.textContent = app.getTotalGamesPlayed().toString() || '0';
+    // if (this.profileForm.statsTotalGames)
+    //   this.profileForm.statsTotalGames.textContent = app.getTotalGamesPlayed().toString() || '0';
     
-    if (this.profileForm.statsWins)
-      this.profileForm.statsWins.textContent = app.getTotalWins().toString() || '0';
+    // if (this.profileForm.statsWins)
+    //   this.profileForm.statsWins.textContent = app.getTotalWins().toString() || '0';
     
-    if (this.profileForm.statsLosses)
-      this.profileForm.statsLosses.textContent = app.getTotalLosses().toString() || '0';
+    // if (this.profileForm.statsLosses)
+    //   this.profileForm.statsLosses.textContent = app.getTotalLosses().toString() || '0';
     
-    if (this.profileForm.statsWinRate)
-      this.profileForm.statsWinRate.textContent = app.getWinRate().toString() || '0';
+    // if (this.profileForm.statsWinRate)
+    //   this.profileForm.statsWinRate.textContent = app.getWinRate().toString() || '0';
     
-    if (this.profileForm.statsRank)
-      this.profileForm.statsRank.textContent = app.getRank() || 'Beginner';
-    
-    this.update2FAUI(user);
-    this.renderMatchHistory();
-  }
+    // if (this.profileForm.statsRank)
+    //   this.profileForm.statsRank.textContent = app.getRank() || 'Beginner';
+    // ✅ WITH this enhanced version:
+  const userStats = this.calculateUserStats(matchHistory, tournamentHistory);
+
+  if (this.profileForm.statsTotalGames)
+    this.profileForm.statsTotalGames.textContent = userStats.totalMatches.toString();
+
+  if (this.profileForm.statsWins)
+    this.profileForm.statsWins.textContent = userStats.wins.toString();
+
+  if (this.profileForm.statsLosses)
+    this.profileForm.statsLosses.textContent = userStats.losses.toString();
+
+  if (this.profileForm.statsWinRate)
+    this.profileForm.statsWinRate.textContent = `${userStats.winRate}%`;
+      this.update2FAUI(user);
+      this.renderMatchHistory(matchHistory, tournamentHistory);
+    }
 
   setupProfilePictureHandlers(): void {
     const { uploadBtn, removeBtn, profilePictureInput, profileAvatar } = this.profileForm;
@@ -722,7 +850,9 @@ init2FA(): void {
     }
   }
 
-  renderMatchHistory(): void {
+
+  // ✅ WITH this enhanced version:
+  renderMatchHistory(matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
     const tableBody = document.getElementById('matchHistoryTable');
     if (!tableBody) return;
     
@@ -733,6 +863,7 @@ init2FA(): void {
     if (!tableHead) return;
 
     tableHead.innerHTML = `<tr>
+      <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Date</th>
       <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Type</th>
       <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Vs</th>
       <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Score</th>
@@ -740,33 +871,97 @@ init2FA(): void {
     </tr>`;
 
     const currentUser = app.getUsername();
-    const history = app.state.user?.matchHistory || [];
-    const entries = utils.extractMatchData(history, currentUser);
-
     tableBody.innerHTML = '';
-    if (entries.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No match history available</td></tr>`;
-    } else {
-      entries.forEach(entry => {
+
+    // Combine and sort all matches by date
+    const allMatches : any = [];
+    
+    // Add regular matches
+    matchHistory.forEach(match => {
+      allMatches.push({
+        ...match,
+        source: 'regular',
+        date: new Date(match.created_at || match.date)
+      });
+    });
+
+    // Add tournament matches
+    tournamentHistory.forEach(tournament => {
+      // Add tournament header
+      allMatches.push({
+        type: 'tournament-header',
+        tournament_id: tournament.id,
+        winner: tournament.winner,
+        participants: tournament.participants,
+        date: new Date(tournament.created_at),
+        source: 'tournament-header'
+      });
+
+      // Add each match in the tournament
+      tournament.matches.forEach(match => {
+        allMatches.push({
+          ...match,
+          source: 'tournament',
+          tournament_id: tournament.id,
+          tournament_winner: tournament.winner,
+          date: new Date(match.created_at || match.date)
+        });
+      });
+    });
+
+    // Sort by date (newest first)
+    allMatches.sort((a : any, b : any) => b.date.getTime() - a.date.getTime());
+
+    if (allMatches.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-400">No match history available</td></tr>`;
+      return;
+    }
+
+    // Render all matches
+    allMatches.forEach((match : any) => {
+      if (match.source === 'tournament-header') {
+        // Tournament header row
         const tr = document.createElement('tr');
-        if (entry.winner === currentUser) {
+        tr.classList.add('bg-cyber-blue', 'bg-opacity-20');
+        tr.innerHTML = `
+          <td colspan="5" class="text-center font-cyber text-cyber-blue px-4 py-3">
+            🏆 Tournament #${match.tournament_id} • ${match.participants.length} Players • Winner: ${match.winner}
+          </td>`;
+        tableBody.appendChild(tr);
+      } else {
+        // Regular match or tournament match row
+        const tr = document.createElement('tr');
+        
+        // Style based on result
+        if (match.winner === currentUser || match.tournament_winner === currentUser) {
           tr.classList.add('match-win');
         } else {
           tr.classList.add('match-loss');
         }
+
+        const matchType = match.source === 'tournament' ? 'Tournament' : 
+                        match.match_type === '1vAi' ? 'vs AI' :
+                        match.match_type === 'multiplayer' ? 'Multiplayer' : '1v1';
+        
+        const opponent = match.match_type === 'multiplayer' ? 
+                        `${match.player1_name} vs ${match.player2_name}` :
+                        match.player1_name === currentUser ? match.player2_name : match.player1_name;
+        
+        const score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+        const result = match.winner === currentUser ? '🏆 Win' : '❌ Loss';
+        const date = match.date.toLocaleDateString();
+
         tr.innerHTML = `
-          <td class="px-4 py-3">${entry.type}</td>
-          <td class="px-4 py-3">${entry.vs}</td>
-          <td class="px-4 py-3">${entry.score}</td>
-          <td class="px-4 py-3">${entry.winner}</td>
+          <td class="px-4 py-3 text-sm">${date}</td>
+          <td class="px-4 py-3">${matchType}</td>
+          <td class="px-4 py-3">${opponent}</td>
+          <td class="px-4 py-3">${score}</td>
+          <td class="px-4 py-3">${result}</td>
         `;
         tableBody.appendChild(tr);
-      });
-    }
-    // Render tournaments after match history
-    this.renderTournamentMatches(tableBody);
+      }
+    });
   }
-
   // Render tournament matches grouped with a blank separator before each
   renderTournamentMatches(tableBody: HTMLElement): void {
     const currentUser = app.getUsername();

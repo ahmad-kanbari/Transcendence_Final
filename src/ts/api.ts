@@ -691,7 +691,7 @@ class API {
     player2_name: string;
   }, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${baseURL}/tournament/${tournamentId}/matches`, {
+      const response = await fetch(`${baseURL}/tournaments/${tournamentId}/matches`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -742,7 +742,7 @@ class API {
       player2_score: number;
     }, retryCount: number = 0): Promise<ApiResponse> {
       try {
-        const response = await fetch(`${baseURL}/tournament/${tournamentId}/matches/${matchId}`, {
+        const response = await fetch(`${baseURL}/tournaments/${tournamentId}/matches/${matchId}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: {

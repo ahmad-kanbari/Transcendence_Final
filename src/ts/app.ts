@@ -341,6 +341,7 @@ class App {
             this.state.isAuthenticated = result.isAuthenticated;
             login.updateUIAuthState();
             pages.showPage('game');
+           
             game.init(
               this.getUsername(),
               this.setSubmitMatchFunction.bind(this),
