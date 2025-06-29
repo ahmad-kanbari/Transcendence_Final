@@ -70,6 +70,58 @@
                                 <label class="font-cyber text-cyber-blue block mb-2">Email</label>
                                 <input type="email" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingEmail" readonly>
                             </div> -->
+                            <div class="mt-4 flex gap-2 justify-center">
+                                <button id="showDetailedStatsBtn" class="cyber-btn-blue text-sm py-2 px-4 rounded">
+                                    <i class="bi bi-bar-chart mr-1"></i>Detailed Stats
+                                </button>
+                                <button id="showMatchHistoryBtn" class="cyber-btn-green text-sm py-2 px-4 rounded">
+                                    <i class="bi bi-list-ul mr-1"></i>Match History
+                                </button>
+                            </div>
+                            
+
+                            <!-- Detailed Statistics Modal -->
+                            <div id="detailedStatsModal" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-70">
+                                <div class="bg-cyber-darker border-2 border-cyber-blue rounded-lg max-w-4xl w-full mx-4 shadow-neon-blue max-h-[80vh] overflow-y-auto">
+                                    <div class="flex items-center justify-between p-4 border-b border-cyber-blue">
+                                        <h5 class="font-cyber text-cyber-blue text-xl">Detailed Statistics</h5>
+                                        <button type="button" class="text-cyber-blue hover:text-cyber-pink text-2xl" id="closeDetailedStatsBtn">&times;</button>
+                                    </div>
+                                    <div class="p-6">
+                                        <div id="detailedStatsContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <!-- Stats will be populated here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Match History Modal -->
+                            <div id="matchHistoryModal" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-70">
+                                <div class="bg-cyber-darker border-2 border-cyber-blue rounded-lg max-w-6xl w-full mx-4 shadow-neon-blue max-h-[80vh] overflow-y-auto">
+                                    <div class="flex items-center justify-between p-4 border-b border-cyber-blue">
+                                        <h5 class="font-cyber text-cyber-blue text-xl">Complete Match History</h5>
+                                        <button type="button" class="text-cyber-blue hover:text-cyber-pink text-2xl" id="closeMatchHistoryBtn">&times;</button>
+                                    </div>
+                                    <div class="p-4">
+                                        <div class="overflow-x-auto">
+                                            <table class="w-full">
+                                                <thead class="bg-cyber-darker border-b border-cyber-blue">
+                                                    <tr>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Date</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Type</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Opponent</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Score</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Result</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="fullMatchHistoryTable" class="divide-y divide-cyber-blue divide-opacity-30">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="p-4 border border-cyber-blue rounded bg-cyber-darker shadow-neon-blue bg-opacity-70">
                                 <div class="flex items-center justify-between mb-3">
                                     <h5 class="font-cyber text-cyber-blue mb-0 twoFA-header">Two-Factor Authentication</h5>
@@ -92,7 +144,7 @@
                     </div>
                 </div>
             
-                <div class="lg:col-span-12">
+                <!-- <div class="lg:col-span-12">
                     <div class="cyber-container overflow-hidden">
                         <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4">Recent Matches</div>
                         <div class="overflow-x-auto">
@@ -105,6 +157,7 @@
                                         <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Result</th>
                                     </tr>
                                 </thead>
+                                
                                 <tbody id="matchHistoryTable" class="divide-y divide-cyber-blue divide-opacity-30">
                                     <tr>
                                         <td colspan="4" class="text-center py-6 text-gray-400">No match history available</td>
@@ -113,7 +166,7 @@
                             </table>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
             
             <!-- Two-Factor Authentication Modal -->

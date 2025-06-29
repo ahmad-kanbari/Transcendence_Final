@@ -85,6 +85,9 @@ class Profile {
     });
     
     this.initialized = true;
+    // ❌ ADD this line after fetching match history:
+// Store match history for modals
+   
   }
   
   getProfileForm(): ProfileForm {
@@ -111,6 +114,7 @@ class Profile {
     this.loadProfileData();
     this.setupProfilePictureHandlers();
     this.init2FA();
+    this.setupStatsButtons();
 
     if (this.profileForm.displayNameField) 
       utils.setupInputField(this.profileForm.displayNameField, 'username', components);
@@ -156,12 +160,15 @@ class Profile {
 
       // ✅ WITH this expanded version:
       let userFullData = await api.getUserById(userData.id);
-
+      console.log('Full user data:in porfile', userFullData);
       // Fetch user's match history and tournaments
-      const [matchHistory, tournamentHistory] = await Promise.all([
-        this.fetchUserMatchHistory(userData.id),
-        this.fetchUserTournamentHistory(userData.id)
+      const [matchHistory] = await Promise.all([
+        this.fetchUserMatchHistory(userFullData.data['id'] || userData.id),
+        // this.fetchUserTournamentHistory(userFullData.data['id'] || userData.id)
       ]);
+       localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
+      console.log('Match history:', matchHistory);
+      // console.log('Tournament history:', tournamentHistory);
       this.populateProfileData(userFullData);
       
     } catch (err) {
@@ -169,15 +176,473 @@ class Profile {
       components.showToast('error', 'Profile Error', 'Failed to load profile data');
     }
   }
+
+  // ✅ ADD these new methods:
+
+setupStatsButtons(): void {
+  const showDetailedStatsBtn = document.getElementById('showDetailedStatsBtn');
+  const showMatchHistoryBtn = document.getElementById('showMatchHistoryBtn');
+  const closeDetailedStatsBtn = document.getElementById('closeDetailedStatsBtn');
+  const closeMatchHistoryBtn = document.getElementById('closeMatchHistoryBtn');
+
+  if (showDetailedStatsBtn) {
+    showDetailedStatsBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.showDetailedStatsModal();
+    });
+  }
+
+  if (showMatchHistoryBtn) {
+
+    showMatchHistoryBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.showMatchHistoryModal();
+    });
+  }
+
+  if (closeDetailedStatsBtn) {
+    closeDetailedStatsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      document.getElementById('detailedStatsModal')!.classList.add('hidden');
+    });
+  }
+
+  if (closeMatchHistoryBtn) {
+    closeMatchHistoryBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('matchHistoryModal')!.classList.add('hidden');
+    });
+  }
+}
+
+calculateDetailedStats(matchHistory: any[]): any {
+  const currentUser = app.getUsername();
+  const stats = {
+    // Basic stats
+    totalMatches: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    
+    // Match type breakdown
+    regularMatches: 0,
+    regularWins: 0,
+    aiMatches: 0,
+    aiWins: 0,
+    multiplayerMatches: 0,
+    multiplayerWins: 0,
+    tournamentMatches: 0,
+    tournamentWins: 0,
+    
+    // Tournament specific
+    tournamentsParticipated: new Set(),
+    tournamentsWon: new Set(),
+    
+    // Score analysis
+    totalPointsScored: 0,
+    totalPointsConceded: 0,
+    avgPointsPerMatch: 0,
+    biggestWin: { score: '', opponent: '', date: '' },
+    closestMatch: { score: '', opponent: '', date: '' },
+    
+    // Streaks and patterns
+    currentWinStreak: 0,
+    longestWinStreak: 0,
+    currentLossStreak: 0,
+    longestLossStreak: 0,
+    
+    // Monthly breakdown
+    monthlyStats: {} as any,
+    
+    // Opponent analysis
+    opponents: {} as any
+  };
+
+  let currentWinStreak = 0;
+  let currentLossStreak = 0;
+  let longestWinStreak = 0;
+  let longestLossStreak = 0;
+  let biggestWinMargin = 0;
+  let closestMargin = Infinity;
+
+  // Sort matches by date for streak calculation
+  const sortedMatches = matchHistory
+    .filter(match => match.status === 'finished')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  sortedMatches.forEach(match => {
+    let userWon = false;
+    let userScore = 0;
+    let opponentScore = 0;
+    let opponent = '';
+    
+    stats.totalMatches++;
+    
+    // Process based on match type
+    if (match.match_type === 'multiplayer') {
+      stats.multiplayerMatches++;
+      const userTeam = match.teams?.find((team: any) => 
+        team.players.some((player: any) => player.player_name === currentUser)
+      );
+      const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
+      
+      if (userTeam && opponentTeam) {
+        userWon = userTeam.score > opponentTeam.score;
+        userScore = userTeam.score;
+        opponentScore = opponentTeam.score;
+        opponent = opponentTeam.name;
+        
+        if (userWon) stats.multiplayerWins++;
+      }
+    } else {
+      // Regular, AI, or tournament matches
+      const isPlayer1 = match.player1_name === currentUser;
+      userScore = isPlayer1 ? match.player1_score : match.player2_score;
+      opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
+      opponent = isPlayer1 ? match.player2_name : match.player1_name;
+      userWon = userScore > opponentScore;
+      
+      switch(match.match_type) {
+        case 'tournament':
+          stats.tournamentMatches++;
+          stats.tournamentsParticipated.add(match.tournament_id);
+          if (userWon) {
+            stats.tournamentWins++;
+            stats.tournamentsWon.add(match.tournament_id);
+          }
+          break;
+        case '1vAi':
+          stats.aiMatches++;
+          if (userWon) stats.aiWins++;
+          break;
+        default:
+          stats.regularMatches++;
+          if (userWon) stats.regularWins++;
+      }
+    }
+    
+    // Track total points
+    stats.totalPointsScored += userScore;
+    stats.totalPointsConceded += opponentScore;
+    
+    // Track biggest win and closest match
+    const margin = Math.abs(userScore - opponentScore);
+    if (userWon && margin > biggestWinMargin) {
+      biggestWinMargin = margin;
+      stats.biggestWin = {
+        score: `${userScore}-${opponentScore}`,
+        opponent,
+        date: new Date(match.created_at).toLocaleDateString()
+      };
+    }
+    if (margin < closestMargin) {
+      closestMargin = margin;
+      stats.closestMatch = {
+        score: `${userScore}-${opponentScore}`,
+        opponent,
+        date: new Date(match.created_at).toLocaleDateString()
+      };
+    }
+    
+    // Track opponents
+    if (!stats.opponents[opponent]) {
+      stats.opponents[opponent] = { matches: 0, wins: 0 };
+    }
+    stats.opponents[opponent].matches++;
+    if (userWon) stats.opponents[opponent].wins++;
+    
+    // Track monthly stats
+    const month = new Date(match.created_at).toISOString().slice(0, 7);
+    if (!stats.monthlyStats[month]) {
+      stats.monthlyStats[month] = { matches: 0, wins: 0 };
+    }
+    stats.monthlyStats[month].matches++;
+    if (userWon) stats.monthlyStats[month].wins++;
+    
+    // Calculate streaks
+    if (userWon) {
+      stats.wins++;
+      currentWinStreak++;
+      currentLossStreak = 0;
+      longestWinStreak = Math.max(longestWinStreak, currentWinStreak);
+    } else {
+      stats.losses++;
+      currentLossStreak++;
+      currentWinStreak = 0;
+      longestLossStreak = Math.max(longestLossStreak, currentLossStreak);
+    }
+  });
+
+  // Finalize calculations
+  stats.currentWinStreak = currentWinStreak;
+  stats.currentLossStreak = currentLossStreak;
+  stats.longestWinStreak = longestWinStreak;
+  stats.longestLossStreak = longestLossStreak;
+  stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
+  stats.avgPointsPerMatch = stats.totalMatches > 0 ? Math.round(stats.totalPointsScored / stats.totalMatches * 100) / 100 : 0;
+
+  return stats;
+}
+
+// ❌ REPLACE the showDetailedStatsModal method with this cyberpunk-themed version:
+
+showDetailedStatsModal(): void {
+  const modal = document.getElementById('detailedStatsModal');
+  const content = document.getElementById('detailedStatsContent');
+  
+  if (!modal || !content) return;
+  
+  // Get current match history (you'll need to store this from loadProfileData)
+  const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
+  const stats = this.calculateDetailedStats(storedMatches);
+  
+  content.innerHTML = `
+    <!-- Match Types Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🎮 MATCH TYPES</h6>
+      </div>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-cyber-green shadow-neon-green hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">REGULAR</span>
+          <span class="text-cyber-green font-cyber font-bold text-xl">${stats.regularWins}/${stats.regularMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-cyber-pink shadow-neon-pink hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">AI MATCHES</span>
+          <span class="text-cyber-pink font-cyber font-bold text-xl">${stats.aiWins}/${stats.aiMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-yellow-400 hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">MULTIPLAYER</span>
+          <span class="text-yellow-400 font-cyber font-bold text-xl">${stats.multiplayerWins}/${stats.multiplayerMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-purple-400 hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">TOURNAMENT</span>
+          <span class="text-purple-400 font-cyber font-bold text-xl">${stats.tournamentWins}/${stats.tournamentMatches}</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tournaments Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
+          <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
+        </div>
+        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
+          <div class="text-sm font-cyber text-gray-300">WON</div>
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
+          <span class="text-cyber-dark font-cyber font-bold text-lg">
+            ${stats.tournamentsParticipated.size > 0 ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100) : 0}% WIN RATE
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scoring Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-green rounded-lg p-6 shadow-lg hover:shadow-neon-green transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-green rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-green text-lg font-bold animate-glow">📊 SCORING MATRIX</h6>
+      </div>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-2 bg-cyber-dark rounded">
+          <span class="font-cyber text-gray-300">POINTS SCORED</span>
+          <span class="text-cyber-green font-cyber font-bold text-2xl animate-glow">${stats.totalPointsScored}</span>
+        </div>
+        <div class="w-full bg-cyber-dark rounded-full h-3 border border-cyber-blue">
+          <div class="bg-gradient-to-r from-cyber-green via-cyber-blue to-cyber-pink h-3 rounded-full animate-pulse" 
+               style="width: ${stats.totalPointsScored > 0 ? Math.min((stats.totalPointsScored / (stats.totalPointsScored + stats.totalPointsConceded)) * 100, 100) : 0}%"></div>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-cyber-dark rounded">
+          <span class="font-cyber text-gray-300">POINTS CONCEDED</span>
+          <span class="text-cyber-pink font-cyber font-bold text-2xl">${stats.totalPointsConceded}</span>
+        </div>
+        <div class="text-center mt-4 p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-cyber-blue font-cyber font-bold text-2xl animate-glow">${stats.avgPointsPerMatch}</div>
+          <div class="text-sm font-cyber text-gray-300">AVG PER MATCH</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Streaks Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-pink rounded-lg p-6 shadow-lg hover:shadow-neon-pink transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-pink rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-pink text-lg font-bold animate-glow">🔥 STREAK DATA</h6>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-green to-green-600 rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.currentWinStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">CURRENT WIN</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-blue to-blue-600 rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.longestWinStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">LONGEST WIN</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-pink to-red-600 rounded-lg border border-cyber-pink shadow-neon-pink">
+          <div class="text-3xl font-cyber font-bold text-white">${stats.currentLossStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">CURRENT LOSS</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg border border-purple-400">
+          <div class="text-3xl font-cyber font-bold text-white">${stats.longestLossStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">LONGEST LOSS</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notable Matches Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-purple-400 rounded-lg p-6 shadow-lg hover:shadow-purple-400 transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-purple-400 rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-purple-400 text-lg font-bold animate-glow">⭐ NOTABLE ENCOUNTERS</h6>
+      </div>
+      <div class="space-y-4">
+        <div class="p-4 bg-gradient-to-r from-cyber-green to-green-600 rounded-lg border-2 border-cyber-green shadow-neon-green">
+          <div class="flex items-center mb-2">
+            <span class="text-3xl mr-3">🏆</span>
+            <span class="font-cyber font-bold text-white text-lg">DOMINANT VICTORY</span>
+          </div>
+          <div class="text-white font-cyber font-bold text-2xl animate-glow">${stats.biggestWin.score}</div>
+          <div class="text-gray-200 font-cyber text-sm">VS ${stats.biggestWin.opponent}</div>
+          <div class="text-gray-300 font-cyber text-xs">${stats.biggestWin.date}</div>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-r from-cyber-pink to-red-600 rounded-lg border-2 border-cyber-pink shadow-neon-pink">
+          <div class="flex items-center mb-2">
+            <span class="text-3xl mr-3">🎯</span>
+            <span class="font-cyber font-bold text-white text-lg">CLOSEST BATTLE</span>
+          </div>
+          <div class="text-white font-cyber font-bold text-2xl animate-glow">${stats.closestMatch.score}</div>
+          <div class="text-gray-200 font-cyber text-sm">VS ${stats.closestMatch.opponent}</div>
+          <div class="text-gray-300 font-cyber text-xs">${stats.closestMatch.date}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Top Opponents Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyan-400 rounded-lg p-6 shadow-lg hover:shadow-cyan-400 transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyan-400 rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyan-400 text-lg font-bold animate-glow">👥 RIVAL ANALYSIS</h6>
+      </div>
+      <div class="space-y-3">
+        ${Object.entries(stats.opponents)
+          .sort(([,a]: any, [,b]: any) => b.matches - a.matches)
+          .slice(0, 5)
+          .map(([name, data]: any, index) => {
+            const winRate = Math.round((data.wins / data.matches) * 100);
+            const borders = ['border-cyber-blue', 'border-cyber-green', 'border-cyber-pink', 'border-yellow-400', 'border-purple-400'];
+            const shadows = ['shadow-neon-blue', 'shadow-neon-green', 'shadow-neon-pink', '', ''];
+            const ranks = ['🥇', '🥈', '🥉', '🏅', '🎖️'];
+            const rankTitles = ['PRIME TARGET', 'MAJOR RIVAL', 'KNOWN ENEMY', 'REGULAR FOE', 'OCCASIONAL MATCH'];
+            
+            return `
+              <div class="flex items-center justify-between p-4 bg-cyber-dark rounded-lg border-2 ${borders[index]} ${shadows[index]} hover:bg-opacity-80 transition-all">
+                <div class="flex items-center">
+                  <span class="text-3xl mr-4">${ranks[index]}</span>
+                  <div>
+                    <div class="text-white font-cyber font-bold text-lg">${name}</div>
+                    <div class="text-gray-400 font-cyber text-xs">${rankTitles[index]}</div>
+                    <div class="text-gray-500 font-cyber text-xs">${data.matches} ENCOUNTERS</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-cyan-400 font-cyber font-bold text-xl">${data.wins}W</div>
+                  <div class="text-xs font-cyber ${winRate >= 50 ? 'text-cyber-green' : 'text-cyber-pink'}">${winRate}%</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+      </div>
+    </div>
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+showMatchHistoryModal(): void {
+  const modal = document.getElementById('matchHistoryModal');
+  const tbody = document.getElementById('fullMatchHistoryTable');
+  
+  if (!modal || !tbody) return;
+  
+  const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
+  const currentUser = app.getUsername();
+  
+  tbody.innerHTML = '';
+  
+  storedMatches.forEach((match: any) => {
+    const tr = document.createElement('tr');
+    
+    let userWon = false;
+    let opponent = '';
+    let score = '';
+    
+    if (match.match_type === 'multiplayer') {
+      const userTeam = match.teams?.find((team: any) => 
+        team.players.some((player: any) => player.player_name === currentUser)
+      );
+      const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
+      
+      userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
+      opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
+      score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+    } else {
+      const isPlayer1 = match.player1_name === currentUser;
+      userWon = isPlayer1 ? match.player1_score > match.player2_score : match.player2_score > match.player1_score;
+      opponent = isPlayer1 ? match.player2_name : match.player1_name;
+      score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+    }
+    
+    if (userWon) tr.classList.add('match-win');
+    else tr.classList.add('match-loss');
+    
+    const matchType = match.match_type === 'tournament' ? 'Tournament' :
+                     match.match_type === '1vAi' ? 'vs AI' :
+                     match.match_type === 'multiplayer' ? 'Multiplayer' : '1v1';
+    
+    tr.innerHTML = `
+      <td class="px-4 py-3 text-sm">${new Date(match.created_at).toLocaleDateString()}</td>
+      <td class="px-4 py-3">${matchType}</td>
+      <td class="px-4 py-3">${opponent}</td>
+      <td class="px-4 py-3">${score}</td>
+      <td class="px-4 py-3">${userWon ? '🏆 Win' : '❌ Loss'}</td>
+      <td class="px-4 py-3">${match.status}</td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+  
+  modal.classList.remove('hidden');
+}
   
   // ✅ ADD these new methods:
-async fetchUserMatchHistory(userId: string): Promise<any[]> {
+async fetchUserMatchHistory(userId: string, page: number = 1, limit: number = 50): Promise<any[]> {
   try {
-    // This would be your API endpoint for user match history
-    const response = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}/matches`);
+    // API endpoint with pagination parameters
+    const response = await this.fetchWithAutoRefresh(
+      `${this.baseURL}/users/${userId}/matches?page=${page}&limit=${limit}`
+    );
     if (!response.ok) return [];
+    
     const data = await response.json();
-    return data.matches || [];
+    
+    // The API returns an array directly, not wrapped in a matches property
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('Error fetching match history:', error);
     return [];
@@ -197,62 +662,77 @@ async fetchUserMatchHistory(userId: string): Promise<any[]> {
     }
   }
 
-  calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[]): UserGameplayStats {
-    const stats: UserGameplayStats = {
-      totalMatches: 0,
-      tournamentMatches: 0,
-      regularMatches: 0,
-      multiplayerMatches: 0,
-      aiMatches: 0,
-      wins: 0,
-      losses: 0,
-      winRate: 0,
-      tournamentsPlayed: tournamentHistory.length,
-      tournamentsWon: 0
-    };
+    // ❌ UPDATE this section in calculateUserStats:
+calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], userId: string): UserGameplayStats {
+  const stats: UserGameplayStats = {
+    totalMatches: 0,
+    tournamentMatches: 0,
+    regularMatches: 0,
+    multiplayerMatches: 0,
+    aiMatches: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    tournamentsPlayed: tournamentHistory.length,
+    tournamentsWon: 0
+  };
 
-    const currentUser = app.getUsername();
+  const currentUser = app.getUsername();
 
-    // Process regular matches
-    matchHistory.forEach(match => {
-      stats.totalMatches++;
-      
-      switch(match.match_type) {
-        case 'tournament':
-          stats.tournamentMatches++;
-          break;
-        case 'multiplayer':
-          stats.multiplayerMatches++;
-          break;
-        case '1vAi':
-          stats.aiMatches++;
-          break;
-        default:
-          stats.regularMatches++;
+  // Process matches based on your API structure
+  matchHistory.forEach(match => {
+    // Skip cancelled matches
+    if (match.status === 'cancelled') return;
+    
+    stats.totalMatches++;
+    
+    switch(match.match_type) {
+      case 'tournament':
+        stats.tournamentMatches++;
+        break;
+      case 'multiplayer':
+        stats.multiplayerMatches++;
+        break;
+      case '1vAi':
+        stats.aiMatches++;
+        break;
+      default:
+        stats.regularMatches++;
+    }
+
+    // Determine winner based on match type
+    let userWon = false;
+    
+    if (match.match_type === 'multiplayer') {
+      // For multiplayer, check if user's team won
+      const userTeam = match.teams?.find((team: any) => 
+        team.players.some((player: any) => player.user_id === parseInt(userId))
+      );
+      if (userTeam) {
+        const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam.id);
+        userWon = userTeam.score > (opponentTeam?.score || 0);
       }
-
-      if (match.winner === currentUser) {
-        stats.wins++;
-      } else {
-        stats.losses++;
+    } else {
+      // For regular/tournament matches
+      if (match.player1_name === currentUser) {
+        userWon = match.player1_score > match.player2_score;
+      } else if (match.player2_name === currentUser) {
+        userWon = match.player2_score > match.player1_score;
       }
-    });
+    }
 
-    // Process tournament matches and wins
-    tournamentHistory.forEach(tournament => {
-      if (tournament.winner === currentUser) {
-        stats.tournamentsWon++;
-      }
-      // Add tournament matches to total
-      stats.tournamentMatches += tournament.matches.length;
-      stats.totalMatches += tournament.matches.length;
-    });
+    if (userWon) {
+      stats.wins++;
+    } else {
+      stats.losses++;
+    }
+  });
 
-    // Calculate win rate
-    stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
+  // Calculate win rate
+  stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
 
-    return stats;
-  }
+  return stats;
+}
   populateProfileData(userData?: any, matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
     
     const user = userData.data || app.state.user;
@@ -307,7 +787,7 @@ async fetchUserMatchHistory(userId: string): Promise<any[]> {
     // if (this.profileForm.statsRank)
     //   this.profileForm.statsRank.textContent = app.getRank() || 'Beginner';
     // ✅ WITH this enhanced version:
-  const userStats = this.calculateUserStats(matchHistory, tournamentHistory);
+  const userStats = this.calculateUserStats(matchHistory, tournamentHistory, userData?.id?.toString() || app.state.user?.id?.toString() || '');
 
   if (this.profileForm.statsTotalGames)
     this.profileForm.statsTotalGames.textContent = userStats.totalMatches.toString();
@@ -321,7 +801,7 @@ async fetchUserMatchHistory(userId: string): Promise<any[]> {
   if (this.profileForm.statsWinRate)
     this.profileForm.statsWinRate.textContent = `${userStats.winRate}%`;
       this.update2FAUI(user);
-      this.renderMatchHistory(matchHistory, tournamentHistory);
+      this.renderMatchHistory(matchHistory, tournamentHistory, userData?.id || app.state.user?.id);
     }
 
   setupProfilePictureHandlers(): void {
@@ -852,7 +1332,7 @@ init2FA(): void {
 
 
   // ✅ WITH this enhanced version:
-  renderMatchHistory(matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
+  renderMatchHistory(matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = [], userID : number): void {
     const tableBody = document.getElementById('matchHistoryTable');
     if (!tableBody) return;
     
@@ -877,13 +1357,17 @@ init2FA(): void {
     const allMatches : any = [];
     
     // Add regular matches
-    matchHistory.forEach(match => {
-      allMatches.push({
-        ...match,
-        source: 'regular',
-        date: new Date(match.created_at || match.date)
-      });
+  matchHistory.forEach(match => {
+    // Skip cancelled matches in display
+    if (match.status === 'cancelled') return;
+    
+    allMatches.push({
+      ...match,
+      source: 'regular',
+      date: new Date(match.created_at)
     });
+  });
+
 
     // Add tournament matches
     tournamentHistory.forEach(tournament => {
@@ -918,22 +1402,42 @@ init2FA(): void {
     }
 
     // Render all matches
-    allMatches.forEach((match : any) => {
+    allMatches.forEach((match : any )=> {
       if (match.source === 'tournament-header') {
-        // Tournament header row
-        const tr = document.createElement('tr');
-        tr.classList.add('bg-cyber-blue', 'bg-opacity-20');
-        tr.innerHTML = `
-          <td colspan="5" class="text-center font-cyber text-cyber-blue px-4 py-3">
-            🏆 Tournament #${match.tournament_id} • ${match.participants.length} Players • Winner: ${match.winner}
-          </td>`;
-        tableBody.appendChild(tr);
+        // Tournament header row (existing code)
       } else {
         // Regular match or tournament match row
         const tr = document.createElement('tr');
         
+        // Determine winner and style
+        let userWon = false;
+        let opponent = '';
+        let score = '';
+        
+        if (match.match_type === 'multiplayer') {
+          // Handle multiplayer matches
+          const userTeam = match.teams?.find((team: any) => 
+            team.players.some((player: any) => player.user_id === parseInt(userID.toString()))
+          );
+          const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
+          
+          userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
+          opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
+          score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+        } else {
+          // Handle regular/tournament matches
+          if (match.player1_name === currentUser) {
+            userWon = match.player1_score > match.player2_score;
+            opponent = match.player2_name;
+          } else {
+            userWon = match.player2_score > match.player1_score;
+            opponent = match.player1_name;
+          }
+          score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+        }
+        
         // Style based on result
-        if (match.winner === currentUser || match.tournament_winner === currentUser) {
+        if (userWon) {
           tr.classList.add('match-win');
         } else {
           tr.classList.add('match-loss');
@@ -943,12 +1447,7 @@ init2FA(): void {
                         match.match_type === '1vAi' ? 'vs AI' :
                         match.match_type === 'multiplayer' ? 'Multiplayer' : '1v1';
         
-        const opponent = match.match_type === 'multiplayer' ? 
-                        `${match.player1_name} vs ${match.player2_name}` :
-                        match.player1_name === currentUser ? match.player2_name : match.player1_name;
-        
-        const score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
-        const result = match.winner === currentUser ? '🏆 Win' : '❌ Loss';
+        const result = userWon ? '🏆 Win' : '❌ Loss';
         const date = match.date.toLocaleDateString();
 
         tr.innerHTML = `
@@ -961,38 +1460,38 @@ init2FA(): void {
         tableBody.appendChild(tr);
       }
     });
-  }
-  // Render tournament matches grouped with a blank separator before each
-  renderTournamentMatches(tableBody: HTMLElement): void {
-    const currentUser = app.getUsername();
-    const tournaments = app.state.user?.tournaments || [];
-    tournaments.forEach((tournament: Tournament) => {
-      // Tournament summary row (ID and winner)
-      const summary = document.createElement('tr');
-      summary.classList.add('bg-cyber-blue', 'bg-opacity-20');
-      summary.innerHTML = `
-        <td colspan="4" class="text-center font-cyber text-cyber-blue px-4 py-3">
-          Tournament #${tournament.tournament_id} — Winner: ${tournament.winner}
-        </td>`;
-      tableBody.appendChild(summary);
-      // Add each tournament match
-      tournament.matches.forEach(match => {
-        const entry = utils.makeEntry(match, currentUser);
-        const tr = document.createElement('tr');
-        // Style all tournament match rows by the tournament winner
-        if (tournament.winner === currentUser) tr.classList.add('match-win');
-        else tr.classList.add('match-loss');
-        tr.innerHTML = `
-          <td class="px-4 py-3">${entry.type}</td>
-          <td class="px-4 py-3">${entry.vs}</td>
-          <td class="px-4 py-3">${entry.score}</td>
-          <td class="px-4 py-3">${tournament.winner}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
+}
+// Render tournament matches grouped with a blank separator before each
+renderTournamentMatches(tableBody: HTMLElement): void {
+  const currentUser = app.getUsername();
+  const tournaments = app.state.user?.tournaments || [];
+  tournaments.forEach((tournament: Tournament) => {
+    // Tournament summary row (ID and winner)
+    const summary = document.createElement('tr');
+    summary.classList.add('bg-cyber-blue', 'bg-opacity-20');
+    summary.innerHTML = `
+      <td colspan="4" class="text-center font-cyber text-cyber-blue px-4 py-3">
+        Tournament #${tournament.tournament_id} — Winner: ${tournament.winner}
+      </td>`;
+    tableBody.appendChild(summary);
+    // Add each tournament match
+    tournament.matches.forEach(match => {
+      const entry = utils.makeEntry(match, currentUser);
+      const tr = document.createElement('tr');
+      // Style all tournament match rows by the tournament winner
+      if (tournament.winner === currentUser) tr.classList.add('match-win');
+      else tr.classList.add('match-loss');
+      tr.innerHTML = `
+        <td class="px-4 py-3">${entry.type}</td>
+        <td class="px-4 py-3">${entry.vs}</td>
+        <td class="px-4 py-3">${entry.score}</td>
+        <td class="px-4 py-3">${tournament.winner}</td>
+      `;
+      tableBody.appendChild(tr);
     });
-  }
+  });
 }
 
+}
 export default new Profile();
 export { ProfileForm, MatchEntry };
