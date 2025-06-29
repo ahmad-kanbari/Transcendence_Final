@@ -142,6 +142,58 @@ class App {
     router.registerRoutes({
 
       '/': async () => {
+
+          // Check for OAuth callback parameters
+          const urlParams = new URLSearchParams(window.location.search);
+          const oauthStatus = urlParams.get('oauth');
+          const oauthMessage = urlParams.get('message');
+          
+          // Handle OAuth callback
+          if (oauthStatus === 'success') {
+            components.showSpinner();
+            try {
+              // Clear URL parameters
+              window.history.replaceState({}, document.title, window.location.pathname);
+              
+              // Check if cookies are set and fetch user data
+              const accessToken = utils.getCookie("accessToken");
+              if (accessToken) {
+                const result = await api.getCurrentUser();
+                
+                if (result.success && result.data) {
+                  this.state.user = result.data.user;
+                  this.state.isAuthenticated = result.data.isAuthenticated ?? true;
+                  
+                  components.showToast('success', 'Welcome Back!', `Hello ${this.getUsername()}!`, 3000);
+                  login.updateUIAuthState();
+                  
+                  // Check if 2FA is required
+                  if (this.get2FAState() && !this.getIsAuthenticated()) {
+                    pages.showPage('twoFA');
+                    return;
+                  }
+                  
+                  pages.showPage('home');
+                  return;
+                }
+              }
+              
+              // If no access token or getCurrentUser failed
+              components.showToast('error', 'Login Error', 'Failed to complete Google login.', 5000);
+              
+            } catch (error) {
+              console.error('Error after OAuth success:', error);
+              components.showToast('error', 'Login Error', 'Failed to complete login process.', 5000);
+            } finally {
+              components.hideSpinner();
+            }
+          } else if (oauthStatus === 'error') {
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            const errorMessage = oauthMessage ? decodeURIComponent(oauthMessage) : 'Google login failed';
+            components.showToast('error', 'Login Failed', errorMessage, 5000);
+          }
         // Check if user has accessToken cookie (from Google OAuth)
         const accessToken = utils.getCookie("accessToken");
         

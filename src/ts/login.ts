@@ -13,7 +13,7 @@ interface LoginForm {
   container: HTMLElement | null;
   form: HTMLFormElement | null;
   submitBtn: HTMLButtonElement | null;
-  login42Link: HTMLElement | null;
+  loginGoogleLink: HTMLElement | null;
   emailField: HTMLInputElement | null;
   passwordField: HTMLInputElement | null;
   twoFactorForm: HTMLFormElement | null;
@@ -80,7 +80,7 @@ class Login {
       container: document.getElementById('loginFormContainer'),
       form: document.getElementById('loginForm') as HTMLFormElement | null,
       submitBtn: document.getElementById('loginBtn') as HTMLButtonElement | null,
-      login42Link: document.getElementById('login42Link'),
+      loginGoogleLink: document.getElementById('loginGoogleLink'),
       emailField: document.getElementById('loginUseremail') as HTMLInputElement | null,
       passwordField: document.getElementById('loginPassword') as HTMLInputElement | null,
       twoFactorForm: document.getElementById('twoFactorForm') as HTMLFormElement | null,
@@ -103,8 +103,8 @@ class Login {
       localStorage.setItem("deviceId", this.deviceId);
     }
     
-    if (this.loginForm.login42Link)
-      this.loginForm.login42Link.onclick = this.handleGoogleLoginBtnClick.bind(this);
+    if (this.loginForm.loginGoogleLink)
+      this.loginForm.loginGoogleLink.onclick = this.handleGoogleLoginBtnClick.bind(this);
     
     if (this.loginForm.form) {
       if (this.loginForm.emailField) 
@@ -517,46 +517,50 @@ show2FAModal(): void {
     return crypto.randomUUID();
   }
 
-  async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
-    if (event) {
-      event.preventDefault();
-    }
-    
-    // Disable button to prevent multiple clicks
-    const googleBtn = event.currentTarget as HTMLButtonElement;
-    if (googleBtn) {
-      googleBtn.disabled = true;
-    }
-    
-    components.showToast('info', 'Connecting', 'Initializing Google authentication...');
-    
-    try {
-      // Get or generate deviceId
-      if (!this.deviceId) {
-        this.deviceId = this.generateDeviceId();
-        localStorage.setItem("deviceId", this.deviceId);
-      }
-      
-      // Create state parameter with deviceId
-      const state = encodeURIComponent(btoa(JSON.stringify({ deviceId: this.deviceId })));
-      
-      // Construct Google auth URL
-      const authUrl = `${baseURL}/auth/google/login?state=${state}`;
-      
-      components.showToast('success', 'Connected', 'Redirecting to Google login page...', 1000);
-      
-      // Redirect to Google's login page
-      window.location.href = authUrl;
-    } catch (error: any) {
-      // Re-enable button on error
-      if (googleBtn) {
-        googleBtn.disabled = false;
-      }
-      
-      components.showToast('error', 'Google Login Failed', 
-        error.message || 'Could not connect to Google authentication service.', 2000);
-    }
+
+async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
+  console.log('Google login button clicked');
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
   }
+  
+  // Disable button to prevent multiple clicks
+  const googleBtn = event.currentTarget as HTMLButtonElement;
+  if (googleBtn) {
+    googleBtn.disabled = true;
+  }
+  
+  components.showToast('info', 'Connecting', 'Initializing Google authentication...');
+  
+  try {
+    // Get or generate deviceId
+    if (!this.deviceId) {
+      this.deviceId = this.generateDeviceId();
+      localStorage.setItem("deviceId", this.deviceId);
+    }
+    
+    // Create state parameter with deviceId
+    const state = encodeURIComponent(btoa(JSON.stringify({ deviceId: this.deviceId })));
+    
+    // Construct Google auth URL - this should redirect to Google, then back to your callback
+    const authUrl = `${baseURL}/auth/google/login?state=${state}`;
+    
+    components.showToast('success', 'Connected', 'Redirecting to Google login page...', 1000);
+    
+    // Redirect to Google's login page
+    window.location.href = authUrl;
+    
+  } catch (error: any) {
+    // Re-enable button on error
+    if (googleBtn) {
+      googleBtn.disabled = false;
+    }
+    
+    components.showToast('error', 'Google Login Failed', 
+      error.message || 'Could not connect to Google authentication service.', 5000);
+  }
+}
 }
 
 const login = new Login();

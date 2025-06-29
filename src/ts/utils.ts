@@ -98,13 +98,16 @@ class Utils {
   }
 
   getCookie(name: string): string | null {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    const cookieValue = parts.length === 2 ? parts.pop()?.split(';').shift() || null : null;
-    
-    if (name === 'access_token') this.access_token = cookieValue;
-    
-    return cookieValue;
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.trim().split('=');
+      if (cookieName === name) {
+        // Handle signed cookies - you might need to unsign them
+        // For now, return the raw value (backend should handle unsigning)
+        return decodeURIComponent(cookieValue);
+      }
+    }
+    return null;
   }
   
   deleteCookie(name: string): void {
