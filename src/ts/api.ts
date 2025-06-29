@@ -704,6 +704,7 @@ class API {
           player2_name: matchData.player2_name
         })
       });
+      console.log('Creating tournament and response is', response);
 
       if (response.status === 401 && retryCount < 1) {
         const refreshResult = await this.refreshToken();
@@ -1116,6 +1117,106 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
             method: 'DELETE'
         });
     }
+    /**
+ * Create a multiplayer match between 4 users
+ * One user is authenticated, three others are local players
+ * Based on POST /matches endpoint with multiplayer structure
+ */
+async createMultiplayerMatch(matchData: {
+  team1_name: string;
+  team2_name: string;
+  players: Array<{
+    name: string;
+    user_id: number | null;
+    team: number;
+  }>;
+  match_type: "multiplayer";
+}, retryCount: number = 0): Promise<ApiResponse> {
+  try {
+    // Validate multiplayer match data
+    // if (!matchData.team1_name || !matchData.team2_name) {
+    //   return { 
+    //     success: false, 
+    //     error: 'Team names are required for multiplayer matches' 
+    //   };
+    // }
+
+    // if (!Array.isArray(matchData.players) || matchData.players.length !== 4) {
+    //   return { 
+    //     success: false, 
+    //     error: 'Multiplayer matches require exactly 4 players' 
+    //   };
+    // }
+
+    // // Validate that there's exactly one authenticated user
+    // const authenticatedPlayers = matchData.players.filter(player => player.user_id !== null);
+    // if (authenticatedPlayers.length !== 1) {
+    //   return { 
+    //     success: false, 
+    //     error: 'Multiplayer matches require exactly one authenticated user and three local players' 
+    //   };
+    // }
+
+    // Validate team assignments (should have players on both teams)
+    // const team1Players = matchData.players.filter(player => player.team === 1);
+    // const team2Players = matchData.players.filter(player => player.team === 2);
+    
+    // if (team1Players.length !== 2 || team2Players.length !== 2) {
+    //   return { 
+    //     success: false, 
+    //     error: 'Each team must have exactly 2 players' 
+    //   };
+    // }
+    console.log('Creating multiplayer match with data:', matchData);
+    const response = await fetch(ENDPOINTS.game.create_match, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(matchData)
+    });
+    console.log('createMultiplayerMatch response:', response);
+    // Handle authentication errors with retry
+    if (response.status === 401 && retryCount < 1) {
+      const refreshResult = await this.refreshToken();
+      if (refreshResult.success) {
+        return await this.createMultiplayerMatch(matchData, retryCount + 1);
+      } else {
+        console.error('Token refresh failed:', refreshResult.error);
+        utils.cleanUp();
+        return { 
+          success: false, 
+          error: 'Authentication expired. Please log in again.',
+          authExpired: true 
+        };
+      }
+    }
+
+    // Handle other HTTP errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return { 
+        success: false, 
+        error: errorData.error || `Failed to create multiplayer match: ${response.status} ${response.statusText}` 
+      };
+    }
+
+    const responseData = await response.json();
+    
+    return { 
+      success: true, 
+      data: responseData 
+    };
+
+  } catch (error: any) {
+    console.error(`createMultiplayerMatch error (attempt ${retryCount + 1}):`, error);
+    return { 
+      success: false, 
+      error: error.message || 'Network error occurred while creating multiplayer match' 
+    };
+  }
+}
   
 }
 

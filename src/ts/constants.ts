@@ -51,7 +51,7 @@ export const ENDPOINTS = {
         create_tournament: `${baseURL}/tournaments`,              // POST /tournaments
         get_tournament: `${baseURL}/tournaments`,                 // GET /tournaments/:tournamentId  
         get_all_tournaments: `${baseURL}/tournaments`,            // GET /tournaments?page=1&limit=10
-        create_match_inTournament: `${baseURL}/tournament`,       // POST /tournament/:tournamentId/matches
+        create_match_inTournament: `${baseURL}/tournaments/`,       // POST /tournament/:tournamentId/matches
         adjust_match_inTournament: `${baseURL}/tournament`,       // PATCH /tournament/:tournamentId/matches/:matchId
         
         // Regular match endpoints  

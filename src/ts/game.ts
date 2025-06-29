@@ -4,6 +4,7 @@
  */
 
 import api from "./api";
+import { t } from "./localization";
 
 class PongGame {
     // Game state
@@ -673,10 +674,11 @@ async startGame(): Promise<void> {
         player2_score: 0,
         winner: '',
         match_type: this.isMultiplayerMode ? 'multiplayer' : (this.isAIMode ? '1vAi' : (this.isTournamentMode ? 'tournament' : '1v1')),
+        tournamentId: this.isTournamentMode ? this.tournamentId || null : null,
     };
 
     // Submit single match if not in tournament
-    if (!this.isTournamentMode) {
+    if (!this.isTournamentMode && !this.isMultiplayerMode) {
         if (this.matchObj && this.submitMatch) {
             const response = await api.createMatch(this.matchObj);
             console.log("Match created successfully:", response);
@@ -689,8 +691,104 @@ async startGame(): Promise<void> {
         }
 
     }
+    if (this.isMultiplayerMode){
+
+        const multiplayerMatchData = this.createMultiplayerMatchData(
+            this.matchObj.player1_id,
+            this.matchObj.player1_name,
+            this.player1Name!.textContent || 'Team A',          
+            this.player2Name!.textContent || 'Team B',
+            ['Player 2', 'Player 3', 'Player 4']
+        );
+        console.log("Multiplayer mode detected, preparing match data for backend submission", multiplayerMatchData);
+        const response = await api.createMultiplayerMatch({
+          team1_name: this.matchObj.player1_name,
+        team2_name:  this.matchObj.player2_name,
+    players: [
+      {
+        name: this.matchObj.player1_name,
+        user_id: this.matchObj.player1_id,
+        team: 1 // Put authenticated user on team 1
+      },
+      {
+        name: 'Player 2',
+        user_id: null,
+        team: 1 // Second player on team 1
+      },
+      {
+        name: 'Player 3',
+        user_id: null,
+        team: 2 // First player on team 2
+      },
+      {
+        name: 'Player 4',
+        user_id: null,
+        team: 2 // Second player on team 2
+      }
+    ],
+    match_type: "multiplayer"
+  }
+        );
+        console.log("Multiplayer match data from the response:", response);
+        if (response.success) {
+        console.log("Multiplayer match created successfully:", response);
+    }
 }
 
+}
+    /**
+ * Helper function to create multiplayer match data structure
+ * Simplifies the process of creating the required data format
+ */
+createMultiplayerMatchData(
+  authenticatedUserId: number,
+  authenticatedUserName: string,
+  team1Name: string = "Team A",
+  team2Name: string = "Team B",
+  localPlayerNames: string[] = ["Player 2", "Player 3", "Player 4"]
+): {
+  team1_name: string;
+  team2_name: string;
+  players: Array<{
+    name: string;
+    user_id: number | null;
+    team: number;
+  }>;
+  match_type: "multiplayer";
+} {
+  // Validate input
+  if (localPlayerNames.length !== 3) {
+    throw new Error('Exactly 3 local player names are required');
+  }
+
+  return {
+    team1_name: team1Name,
+    team2_name: team2Name,
+    players: [
+      {
+        name: authenticatedUserName,
+        user_id: authenticatedUserId,
+        team: 1 // Put authenticated user on team 1
+      },
+      {
+        name: localPlayerNames[0],
+        user_id: null,
+        team: 1 // Second player on team 1
+      },
+      {
+        name: localPlayerNames[1],
+        user_id: null,
+        team: 2 // First player on team 2
+      },
+      {
+        name: localPlayerNames[2],
+        user_id: null,
+        team: 2 // Second player on team 2
+      }
+    ],
+    match_type: "multiplayer"
+  };
+}
     /**
      * Reset the ball to the center
      */
@@ -1231,7 +1329,7 @@ async startGame(): Promise<void> {
     /**
      * Show the win screen with the winner's name
      */
-    showWinScreen(winnerName: string): void {
+    async showWinScreen(winnerName: string): Promise<void> {
         // Stop the game
         this.gameRunning = false;
         this.gameOver = true;
@@ -1253,6 +1351,24 @@ async startGame(): Promise<void> {
             // Record this match after populating matchObj
             this.tournamentArr.push({ ...this.matchObj });
             if (this.currentTournamentMatch < 3) {
+           
+                    console.log("Tournament ID", this.tournamentId);
+                    console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
+                const response  = await api.createTournamentMatch(this.tournamentId!, {
+                    player1_id: this.matchObj.player1_id!,
+                    player2_id: null,
+                    player1_name: this.tournamentPlayers[0],
+                    player2_name: this.tournamentPlayers[1],
+                
+                });
+                console.log("Tournament Match1 Created:", response);
+                this.matchObj.matchId = response.data.matchId; // Update matchId from the response
+                const response_submission = await api.submitTournamentMatch(this.matchObj.tournamentId!, this.matchObj.matchId!, {
+                    player1_score: this.tournamentArr[this.currentTournamentMatch].player1_score!,
+                    player2_score:  this.tournamentArr[this.currentTournamentMatch].player2_score!,
+                });
+                console.log("Tournament Match1 Submitted:", response_submission);
+
                 document.getElementById('nextMatchButton')!.style.display = 'inline-block';
             } else {
                 // Final completed: submit and clear
@@ -1295,6 +1411,19 @@ async startGame(): Promise<void> {
                     team2_score: this.matchObj.player2_score!,
                     is_multiplayer:true,
                 });
+            }
+        }
+        if(this.isTournamentMode){
+            if (this.matchObj && this.matchObj.tournamentId && this.matchObj.matchId) {
+              // Submit tournament match
+              console.log("Submitting Tournament match:", this.matchObj);
+              console.log("Tournament ID:", this.matchObj.tournamentId);
+              console.log("Match ID:", this.matchObj.matchId);
+            
+            const response =  api.submitTournamentMatch(this.matchObj.tournamentId!, this.matchObj.matchId!, {    
+                player1_score: this.matchObj.player1_score!,
+                player2_score: this.matchObj.player2_score!,
+              });
             }
         }
 
@@ -1580,7 +1709,7 @@ async startGame(): Promise<void> {
     /**
      * Start a tournament with 4 players
      */
-    startTournament(): void {
+    async startTournament(): Promise<void> {
          // Get player names from inputs
          this.tournamentPlayers = [
             (document.getElementById('tournament-p1')! as HTMLInputElement).value || 'Player 1',
@@ -1603,6 +1732,24 @@ async startGame(): Promise<void> {
 
         //api to create the tournament in the backend
         
+            //create the tournament
+        if (this.isTournamentMode) {
+            // Prepare tournament match data
+            this.matchObj.tournamentId = this.tournamentId || null;
+            this.matchObj.match_type = 'tournament';
+            
+            // Submit tournament match data
+            const response = await api.createTournament(4);
+            console.log("Tournament created from the response:", response);
+            if (response.success) {
+                this.tournamentId = response.data.tournament.id;
+                this.matchObj.tournamentId = response.data.tournament.id;
+                 // Store the match ID
+                console.log("Tournament match created successfully with ID:", response.data.tournament.id);
+            } else {
+                console.error("Error creating tournament match:", response.message);
+            }
+        } 
         // Start first match
         
         this.setupNextTournamentMatch();
@@ -1611,7 +1758,7 @@ async startGame(): Promise<void> {
     /**
      * Set up the next match in the tournament
      */
-    setupNextTournamentMatch() : void {
+    async setupNextTournamentMatch() : Promise<void> {
         // Hide tournament screen
         document.getElementById('tournamentScreen')!.style.display = 'none';
         
@@ -1624,7 +1771,20 @@ async startGame(): Promise<void> {
             // Set player names for the match
             this.player1Name!.textContent = this.tournamentPlayers[0];
             this.player2Name!.textContent = this.tournamentPlayers[1];
+
+
+            //
+            // console.log("Tournament id:", this.matchObj.tournamentId);
+            //  const response  = await api.createTournamentMatch(this.matchObj.tournamentId!, {
+            //     player1_id: this.matchObj.player1_id!,
+            //     player2_id: null,
+            //     player1_name: this.tournamentPlayers[0],
+            //     player2_name: this.tournamentPlayers[1],
+               
+            // });
+            // console.log("Tournament Match1 Created:", response);
             
+
         } else if (this.currentTournamentMatch === 1) {
             // Second semifinal
             document.getElementById('tournamentAnnouncement')!.textContent = 
@@ -1633,7 +1793,13 @@ async startGame(): Promise<void> {
             // Set player names for the match
             this.player1Name!.textContent = this.tournamentPlayers[2];
             this.player2Name!.textContent = this.tournamentPlayers[3];
-            
+            // const response  = await api.createTournamentMatch(this.matchObj.tournamentId!, {
+            //     player1_name: this.tournamentPlayers[2],
+            //     player2_name: this.tournamentPlayers[3],
+               
+            // });
+
+            // console.log("Tournament Match2 Created:", response);
         } else if (this.currentTournamentMatch === 2) {
             // Final match - announce based on stored tournamentArr winners
             const winner1 = this.getWinnerName(this.tournamentArr[0]);
@@ -1646,6 +1812,14 @@ async startGame(): Promise<void> {
             // Set player names for the match
             this.player1Name!.textContent = winner1;
             this.player2Name!.textContent = winner2;
+
+            //      const response  = await api.createTournamentMatch(this.matchObj.tournamentId!, {
+            //     player1_name: this.tournamentPlayers[2],
+            //     player2_name: this.tournamentPlayers[3],
+               
+            // });
+
+            // console.log("Tournament Match3 Created:", response);
         }
         
         // Increment match counter
