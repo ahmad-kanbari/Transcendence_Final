@@ -277,7 +277,7 @@ class PongGame {
             pvpButton.addEventListener('click', () => {
                 // On 1 VS 1, set Player 1's name to current user and Player 2's name to RANDOM
                 this.player1Name!.textContent = this.userName;
-                this.player2Name!.textContent = 'RANDOM';
+                this.player2Name!.textContent = this.matchObj.player2_name  ?? 'RANDOM';
                 this.setGameMode('1v1');
             });
         } else {
@@ -299,8 +299,8 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = this.userName;
-                this.player2Name!.textContent = 'Obs team';
+                this.player1Name!.textContent = `${this.userName}_team `;
+                this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
         } else {
@@ -584,9 +584,11 @@ class PongGame {
                 this.isMultiplayerMode = true;
                 activeButton = document.getElementById('multiplayerButton');
                 // Determine team names: respect settings overrides or use defaults
-                // const team2InputEl = document.getElementById('team2NameInput');
-                // const team2Name = (team2InputEl && team2InputEl.value) ? team2InputEl.value : 'Obs team';
-                // this.player2Name.textContent = team2Name;
+                const team2InputEl = document.getElementById('team2NameInput');
+                const team2Name = (team2InputEl && (team2InputEl as HTMLInputElement).value) ? (team2InputEl as HTMLInputElement).value : 'Opp_team';
+                if (this.player2Name) {
+                    this.player2Name.textContent = team2Name;
+                }
                 break;
                 
             case 'tournament':
@@ -709,9 +711,9 @@ async startGame(): Promise<void> {
         const multiplayerMatchData = this.createMultiplayerMatchData(
             this.matchObj.player1_id,
             this.matchObj.player1_name,
-            this.player1Name!.textContent || 'Team A',          
-            this.player2Name!.textContent || 'Team B',
-            ['Player 2', 'Player 3', 'Player 4']
+            this.player1Name!.textContent || 'Team_A',          
+            this.player2Name!.textContent || 'Team_B',
+            ['Player_2', 'Player_3', 'Player_4']
         );
         console.log("Multiplayer mode detected, preparing match data for backend submission", multiplayerMatchData);
         const response = await api.createMultiplayerMatch({
@@ -724,17 +726,17 @@ async startGame(): Promise<void> {
         team: 1 // Put authenticated user on team 1
       },
       {
-        name: 'Player 2',
+        name: 'Player_2',
         user_id: null,
         team: 1 // Second player on team 1
       },
       {
-        name: 'Player 3',
+        name: 'Player_3',
         user_id: null,
         team: 2 // First player on team 2
       },
       {
-        name: 'Player 4',
+        name: 'Player_4',
         user_id: null,
         team: 2 // Second player on team 2
       }
@@ -746,6 +748,8 @@ async startGame(): Promise<void> {
         if (response.success) {
         console.log("Multiplayer match created successfully:", response);
     }
+     this.matchObj.matchId =response.data.match['id'] || null;
+     console.log("Multiplayer match created successfully: with ID", this.matchObj.matchId);
 }
 
 }
@@ -1943,7 +1947,9 @@ createMultiplayerMatchData(
         }
         
         if (player2NameInput.value) {
+            
             this.player2Name!.textContent = player2NameInput.value;
+            this.matchObj.player2_name = player2NameInput.value;
         }
         
         // If in AI mode, update player 2 name based on difficulty
