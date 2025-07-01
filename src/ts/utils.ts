@@ -122,7 +122,7 @@ class Utils {
     localStorage.removeItem('access_token');
 
     localStorage.removeItem('refresh_token');
-    localStorage.removeItem('userMatchHistory'); // Duplicate in original code
+    localStorage.removeItem('userMatchHistory'); 
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
     
