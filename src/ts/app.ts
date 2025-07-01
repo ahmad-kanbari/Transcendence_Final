@@ -197,15 +197,14 @@ class App {
             const errorMessage = oauthMessage ? decodeURIComponent(oauthMessage) : 'Google login failed';
             components.showToast('error', 'Login Failed', errorMessage, 5000);
           }
-        // Check if user has accessToken cookie (from Google OAuth)
-        const accessToken = utils.getCookie("accessToken");
-        
-        if (accessToken) {
+       
+
           // User has token, try to get their data
           components.showSpinner();
           try {
+   
             const result = await api.getCurrentUser(); // This uses /showUser endpoint
-            
+            console.log('User data without oat:', result.data);
             if (result.success && result.data) {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
@@ -226,10 +225,12 @@ class App {
             console.error('Error fetching user data after OAuth:', error);
             // Clear invalid token
             utils.deleteCookie('accessToken');
+            this.state.user = null;
+            this.state.isAuthenticated = false;
           } finally {
             components.hideSpinner();
           }
-        }
+        
         
         // No token or failed to get user data - show home page
         pages.showPage('home');
@@ -238,15 +239,16 @@ class App {
       
       '/home': async () => {
         // Check if user has accessToken cookie
-        const accessToken = utils.getCookie("accessToken");
+        //use refresh instead of access 
+
         
-        if (accessToken && !this.state.user) {
+   
           // User has token but no user data loaded yet
           components.showSpinner();
           try {
             const result = await api.getCurrentUser(); // Use /showUser endpoint
             
-            if (result.success && result.data) {
+          if (result.success && result.data) {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               console.log('User data: user logged in in home', this.state.user);
@@ -270,7 +272,7 @@ class App {
           } finally {
             components.hideSpinner();
           }
-        }
+        
         
         pages.showPage('home');
         login.updateUIAuthState();
@@ -282,13 +284,11 @@ class App {
         
         try {
           // Check if we have the accessToken cookie
-          const accessToken = utils.getCookie("accessToken");
-          
-          if (accessToken) {
+        
             // Fetch user data using the token
             const result = await api.getCurrentUser();
             
-            if (result.success && result.data) {
+          if (result.success && result.data) {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               
@@ -305,7 +305,7 @@ class App {
               router.navigate('/profile');
               return;
             }
-          }
+        
           
           // No token or failed to get user data
           components.showToast('error', 'Login Failed', 'Authentication was unsuccessful.', 5000);
@@ -338,20 +338,20 @@ class App {
           }
       
           
-        let accessToken = utils.getCookie("accessToken");
-        if (accessToken && !this.state.user) {
+     
+       
           const result = await api.getCurrentUser();
-           console.log('after', result.userData);
+           console.log('after', result.data);
            
-          if (result.success && result.userData) {
-            this.state.user = result.userData;
-            this.state.isAuthenticated = result.isAuthenticated;
+        if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
             login.updateUIAuthState();
             components.showToast('info', 'Session Restored', 'Your session has been restored.', 5000);
             router.navigate('/profile');
             return;
           }
-          } else {
+          else {
             pages.showPage('login');
             
             login.renderForms();
@@ -378,11 +378,7 @@ class App {
         //   login.updateUIAuthState();
         //   return;
         // }
-
-        components.showSpinner();
-        
-        try {
-          if (this.state.user) {
+        if (this.state.user) {
             pages.showPage('game');
             // login.updateUIAuthState();
             game.init(
@@ -392,15 +388,18 @@ class App {
             );
             return;
           }
-          let accessToken = utils.getCookie("accessToken");
-          if (accessToken && !this.state.user) {
+          components.showSpinner();
+        try {
+          console.log('Game route accessed with state:', this.state.user);
+       
+     
+          
             console.log('Access token found, fetching current user data ing ame');
             const result = await api.getCurrentUser();
-            console.log('before', result.userData);
-            if (result.success && result.userData) {
-              console.log('User data:', result.userData);
-              this.state.user = result.userData;
-              this.state.isAuthenticated = result.isAuthenticated;
+            console.log('before', result.data);
+            if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               login.updateUIAuthState();
               pages.showPage('game');
             
@@ -410,7 +409,7 @@ class App {
                 this.setSubmitTournamentFunction.bind(this)
               );
           }
-          } else {
+          else {
             components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
             router.navigate('/login');
           }
@@ -418,6 +417,9 @@ class App {
         } catch (error) {
           components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
           router.navigate('/login');
+            utils.deleteCookie('accessToken');
+            this.state.user = null;
+            this.state.isAuthenticated = false;
         } finally {
           components.hideSpinner();
         }
@@ -435,17 +437,17 @@ class App {
             login.updateUIAuthState();
             return;
         }
-        let accessToken = utils.getCookie("accessToken"); 
-        if (accessToken && !this.state.user) {
+     
+       
           const result = await api.getCurrentUser();
           
-          if (result.success && result.userData) {
-            this.state.user = result.userData;
-            this.state.isAuthenticated = result.isAuthenticated;
+          if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
             login.updateUIAuthState();
             pages.showPage('chat');
           }
-          } else {
+           else {
             components.showToast('warning', 'Authentication Required', 'Please log in to access chat.', 5000);
             router.navigate('/login');
           }
@@ -472,17 +474,17 @@ class App {
               login.updateUIAuthState();
               return;
           }
-          let accessToken = utils.getCookie("accessToken");
-          if (accessToken && !this.state.user) {
+
+          
           const result = await api.getCurrentUser();
           
-          if (result.success && result.userData) {
-            this.state.user = result.userData;
-            this.state.isAuthenticated = result.isAuthenticated;
+          if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
             login.updateUIAuthState();
             pages.showPage('profile');
           }
-          } else {
+          else {
             components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.', 5000);
             router.navigate('/login');
           }
@@ -508,9 +510,9 @@ class App {
           if (!this.state.user) {
             const result = await api.getCurrentUser();
             
-            if (result.success && result.userData) {
-              this.state.user = result.userData;
-              this.state.isAuthenticated = result.isAuthenticated;
+          if (result.success && result.data) {
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               login.updateUIAuthState();
               
               if (this.state.isAuthenticated) {
@@ -610,8 +612,8 @@ class App {
       const result = await api.getCurrentUser();
       
       if (result.success && result.data) {
-        this.state.user = result.data.user;
-        this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+              this.state.user = result.data.user;
+              this.state.isAuthenticated = result.data.isAuthenticated ?? false;
         
         // Update localStorage
         localStorage.setItem('user', JSON.stringify(result.data.user));

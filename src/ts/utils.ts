@@ -99,6 +99,7 @@ class Utils {
 
   getCookie(name: string): string | null {
     const cookies = document.cookie.split(';');
+    console.log('Utils: Retrieving all cookies:', cookies);
     for (let cookie of cookies) {
       const [cookieName, cookieValue] = cookie.trim().split('=');
       if (cookieName === name) {
@@ -116,12 +117,12 @@ class Utils {
 
   cleanUp(): void {
     console.log('Utils: Cleaning up cookies and localStorage');
-    this.deleteCookie('access_token');
-    this.deleteCookie('refresh_token');
+    // this.deleteCookie('access_token');
+    // this.deleteCookie('refresh_token');
     
-    localStorage.removeItem('access_token');
+    // localStorage.removeItem('access_token');
 
-    localStorage.removeItem('refresh_token');
+    // localStorage.removeItem('refresh_token');
     localStorage.removeItem('userMatchHistory'); 
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
