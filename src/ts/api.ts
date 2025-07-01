@@ -177,6 +177,69 @@ class API {
     }
   }
 
+   async updateUserPassword(newPassword:string, currentPassword: string): Promise<ApiResponse> {
+    try {
+      console.log('updating user password');
+      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          newPassword: newPassword, 
+          currentPassword: currentPassword
+        })
+      });
+      console.log('Update user password message:', message);
+      return { success: true , response: message };
+    } catch (error: any) {  
+      console.error('Update user password error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+     async updateUserEmail(userEmail:string): Promise<ApiResponse> {
+    try {
+      console.log('updating user email');
+      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          email: userEmail,
+        })
+      });
+      console.log('Update user email message:', message);
+      return { success: true , response: message };
+    } catch (error: any) {  
+      console.error('Update user email error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateUserUsername(useranme: string): Promise<ApiResponse> {
+    try {
+      console.log('updating user username');
+      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          username: useranme 
+        })
+      });
+      console.log('Update user username message:', message);
+      return { success: true , response: message };
+    } catch (error: any) {  
+      console.error('Update user username error:',  error );
+      return { success: false, error: error.message };
+    }
+  }
   getGoogleAuthUrl(): AuthUrlResponse{
     try {
 

@@ -586,6 +586,9 @@ async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
       error.message || 'Could not connect to Google authentication service.', 5000);
   }
 }
+
+
+
 }
 
 const login = new Login();

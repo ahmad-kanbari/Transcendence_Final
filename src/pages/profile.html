@@ -62,14 +62,25 @@
                     <div class="cyber-container">
                         <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4">Account Information</div>
                         <div class="space-y-4">
+                        
                             <div>
                                 <label class="font-cyber text-cyber-blue block mb-2">Display Name</label>
-                                <input type="text" class="cyber-input w-full rounded" id="settingDisplayName" readonly>
+                
+                                    <input type="text" class="cyber-input flex-1 rounded" id="settingDisplayName" placeholder="Update your display name">
+                             
                             </div>
-                            <!-- <div>
+                            <div>
                                 <label class="font-cyber text-cyber-blue block mb-2">Email</label>
-                                <input type="email" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingEmail" readonly>
-                            </div> -->
+                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingEmail" placeholder="Update your email">
+                            </div>
+                             <div>
+                                <label class="font-cyber text-cyber-blue block mb-2">Current Password</label>
+                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="currentPassword" placeholder="Update your password">
+                            </div>
+                            <div>
+                                <label class="font-cyber text-cyber-blue block mb-2">New Password</label>
+                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingPassword" placeholder="Update your password">
+                            </div>
                             <div class="mt-4 flex gap-2 justify-center">
                                 <button id="showDetailedStatsBtn" class="cyber-btn-blue text-sm py-2 px-4 rounded">
                                     <i class="bi bi-bar-chart mr-1"></i>Detailed Stats

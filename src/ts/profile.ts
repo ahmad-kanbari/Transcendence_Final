@@ -4,12 +4,15 @@ import utils from './utils';
 import components from './components';
 import { VALIDATION_INPUTS } from './constants';
 import { baseURL } from './constants';
+import toastManager from './toastManager';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
   profileAvatar?: HTMLImageElement | null;
   displayNameField?: HTMLInputElement | null;
   emailField?: HTMLInputElement | null;
+  passwordField?: HTMLInputElement | null;
+  currentPasswordField?: HTMLInputElement | null;
   statsTotalGames?: HTMLElement | null;
   statsWins?: HTMLElement | null;
   statsLosses?: HTMLElement | null;
@@ -96,7 +99,9 @@ class Profile {
       profileUsername: document.getElementById('profileUsername'),
       profileAvatar: document.getElementById('profileAvatar') as HTMLImageElement | null,
       displayNameField: document.getElementById('settingDisplayName') as HTMLInputElement | null,
-      // emailField: document.getElementById('settingEmail') as HTMLInputElement | null,
+      emailField: document.getElementById('settingEmail') as HTMLInputElement | null,
+      passwordField: document.getElementById('settingPassword') as HTMLInputElement | null,
+      currentPasswordField: document.getElementById('currentPassword') as HTMLInputElement | null,
       statsTotalGames: document.getElementById('statsTotalGames'),
       statsWins: document.getElementById('statsWins'),
       statsLosses: document.getElementById('statsLosses'),
@@ -115,9 +120,10 @@ class Profile {
     this.setupProfilePictureHandlers();
     this.init2FA();
     this.setupStatsButtons();
+    this.setupUpdateHandlers(); 
 
-    if (this.profileForm.displayNameField) 
-      utils.setupInputField(this.profileForm.displayNameField, 'username', components);
+    // if (this.profileForm.displayNameField) 
+    //   utils.setupInputField(this.profileForm.displayNameField, 'username', components);
     
     // if (this.profileForm.emailField) 
     //   // utils.setupInputField(this.profileForm.emailField, 'email', components);
@@ -141,8 +147,8 @@ class Profile {
       const urlParams = new URLSearchParams(window.location.search);
       const userId = urlParams.get('userId');
 
-       let usertest =await api.getUserById('10');
-        console.log('User test data:', usertest);
+      //  let usertest =await api.getUserById('10');
+      //   console.log('User test data:', usertest);
       let userData;
       if (userId) {
         // Loading another user's profile
@@ -388,7 +394,7 @@ calculateDetailedStats(matchHistory: any[]): any {
   return stats;
 }
 
-// ❌ REPLACE the showDetailedStatsModal method with this cyberpunk-themed version:
+
 
 showDetailedStatsModal(): void {
   const modal = document.getElementById('detailedStatsModal');
@@ -746,9 +752,35 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
 
     //get full user Data
 
-    if (this.profileForm.profileUsername)
-      this.profileForm.profileUsername.textContent = user.username || app.getUsername() || 'Username';
+    // if (this.profileForm.profileUsername)
+    //   this.profileForm.profileUsername.textContent = user.username || app.getUsername() || 'Username';
+    // Update these fields to be editable
+    if (this.profileForm.displayNameField) {
+        this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
+        this.profileForm.displayNameField.readOnly = false; // Make it editable
+    }
     
+    if (this.profileForm.emailField) {
+        this.profileForm.emailField.value = user.email || app.getEmail() || '';
+        this.profileForm.emailField.readOnly = false; // Make it editable
+        // Remove the bg-cyber-dark class to make it look editable
+        // this.profileForm.emailField.classList.remove('bg-cyber-dark');
+    }
+
+    if (this.profileForm.passwordField) {
+        this.profileForm.passwordField.value = '';
+        this.profileForm.passwordField.placeholder = 'Enter new password';
+        this.profileForm.passwordField.readOnly = false; // Make it editable
+        // Remove the bg-cyber-dark class to make it look editable
+        // this.profileForm.passwordField.classList.remove('bg-cyber-dark');
+    }
+        if (this.profileForm.currentPasswordField) {
+        this.profileForm.currentPasswordField.value = '';
+        this.profileForm.currentPasswordField.placeholder = 'Enter current password';
+        this.profileForm.currentPasswordField.readOnly = false; // Make it editable
+        // Remove the bg-cyber-dark class to make it look editable
+        // this.profileForm.passwordField.classList.remove('bg-cyber-dark');
+    }
     if (this.profileForm.profileAvatar) {
       // First check localStorage for cached profile picture
       const cachedImage = this.getProfilePictureFromLocalStorage();
@@ -1490,6 +1522,171 @@ renderTournamentMatches(tableBody: HTMLElement): void {
       tableBody.appendChild(tr);
     });
   });
+}
+
+setupUpdateHandlers(): void {
+    const updateUsernameBtn = document.createElement('button');
+    updateUsernameBtn.textContent = 'Update Username';
+    updateUsernameBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 whitespace-nowrap';
+    updateUsernameBtn.type = 'button';
+
+    const updateEmailBtn = document.createElement('button');
+    updateEmailBtn.textContent = 'Update Email';
+    updateEmailBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2';
+    updateEmailBtn.type = 'button';
+
+    const updatePasswordBtn = document.createElement('button');
+    updatePasswordBtn.textContent = 'Update Password';
+    updatePasswordBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 border-cyber-blue border-2 h-8';
+    updatePasswordBtn.type = 'button';
+
+    // Add buttons to the form
+    if (this.profileForm.displayNameField?.parentElement) {
+        this.profileForm.displayNameField.parentElement.appendChild(updateUsernameBtn);
+    }
+    if (this.profileForm.emailField?.parentElement) {
+        this.profileForm.emailField.parentElement.appendChild(updateEmailBtn);
+    }
+    if (this.profileForm.passwordField?.parentElement) {
+        this.profileForm.passwordField.parentElement.appendChild(updatePasswordBtn);
+    }
+
+    // Add event listeners
+    updateUsernameBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleUsernameUpdate();
+    });
+
+    updateEmailBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleEmailUpdate();
+    });
+
+    updatePasswordBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handlePasswordUpdate();
+    });
+}
+
+
+// Add these handler methods to your Profile class
+async handleUsernameUpdate(): Promise<void> {
+    if (!this.profileForm.displayNameField) return;
+    
+    const newUsername = this.profileForm.displayNameField.value.trim();
+    
+    if (!newUsername) {
+        components.showToast('error', 'Validation Error', 'Username cannot be empty');
+        return;
+    }
+
+    if (newUsername.length < 3 || newUsername.length > 25) {
+        components.showToast('error', 'Validation Error', 'Username must be between 3 and 25 characters');
+        return;
+    }
+
+    try {
+        const result = await api.updateUserUsername(newUsername);
+        
+        if (result.success) {
+            components.showToast('success', 'Success', 'Username updated successfully');
+            
+            // Update local state
+            if (app.state.user) {
+                app.state.user.username = newUsername;
+                localStorage.setItem('user', JSON.stringify(app.state.user));
+            }
+            
+            // Refresh profile data
+            this.loadProfileData();
+        } else {
+            components.showToast('error', 'Update Error', result.error || 'Failed to update username');
+        }
+    } catch (error: any) {
+        components.showToast('error', 'Update Error', 'An error occurred while updating username');
+    }
+}
+
+async handleEmailUpdate(): Promise<void> {
+    if (!this.profileForm.emailField) return;
+    
+    const newEmail = this.profileForm.emailField.value.trim();
+    
+    if (!newEmail) {
+        components.showToast('error', 'Validation Error', 'Email cannot be empty');
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+        components.showToast('error', 'Validation Error', 'Please enter a valid email address');
+        return;
+    }
+
+    try {
+        const result = await api.updateUserEmail(newEmail);
+        
+        if (result.success) {
+            components.showToast('success', 'Success', 'Email updated successfully');
+            
+            // Update local state
+            if (app.state.user) {
+                app.state.user.email = newEmail;
+                localStorage.setItem('user', JSON.stringify(app.state.user));
+            }
+            
+            // Refresh profile data
+            this.loadProfileData();
+        } else {
+            components.showToast('error', 'Update Error', result.error || 'Failed to update email');
+        }
+    } catch (error: any) {
+        components.showToast('error', 'Update Error', 'An error occurred while updating email');
+    }
+}
+
+async handlePasswordUpdate(): Promise<void> {
+    if (!this.profileForm.passwordField) return;
+    
+    const newPassword = this.profileForm.passwordField.value.trim();
+    const currentPassword = this.profileForm.currentPasswordField?.value.trim() || '';
+    
+    if (!newPassword || !currentPassword) {
+        components.showToast('error', 'Validation Error', 'New Password and Current Passoword fields cannot be empty');
+        return;
+    }
+
+    if (newPassword.length < 8 || newPassword.length > 25) {
+        components.showToast('error', 'Validation Error', 'Password must be between 8 and 25 characters');
+        return;
+    }
+    if (newPassword ==  currentPassword) {
+        components.showToast('error', 'Validation Error', 'New Password and Current Password must not the same');
+        toastManager.showToast('error', 'New Password and Current Password must not the same');
+        return;
+    }
+
+    try {
+        const result = await api.updateUserPassword(newPassword, currentPassword);
+        
+        if (result.success) {
+            components.showToast('success', 'Success', 'Password updated successfully');
+            
+            // Clear the password field for security
+            this.profileForm.passwordField.value = '';
+            
+            // Optionally refresh profile data
+            this.loadProfileData();
+        } else {
+            components.showToast('error', 'Update Error', result.error || 'Failed to update password');
+            toastManager.showToast('error', result.error || 'Failed to update password');
+        }
+    } catch (error: any) {
+        components.showToast('error', 'Update Error', 'An error occurred while updating password');
+    }
 }
 
 }
