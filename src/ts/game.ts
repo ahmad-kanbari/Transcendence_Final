@@ -26,7 +26,8 @@ class PongGame {
     player2Score: HTMLElement | null = null;
     player1Name: HTMLElement | null = null;
     player2Name: HTMLElement | null = null;
-
+    player1NameInput: HTMLInputElement | null = null;
+    player2NameInput: HTMLInputElement | null = null;
     // Game mode flags
     isAIMode: boolean = false;
     isMultiplayerMode: boolean = false;
@@ -276,8 +277,9 @@ class PongGame {
         if (pvpButton) {
             pvpButton.addEventListener('click', () => {
                 // On 1 VS 1, set Player 1's name to current user and Player 2's name to RANDOM
-                this.player1Name!.textContent = this.userName;
-                this.player2Name!.textContent = this.matchObj.player2_name  ?? 'RANDOM';
+                // this.player1Name!.textContent =  this.matchObj.player1_name ?? this.userName;
+                // this.player2Name!.textContent = this.matchObj.player2_name  ?? 'RANDOM';
+                this.updatePlayerNames();
                 this.setGameMode('1v1');
             });
         } else {
@@ -288,7 +290,7 @@ class PongGame {
         if (pveButton) {
             pveButton.addEventListener('click', () => {
                 // On 1 VS AI, set Player 1's name to current user and Player 2's name to AI
-                this.player1Name!.textContent = this.userName;
+                this.player1Name!.textContent = this.matchObj.player1_name ??  this.userName;
                 this.player2Name!.textContent = 'AI';
                 this.setGameMode('1vAi');
             });
@@ -299,7 +301,7 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = `${this.userName}_team `;
+                this.player1Name!.textContent = `${this.matchObj.player1_name ?? this.userName}_team `;
                 this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
@@ -535,7 +537,7 @@ class PongGame {
         if (startText) startText.style.display = 'none';
         
         // Reset player names to defaults when returning to menu
-        this.player1Name!.textContent = 'PLAYER_1';
+        this.player1Name!.textContent =  this.userName ?? 'PLAYER_1';
         this.player2Name!.textContent = 'PLAYER_2';
         
         // Reset game state if needed
@@ -561,7 +563,7 @@ class PongGame {
         const player1NameInput = document.getElementById('player1NameInput');
         if (player1NameInput) {
             (player1NameInput as HTMLInputElement).value = this.userName ?? 'PLAYER_1';
-            (player1NameInput as HTMLInputElement).readOnly = true;
+            (player1NameInput as HTMLInputElement).readOnly = false;
         }
 
         // Add active class to the clicked button
@@ -677,7 +679,7 @@ async startGame(): Promise<void> {
     const userData = JSON.parse(storedUser ?? '{}');
     
     console.log("userData in game before creating match:", userData);
-    
+    console.log("Player 2", this.player2Name!.textContent);
     // Initialize base match object
     this.matchObj = {
         matchId: null,
@@ -695,6 +697,7 @@ async startGame(): Promise<void> {
     // Submit single match if not in tournament
     if (!this.isTournamentMode && !this.isMultiplayerMode) {
         if (this.matchObj && this.submitMatch) {
+            console.log("Submitting match data to backend:", this.matchObj);
             const response = await api.createMatch(this.matchObj);
             console.log("Match created successfully:", response);
             if (response.success) {
@@ -1455,19 +1458,7 @@ createMultiplayerMatchData(
                 });
             }
         }
-        // if(this.isTournamentMode){
-        //     if (this.matchObj && this.matchObj.tournamentId && this.matchObj.matchId) {
-        //       // Submit tournament match
-        //       console.log("Submitting Tournament match:", this.matchObj);
-        //       console.log("Tournament ID:", this.matchObj.tournamentId);
-        //       console.log("Match ID:", this.matchObj.matchId);
-            
-        //     const response =  api.submitTournamentMatch(this.matchObj.tournamentId!, this.matchObj.matchId!, {    
-        //         player1_score: this.matchObj.player1_score!,
-        //         player2_score: this.matchObj.player2_score!,
-        //       });
-        //     }
-        // }
+      
 
     }
 
@@ -2054,7 +2045,7 @@ createMultiplayerMatchData(
         
         // Set default names if inputs are empty
         if (!player1NameInput!.value) {
-            player1NameInput!.value = 'Player1';
+            player1NameInput!.value = this.userName ?? 'Player1';
         }
         
         if (!player2NameInput!.value) {
