@@ -334,7 +334,10 @@ class App {
             router.navigate('/profile');
             return;
           }
+      
           
+        let accessToken = utils.getCookie("accessToken");
+        if (accessToken && !this.state.user) {
           const result = await api.getCurrentUser();
            console.log('after', result.userData);
            
@@ -345,6 +348,7 @@ class App {
             components.showToast('info', 'Session Restored', 'Your session has been restored.', 5000);
             router.navigate('/profile');
             return;
+          }
           } else {
             pages.showPage('login');
             
@@ -353,6 +357,7 @@ class App {
             
             login.updateUIAuthState();
           }
+        
         } catch (error) {
           pages.showPage('login');
           
@@ -385,25 +390,29 @@ class App {
             );
             return;
           }
-          
-          const result = await api.getCurrentUser();
-          console.log('before', result.userData);
-          if (result.success && result.userData) {
-            console.log('User data:', result.userData);
-            this.state.user = result.userData;
-            this.state.isAuthenticated = result.isAuthenticated;
-            login.updateUIAuthState();
-            pages.showPage('game');
-           
-            game.init(
-              this.getUsername(),
-              this.setSubmitMatchFunction.bind(this),
-              this.setSubmitTournamentFunction.bind(this)
-            );
+          let accessToken = utils.getCookie("accessToken");
+          if (accessToken && !this.state.user) {
+            console.log('Access token found, fetching current user data ing ame');
+            const result = await api.getCurrentUser();
+            console.log('before', result.userData);
+            if (result.success && result.userData) {
+              console.log('User data:', result.userData);
+              this.state.user = result.userData;
+              this.state.isAuthenticated = result.isAuthenticated;
+              login.updateUIAuthState();
+              pages.showPage('game');
+            
+              game.init(
+                this.getUsername(),
+                this.setSubmitMatchFunction.bind(this),
+                this.setSubmitTournamentFunction.bind(this)
+              );
+          }
           } else {
             components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
             router.navigate('/login');
           }
+      
         } catch (error) {
           components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
           router.navigate('/login');
@@ -424,6 +433,8 @@ class App {
             login.updateUIAuthState();
             return;
         }
+        let accessToken = utils.getCookie("accessToken"); 
+        if (accessToken && !this.state.user) {
           const result = await api.getCurrentUser();
           
           if (result.success && result.userData) {
@@ -431,6 +442,7 @@ class App {
             this.state.isAuthenticated = result.isAuthenticated;
             login.updateUIAuthState();
             pages.showPage('chat');
+          }
           } else {
             components.showToast('warning', 'Authentication Required', 'Please log in to access chat.', 5000);
             router.navigate('/login');
@@ -458,7 +470,8 @@ class App {
               login.updateUIAuthState();
               return;
           }
-          
+          let accessToken = utils.getCookie("accessToken");
+          if (accessToken && !this.state.user) {
           const result = await api.getCurrentUser();
           
           if (result.success && result.userData) {
@@ -466,6 +479,7 @@ class App {
             this.state.isAuthenticated = result.isAuthenticated;
             login.updateUIAuthState();
             pages.showPage('profile');
+          }
           } else {
             components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.', 5000);
             router.navigate('/login');
