@@ -115,13 +115,14 @@ class Utils {
   }
 
   cleanUp(): void {
+    console.log('Utils: Cleaning up cookies and localStorage');
     this.deleteCookie('access_token');
     this.deleteCookie('refresh_token');
     
     localStorage.removeItem('access_token');
-    localStorage.removeItem('access_token'); // Duplicate in original code
+
     localStorage.removeItem('refresh_token');
-    
+    localStorage.removeItem('userMatchHistory'); // Duplicate in original code
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
     

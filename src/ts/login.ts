@@ -22,6 +22,7 @@ interface LoginForm {
   twoFactorError: HTMLElement | null;
   twoFactorModal: HTMLElement | null;
   twoFactorCloseBtn: HTMLElement | null;
+  // loginBtnHome: HTMLButtonElement | null;
 }
 
 // Login data interface
@@ -66,6 +67,9 @@ class Login {
     });
     
     this.initialized = true;
+    // if(this.loginForm.loginBtnHome) {
+    //   this.loginForm.loginBtnHome.onclick = this.handleLoginBtnHomeClick.bind(this);
+    // }
   }
   
   renderForms(): void {
@@ -80,6 +84,7 @@ class Login {
       container: document.getElementById('loginFormContainer'),
       form: document.getElementById('loginForm') as HTMLFormElement | null,
       submitBtn: document.getElementById('loginBtn') as HTMLButtonElement | null,
+      // loginBtnHome: document.getElementById('loginBtnHome') as HTMLButtonElement | null,
       loginGoogleLink: document.getElementById('loginGoogleLink'),
       emailField: document.getElementById('loginUseremail') as HTMLInputElement | null,
       passwordField: document.getElementById('loginPassword') as HTMLInputElement | null,
@@ -478,6 +483,7 @@ show2FAModal(): void {
   
   updateUIAuthState(): void {
     const loginNavBtn = document.getElementById('loginNavBtn');
+    const loginBtnHome = document.getElementById('loginBtnHome');
     const loginNavBtnMobile = document.getElementById('loginNavBtnMobile');
     const loginBtn = document.getElementById('loginBtn');
     const loginDropdown = document.getElementById('loginDropdown');
@@ -487,6 +493,11 @@ show2FAModal(): void {
     if (app.state?.user) {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'none';
       if (loginBtn) loginBtn.style.display = 'none';
+      if( loginBtnHome) {
+      
+        loginBtnHome.style.display = 'none';
+        
+      };
       if (loginDropdown) loginDropdown.style.display = 'block';
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
       
@@ -509,9 +520,23 @@ show2FAModal(): void {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
       if (loginBtn) loginBtn.style.display = 'block';
       if (loginDropdown) loginDropdown.style.display = 'none';
+      if (loginBtnHome) {
+        loginBtnHome.style.display = 'block';
+      }
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
     }
   }
+
+  handleLoginBtnHomeClick(event: MouseEvent): void {
+    console.log('Login button on home clicked');
+    if (event) {
+      event.preventDefault();  
+    } 
+    // Show login form
+    this.showLoginForm();
+    // Scroll to the top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }     
 
   generateDeviceId(): string {
     return crypto.randomUUID();

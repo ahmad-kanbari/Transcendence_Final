@@ -89,7 +89,7 @@ class App {
       components.showSpinner();
       components.init(this.appContainer);
 
-      this.initializeSocket();
+      // this.initializeSocket();
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
@@ -153,6 +153,7 @@ class App {
             components.showSpinner();
             try {
               // Clear URL parameters
+              console.log("signing in with oauth")
               window.history.replaceState({}, document.title, window.location.pathname);
               
               // Check if cookies are set and fetch user data
@@ -246,7 +247,7 @@ class App {
             if (result.success && result.data) {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
-              
+              console.log('User data: user logged in in home', this.state.user);
               login.updateUIAuthState();
               
               // Check if 2FA is required
@@ -556,17 +557,18 @@ class App {
           this.clearAuthState();
         }
       } else {
+        console.warn('No stored user data found, checking server session... but no reconnecting');
         // No stored user, check if server has valid session
-        const result = await api.getCurrentUser();
+        // const result = await api.getCurrentUser();
         
-        if (result.success && result.data) {
-          this.state.user = result.data.user;
-          this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+        // if (result.success && result.data) {
+        //   this.state.user = result.data.user;
+        //   this.state.isAuthenticated = result.data.isAuthenticated ?? false;
           
-          // Store in localStorage
-          localStorage.setItem('user', JSON.stringify(result.data.user));
-          localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
-        }
+        //   // Store in localStorage
+        //   localStorage.setItem('user', JSON.stringify(result.data.user));
+        //   localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+        // }
       }
       
       // Update UI to reflect current auth state
@@ -584,6 +586,7 @@ class App {
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
     utils.deleteCookie('accessToken');
+    utils.cleanUp();  
   }
 
   async checkAuthState(): Promise<void> {
@@ -619,14 +622,14 @@ class App {
       await api.logout();
       
       this.state.user = null;
-      
+      utils.cleanUp();    
       login.updateUIAuthState();
       
       components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
-      
+       
       setTimeout(() => {
         window.location.href = '/';
-      }, 1000);
+      }, 2000);
       
       return true;
     } catch (error) {
@@ -638,7 +641,7 @@ class App {
  
       setTimeout(() => {
         window.location.href = '/';
-      }, 1000);
+      }, 2000);
       
       return false;
     } finally {
@@ -891,6 +894,7 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
   destroy(): void {
         socketService.destroy();
         chat.destroy();
+        utils.cleanUp();
         console.log('App destroyed');
 
     }

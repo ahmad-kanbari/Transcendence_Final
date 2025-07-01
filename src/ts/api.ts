@@ -158,6 +158,7 @@ class API {
 
   async logout(): Promise<ApiResponse> {
     try {
+      console.log('Logging out from API');
       await this.fetchWithAutoRefresh(ENDPOINTS.auth.logout, {
         method: 'POST',
         credentials: 'include',
