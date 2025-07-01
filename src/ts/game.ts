@@ -604,7 +604,7 @@ class PongGame {
                 const p1Input = document.getElementById('tournament-p1');
                 if (p1Input) {
                     (p1Input as HTMLInputElement).value = this.userName ?? 'PLAYER_1';
-                    (p1Input as HTMLInputElement).readOnly = true;
+                    (p1Input as HTMLInputElement).readOnly = false;
                 }
                 return; // Don't start game yet, wait for tournament setup
         }
@@ -1745,7 +1745,7 @@ createMultiplayerMatchData(
     async startTournament(): Promise<void> {
          // Get player names from inputs
          this.tournamentPlayers = [
-            (document.getElementById('tournament-p1')! as HTMLInputElement).value || 'Player_1',
+            (document.getElementById('tournament-p1')! as HTMLInputElement).value || this.userName || 'Player_1',
             (document.getElementById('tournament-p2')! as HTMLInputElement).value || 'Player_2',
             (document.getElementById('tournament-p3')! as HTMLInputElement).value || 'Player_3',
             (document.getElementById('tournament-p4')! as HTMLInputElement).value || 'Player_4'
@@ -1811,7 +1811,7 @@ createMultiplayerMatchData(
                 const response  = await api.createTournamentMatch(this.tournamentId!, {
                     player1_id: this.userId,
                     player2_id: null,
-                    player1_name: this.tournamentPlayers[0],
+                    player1_name: this.userName || this.tournamentPlayers[0],
                     player2_name: this.tournamentPlayers[1],
                 
                 });
@@ -2053,8 +2053,11 @@ createMultiplayerMatchData(
         }
         
         // Update display
+
         this.player1Name!.textContent = player1NameInput!.value;
         this.player2Name!.textContent = player2NameInput!.value;
+
+      
     }
 }
 
