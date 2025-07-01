@@ -4,9 +4,11 @@
  */
 
 import api from "./api";
+import app from "./app";
 import { t } from "./localization";
 
 class PongGame {
+ 
     // Game state
     userName: string | null = null;
     userId: number | null = null;
@@ -184,7 +186,8 @@ class PongGame {
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                this.userName = userObj['user']?.['username'] ?? null;
+                // this.userName = userObj['user']?.['username'] ?? null;
+                this.userName = app.getUsername();
                 this.userId = Number(userObj['user']?.['id']) ?? null;
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);

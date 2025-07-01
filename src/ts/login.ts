@@ -468,6 +468,7 @@ show2FAModal(): void {
 
     // Update app state
     if (app.state) {
+      console.log('Updating app state with user data:', userData);
       app.state.user = userData;
     }
     localStorage.setItem('user', JSON.stringify(userData));

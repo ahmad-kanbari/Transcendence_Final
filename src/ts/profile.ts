@@ -5,6 +5,7 @@ import components from './components';
 import { VALIDATION_INPUTS } from './constants';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
+import game from './game';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
@@ -1593,15 +1594,19 @@ async handleUsernameUpdate(): Promise<void> {
         
         if (result.success) {
             components.showToast('success', 'Success', 'Username updated successfully');
-            
+            console.log("the new username in profile", newUsername);
+          
             // Update local state
             if (app.state.user) {
-                app.state.user.username = newUsername;
+                console.log("the new username in app state", app.state.user!.username);
+                app.state.user!.username = newUsername!;
                 localStorage.setItem('user', JSON.stringify(app.state.user));
             }
             
             // Refresh profile data
             this.loadProfileData();
+            // let newUsernameGame = game.init(newUsername, api.submitRegularMatch, api.submitTournamentMatch); 
+            // console.log("the new username in game", app.getUsername());// Update username in game state
         } else {
             components.showToast('error', 'Update Error', result.error || 'Failed to update username');
         }
