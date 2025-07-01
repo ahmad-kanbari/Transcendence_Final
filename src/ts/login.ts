@@ -481,6 +481,33 @@ show2FAModal(): void {
     console.log('Login successful:', userData);
     router.navigate('/');
   }
+
+  getProfilePictureFromLocalStorage(): string | null {
+  try {
+    const userId = app.state.user?.id || 'default';
+    const storageKey = `profile_picture_${userId}`;
+    
+    const savedData = localStorage.getItem(storageKey);
+    if (!savedData) return null;
+    
+    const profilePictureData = JSON.parse(savedData);
+    
+    // Check if data is less than 7 days old (optional cache expiration)
+    const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - profilePictureData.timestamp > sevenDaysInMs) {
+      // Clean up expired data
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem('current_profile_picture_key');
+      return null;
+    }
+    
+    return profilePictureData.image;
+  } catch (error) {
+    console.error('Failed to get profile picture from localStorage:', error);
+    return null;
+  }
+}
+
   
   updateUIAuthState(): void {
     const loginNavBtn = document.getElementById('loginNavBtn');
@@ -503,12 +530,34 @@ show2FAModal(): void {
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
       
       if (typeof app.getIs42User === 'function' && app.getIs42User()) {
-        if (typeof app.getUserImg === 'function' && app.getUserImg() && loggedInUserImg) {
-          loggedInUserImg.src = app.getUserImg();
-          loggedInUserImg.style.display = 'block';
-        } else if (loggedInUserImg) {
-          loggedInUserImg.style.display = 'none';
-        }
+
+        
+        // if (loggedInUserImg) {
+          
+        //   loggedInUserImg.src = app.getUserImg();
+        //   loggedInUserImg.style.display = 'block';
+        // } else if (loggedInUserImg) {
+        //   loggedInUserImg.style.display = 'none';
+        // }
+        if (loggedInUserImg) {
+          // Priority order: localStorage cache > server URL > default image
+          const cachedImage = this.getProfilePictureFromLocalStorage();
+          const serverImage = app.getUserImg();
+          
+          const imageToUse = cachedImage || serverImage || 'src/assets/icons/user.png';
+          
+          if (imageToUse && imageToUse !== 'src/assets/icons/user.png') {
+            loggedInUserImg.src = imageToUse;
+            loggedInUserImg.style.display = 'block';
+          } else {
+            loggedInUserImg.style.display = 'none';
+          }
+        }  
+
+
+
+
+
       } else {
         if (typeof app.getEmail === 'function' && app.getEmail() && loggedInEmail) {
           loggedInEmail.textContent = app.getEmail();
@@ -543,6 +592,7 @@ show2FAModal(): void {
     return crypto.randomUUID();
   }
 
+  
 
 async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
   console.log('Google login button clicked');

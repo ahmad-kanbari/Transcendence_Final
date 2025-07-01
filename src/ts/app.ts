@@ -155,11 +155,11 @@ class App {
               // Clear URL parameters
               console.log("signing in with oauth")
               window.history.replaceState({}, document.title, window.location.pathname);
-              
+                  // ✅ Use API call instead of reading cookies
+              const result = await api.getCurrentUser();
               // Check if cookies are set and fetch user data
-              const accessToken = utils.getCookie("accessToken");
-              if (accessToken) {
-                const result = await api.getCurrentUser();
+    
+  
                 
                 if (result.success && result.data) {
                   this.state.user = result.data.user;
@@ -176,11 +176,13 @@ class App {
                   
                   pages.showPage('home');
                   return;
+                }else{
+                  components.showToast('error', 'Login Error', 'Failed to complete Google login.', 5000);
+
                 }
-              }
+            
               
               // If no access token or getCurrentUser failed
-              components.showToast('error', 'Login Error', 'Failed to complete Google login.', 5000);
               
             } catch (error) {
               console.error('Error after OAuth success:', error);

@@ -889,6 +889,16 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
             app.state.user.profile_picture = data.url;
             localStorage.setItem('user', JSON.stringify(app.state.user));
           }
+          // Update logged in user image if available
+          let loggedInUserImg = document.getElementById('loggedInUserImg');
+          if (loggedInUserImg) {
+            loggedInUserImg.setAttribute('src', base64String);
+          }
+          let loggedInUsername = document.getElementById('loggedInUsername');
+          // if (loggedInUsername ) {
+          //   loggedInUsername.textContent = app.state.user!.username || app.getUsername() || user.username || 'Unknown User';
+        
+          // }
         };
         reader.readAsDataURL(file);
         
