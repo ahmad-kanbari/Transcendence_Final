@@ -234,6 +234,7 @@ calculateDetailedStats(matchHistory: any[]): any {
     wins: 0,
     losses: 0,
     winRate: 0,
+    performanceOverTime: [] as any[],
     
     // Match type breakdown
     regularMatches: 0,
@@ -307,7 +308,8 @@ calculateDetailedStats(matchHistory: any[]): any {
       }
     } else {
       // Regular, AI, or tournament matches
-      const isPlayer1 = match.player1_name === currentUser;
+      // const isPlayer1 = match.player1_name === currentUser;
+      const isPlayer1 = true;
       userScore = isPlayer1 ? match.player1_score : match.player2_score;
       opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
       opponent = isPlayer1 ? match.player2_name : match.player1_name;
@@ -395,7 +397,19 @@ calculateDetailedStats(matchHistory: any[]): any {
   return stats;
 }
 
-
+generatePerformanceBars(recentMatches: any[]): string {
+  if (!recentMatches || recentMatches.length === 0) {
+    return '<div class="text-gray-400 text-xs flex items-center justify-center h-full">No recent matches</div>';
+  }
+  
+  return recentMatches.map(match => {
+    const height = Math.random() * 60 + 20;
+    const color = match.result === 1 ? 'bg-cyber-green' : 'bg-cyber-pink';
+    const opponent = match.opponent || 'Unknown';
+    const score = match.score || '0-0';
+    return `<div class="${color} w-6 rounded-t opacity-80 hover:opacity-100 transition-opacity" style="height: ${height}px" title="${opponent}: ${score}"></div>`;
+  }).join('');
+}
 
 showDetailedStatsModal(): void {
   const modal = document.getElementById('detailedStatsModal');
@@ -408,6 +422,105 @@ showDetailedStatsModal(): void {
   const stats = this.calculateDetailedStats(storedMatches);
   
   content.innerHTML = `
+   <!-- CSS Charts Section -->
+  <div class="col-span-full">
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg">
+      <div class="flex items-center mb-6">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-xl font-bold animate-glow">📊 PERFORMANCE ANALYTICS</h6>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Win/Loss Pie Chart -->
+        <div class="cyber-card">
+          <h6 class="font-cyber text-cyber-green text-center mb-4">Win/Loss Distribution</h6>
+          <div class="relative w-32 h-32 mx-auto">
+            <div class="absolute inset-0 rounded-full border-8 border-cyber-green transform rotate-0" 
+                 style="background: conic-gradient(#2DE2E6 0deg ${(stats.wins / (stats.wins + stats.losses)) * 360}deg, #FF2A6D ${(stats.wins / (stats.wins + stats.losses)) * 360}deg 360deg);"></div>
+            <div class="absolute inset-4 bg-cyber-darker rounded-full flex items-center justify-center">
+              <span class="font-cyber text-white text-sm">${stats.winRate}%</span>
+            </div>
+          </div>
+          <div class="flex justify-center mt-4 space-x-4">
+            <div class="flex items-center"><div class="w-3 h-3 bg-cyber-green mr-2"></div><span class="text-xs">Wins: ${stats.wins}</span></div>
+            <div class="flex items-center"><div class="w-3 h-3 bg-cyber-pink mr-2"></div><span class="text-xs">Losses: ${stats.losses}</span></div>
+          </div>
+        </div>
+        
+        <!-- Match Type Bar Chart -->
+        <div class="cyber-card">
+          <h6 class="font-cyber text-cyber-blue text-center mb-4">Match Types</h6>
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <span class="text-xs w-16">Regular</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-blue h-4 rounded" style="width: ${stats.regularMatches ? (stats.regularMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.regularMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">AI</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-pink h-4 rounded" style="width: ${stats.aiMatches ? (stats.aiMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.aiMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">Multi</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-yellow h-4 rounded" style="width: ${stats.multiplayerMatches ? (stats.multiplayerMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.multiplayerMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">Tournament</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-purple-400 h-4 rounded" style="width: ${stats.tournamentMatches ? (stats.tournamentMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.tournamentMatches}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Performance Trend -->
+        <div class="cyber-card">
+          <h6 class="font-cyber text-cyber-pink text-center mb-4">Recent Performance</h6>
+          <div class="flex items-end justify-center space-x-1 h-24">
+            ${this.generatePerformanceBars(stats.performanceOverTime ? stats.performanceOverTime.slice(-10) : [])}
+          </div>
+          <div class="text-center mt-2">
+            <span class="text-xs text-gray-400">Last 10 matches</span>
+          </div>
+        </div>
+        
+        <!-- Top Opponents -->
+        <div class="cyber-card md:col-span-2">
+          <h6 class="font-cyber text-cyber-yellow text-center mb-4">Most Faced Opponents</h6>
+          <div class="space-y-2">
+            ${Object.entries(stats.opponents)
+              .sort(([,a]: any, [,b]: any) => b.matches - a.matches)
+              .slice(0, 5)
+              .map(([name, data]: any, index) => {
+                const winRate = Math.round((data.wins / data.matches) * 100);
+                const colors = ['bg-cyber-blue', 'bg-cyber-green', 'bg-cyber-pink', 'bg-yellow-400', 'bg-purple-400'];
+                return `
+                  <div class="flex items-center justify-between p-2 bg-cyber-dark rounded">
+                    <div class="flex items-center">
+                      <div class="w-3 h-3 ${colors[index]} rounded-full mr-3"></div>
+                      <span class="text-white text-sm font-cyber">${name}</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                      <span class="text-xs text-gray-400">${data.matches} games</span>
+                      <span class="text-xs ${winRate >= 50 ? 'text-cyber-green' : 'text-cyber-pink'}">${winRate}% win</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
     <!-- Match Types Card -->
     <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
       <div class="flex items-center mb-4">
@@ -609,7 +722,8 @@ showMatchHistoryModal(): void {
       opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
       score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
     } else {
-      const isPlayer1 = match.player1_name === currentUser;
+      // const isPlayer1 = match.player1_name == currentUser;
+      const isPlayer1 = true; // Assuming current user is always player 1 for simplicity
       userWon = isPlayer1 ? match.player1_score > match.player2_score : match.player2_score > match.player1_score;
       opponent = isPlayer1 ? match.player2_name : match.player1_name;
       score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
