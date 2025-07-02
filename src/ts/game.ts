@@ -66,7 +66,7 @@ class PongGame {
     paddle3Speed: number = 0;
     paddle4Speed: number = 0;
     paddleMaxSpeed: number = 7;
-    aiReactionDelay: number = 0;
+    aiReactionDelay: number = 1000; // AI reaction delay in milliseconds
     aiPredictionAccuracy: number = 0.8;
     aiRandomOffset: number = 20;
 
