@@ -1377,23 +1377,6 @@ createMultiplayerMatchData(
             // Record this match after populating matchObj
             this.tournamentArr.push({ ...this.matchObj });
             if (this.currentTournamentMatch < 3) {
-           
-                // console.log("Tournament ID", this.tournamentId);
-                // console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
-                // const response  = await api.createTournamentMatch(this.tournamentId!, {
-                //     player1_id: this.matchObj.player1_id!,
-                //     player2_id: null,
-                //     player1_name: this.tournamentPlayers[0],
-                //     player2_name: this.tournamentPlayers[1],
-                
-                // });
-                // console.log("Tournament Match1 Created:", response);
-                // // let matchData = JSON.parse(r);
-                // console.log("Tournament Match1 Data id:", response.data.match['id']);
-                // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                // this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-
-
              
                 if (this.matchObj && this.matchObj.tournamentId) {
                     // Submit tournament match
@@ -1751,10 +1734,10 @@ createMultiplayerMatchData(
     async startTournament(): Promise<void> {
          // Get player names from inputs
          this.tournamentPlayers = [
-            (document.getElementById('tournament-p1')! as HTMLInputElement).value || this.userName || 'Player_1',
-            (document.getElementById('tournament-p2')! as HTMLInputElement).value || 'Player_2',
-            (document.getElementById('tournament-p3')! as HTMLInputElement).value || 'Player_3',
-            (document.getElementById('tournament-p4')! as HTMLInputElement).value || 'Player_4'
+            (document.getElementById('tournament-p1')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p1')! as HTMLInputElement).value : this.userName || 'Player_1',
+            (document.getElementById('tournament-p2')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_2',
+            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_3',
+            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value :  'Player_4'
         ];
         
         // Reset tournament state
