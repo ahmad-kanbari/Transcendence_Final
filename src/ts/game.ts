@@ -186,15 +186,18 @@ class PongGame {
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                // this.userName = userObj['user']?.['username'] ?? null;
-                this.userName = app.getUsername();
-                this.userId = Number(userObj['user']?.['id']) ?? null;
+                console.log('Parsed user object:', userObj);
+                this.userName = userObj['user']?.['username'] ?? app.getUsername(); null;
+                console.log('User name set to:', this.userName);
+                // this.userName = app.getUsername();
+                this.userId = Number(userObj.user.id) ??  null;
+                console.log('User ID set to:', this.userId);
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
             }
         }
-        console.log('Game page initialized with user:', userName);
+        console.log('Game page initialized with user:', this.userName);
         this.submitMatch = submitMatchFn;
         this.submitTournament = submitTournamentFn;
 
@@ -540,7 +543,7 @@ class PongGame {
         if (startText) startText.style.display = 'none';
         
         // Reset player names to defaults when returning to menu
-        this.player1Name!.textContent =  this.userName ?? 'PLAYER_1';
+        this.player1Name!.textContent =  app.getUsername() ?? this.userName ?? 'PLAYER_1';
         this.player2Name!.textContent = 'PLAYER_2';
         
         // Reset game state if needed
@@ -565,7 +568,7 @@ class PongGame {
         
         const player1NameInput = document.getElementById('player1NameInput');
         if (player1NameInput) {
-            (player1NameInput as HTMLInputElement).value = this.userName ?? 'PLAYER_1';
+            (player1NameInput as HTMLInputElement).value = app.getUsername() ?? this.userName ?? 'PLAYER_1';
             (player1NameInput as HTMLInputElement).readOnly = false;
         }
 
@@ -1936,8 +1939,8 @@ createMultiplayerMatchData(
         
         // Override stored username if Player 1 name is set in settings
         if (player1NameInput!.value) {
-            this.userName = player1NameInput.value;
-            this.player1Name!.textContent = this.userName;
+           
+            this.player1Name!.textContent = player1NameInput.value ?? this.userName;
         }
         
         if (player2NameInput.value) {
@@ -2042,6 +2045,7 @@ createMultiplayerMatchData(
      * Update player names display
      */
     updatePlayerNames() : void {
+        console.log("Updating player names...");
         // Get player names from settings inputs
         const player1NameInput = document.getElementById('player1NameInput') as HTMLInputElement;
         const player2NameInput = document.getElementById('player2NameInput') as HTMLInputElement;
@@ -2049,6 +2053,8 @@ createMultiplayerMatchData(
         // Set default names if inputs are empty
         if (!player1NameInput!.value) {
             player1NameInput!.value = this.userName ?? 'Player1';
+            console.log("Default Player 1 Name:", this.userName ?? 'Player1');
+        
         }
         
         if (!player2NameInput!.value) {
@@ -2060,7 +2066,8 @@ createMultiplayerMatchData(
         this.player1Name!.textContent = player1NameInput!.value;
         this.player2Name!.textContent = player2NameInput!.value;
 
-      
+        console.log("Player 1 Name:", this.player1Name!.textContent);
+        console.log("Player 2 Name:", this.player2Name!.textContent);
     }
 }
 
