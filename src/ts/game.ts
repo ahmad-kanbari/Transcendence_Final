@@ -1282,7 +1282,7 @@ createMultiplayerMatchData(
               if (intersectY + parseFloat(this.ball!.style.height) >= paddleY &&
                   intersectY <= paddleY + this.paddleHeight) {
                   // Set ball position so its right edge exactly touches the paddle's left edge
-                  this.ball!.style.left = `${paddleLeft - ballWidth}px`;
+                //   this.ball!.style.left = `${paddleLeft - ballWidth}px`;
                   this.adjustBallDirection(paddleY, this.paddleHeight, false, paddleId);
                   this.collisionProcessedThisFrame = true;
                   return true;
