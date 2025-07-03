@@ -531,7 +531,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 			{ credentials: "include" }
 		);
             if (!res .ok) {
-                toastManager.showToast("Error", `Failed to fetch notifications ${res}`);
+                // toastManager.showToast("Error", `Failed to fetch notifications ${res}`);
                 throw new Error("Failed to fetch notifications")
             };
             const notifications = await res.json();
