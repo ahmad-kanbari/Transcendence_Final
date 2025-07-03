@@ -130,7 +130,7 @@ class Chat {
     cleanupSocketHandlers(): void {
         if (!this.socketService) return;
         
-        this.socketService.off('newMessage');
+        this.socketService.off('messageReceivedInform');
         this.socketService.off('friendRequestInform');
         this.socketService.off('friendRequestAccept');
         console.log('Chat socket handlers cleaned up');
@@ -206,6 +206,7 @@ class Chat {
                 e.stopPropagation();
                 e.preventDefault();
                 this.sendMessage()
+                chat.debouncedReloadChats(); // Reload chats after sending message
             });
         }
 
@@ -214,6 +215,8 @@ class Chat {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.sendMessage();
+                
+                   // Reload chats after sending message
                 }
             });
         }
@@ -282,17 +285,22 @@ class Chat {
      setupSocketHandlers(): void {
         if (!this.socketService) return;
 
-        // Handle new messages
-        // this.socketService.on('newMessage', (message: any) => {
-        //     if (message.chat_id === this.currentChatId) {
+        // // Handle new messages
+        // this.socketService.on('messageReceivedInform', (message: any) => {
+        //     if ((message.chat_id == this.currentChatId)) {
         //         console.log(`New emmiting message in current chat ${this.currentChatId}:`, message);
-               
         //         this.appendMessage(message);
+        //         // return; // Ignore messages not in current chat
         //     }
-        //     this.debouncedReloadChats(); // Use debounced reload
-        //     // this.messagesCount++;
-        //     notificationManager.incrementMailboxCount();
-        //     this.updateDashboardStats();
+        //     // console.log(`New message received in chat ${message.chatId}:`, message);
+        //     // if (!chat.currentChatId || chat.currentChatId.toString() !== message.chatId?.toString()) {
+        //     // toastManager.showToast("Message", message.content);
+        //     // // }
+
+        //     // this.debouncedReloadChats(); // Use debounced reload
+        //     // // this.messagesCount++;
+        //     // notificationManager.incrementMailboxCount();
+        //     // this.updateDashboardStats();
         // });
 
         // // Handle friend requests
@@ -420,7 +428,7 @@ class Chat {
             this.currentChatWithUsername = user.username || null; // Store current username for later use
             await this.joinRoom(chatId);
             // Mark notifications as read for the current chat
-            if (this.mailboxNotificationCount > 0 && this.elements.mailboxBtn) {
+            if (notificationManager.getMailboxCount() > 0 && this.elements.mailboxBtn) {
             const res = await api.fetchWithAutoRefresh(
                 `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
                 {
@@ -510,14 +518,14 @@ class Chat {
                 if (this.elements.chatHeader) {
                     this.elements.chatHeader.textContent =`Chat Active with ${this.currentChatWithUsername  || 'Unknown User'}`;
                 }
-            if ( this.mailboxNotificationCount > 0){
+            if ( notificationManager.getMailboxCount() > 0){
                 // Mark messages as read
                 await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
                     method: 'PATCH',
                     credentials: "include",
                 });
                 
-                this.mailboxNotificationCount = 0;
+                notificationManager.updateMailboxCount(0); // Reset mailbox count
                 if (this.elements.mailboxBtn) {
                     this.elements.mailboxBtn.setAttribute('data-count', '0');
                 }
@@ -573,6 +581,7 @@ class Chat {
             
             if (blockedUser) {
                 components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
+        
                 return;
             }
         }
@@ -580,6 +589,7 @@ class Chat {
             const result = await api.sendMessage(this.currentChatId.toString(), content);
             
             if (result.ok) {
+                this.appendMessage({ sender_id: this.currentUserId ,content: content});
                 this.elements.messageInput.value = '';
             } else {
                 components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
@@ -592,6 +602,7 @@ class Chat {
 
      appendMessage(message: any): void {
         if (!this.elements.messageBox) return;
+    
         console.log(`Appending message: ${message.content} from ${message.sender_id}`);
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;

@@ -405,33 +405,43 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     }
 }
 
-        private setupSocketHandlers(): void {
+    private setupSocketHandlers(): void {
         if (!this.socketService) return;
 
         // Handle message notifications
         this.socketService.on('messageReceivedInform', async (data: any) => {
-            // Only show toast if not in the current chat
-            if (!chat.currentChatId || chat.currentChatId.toString() !== data.chatId?.toString()) {
+        //     // Only show toast if not in the current chat
+                console.log(' new Message received:', data);
+            if (!chat.currentChatId || chat.currentChatId.toString() != data.chatId) {
                 toastManager.addToQueue(data.username, data.message);
             }
-
+            if ((data.chat_id == chat.currentChatId)) {
+                console.log(`New emmiting message in current chat ${chat.currentChatId}:`, data);
+                chat.appendMessage(data);
+        //         // return; // Ignore messages not in current chat
+            }else {
+                notificationManager.incrementMailboxCount();
+            }
+            chat.debouncedReloadChats(); // Use debounced reload
             // Update mailbox notification count for message notifications
             try {
-                const page = 1;
-                const limit = 50;
-                const notifications = await api.getNotifications('messages', page, limit);
-                const uniqueSenders = new Set(
-                    notifications.filter((n: any) => !n.is_read).map((n: any) => n.sender_id)
-                );
+                // const page = 1;
+                // const limit = 50;
+                // const notifications = await api.getNotifications('messages', page, limit);
+                // const uniqueSenders = new Set(
+                //     notifications.filter((n: any) => !n.is_read).map((n: any) => n.sender_id)
+                // );
                 
-                this.mailboxNotificationCount = uniqueSenders.size;
+                // this.mailboxNotificationCount = uniqueSenders.size;
+                // this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
+                // this.updateMailboxCount(this.mailboxNotificationCount);
                 if (this.elements.mailboxBtn) {
                     this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
                 }
                 
-                if (this.elements.messageNotifications) {
-                    this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
-                }
+                // if (this.elements.messageNotifications) {
+                //     this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
+                // }
             } catch (error) {
                 console.error('Error updating message notifications:', error);
             }
@@ -480,13 +490,16 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         try {
              console.log('NotificationManager initialized in the console');
             const page = 1;
-            const limit = 5;
+            const limit = 10;
             // const notifications = await api.getNotifications('others', page, limit);
             const res = await api.fetchWithAutoRefresh(
 			`${this.baseURL}/notifications/others?page=${page}&limit=${limit}`,
 			{ credentials: "include" }
 		);
-            if (!res .ok) throw new Error("Failed to fetch notifications");
+            if (!res .ok) {
+                toastManager.showToast("Error", `Failed to fetch notifications ${res}`);
+                throw new Error("Failed to fetch notifications")
+            };
             const notifications = await res.json();
             this.notificationCount = notifications.filter((n: any) => n.is_opened === 0).length;
             if (this.elements.bellBtn) {
