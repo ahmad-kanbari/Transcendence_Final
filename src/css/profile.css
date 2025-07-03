@@ -482,3 +482,30 @@ input[type="email"].form-control[readonly]:focus
     border-top: none !important;
     border-bottom: none !important;
 } 
+
+/* Add to your CSS file */
+.animate-popup {
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.popup-fade-out {
+  animation: popupFadeOut 0.2s ease-in forwards;
+}
+
+@keyframes popupFadeOut {
+  to {
+    opacity: 0;
+    transform: translateX(-10px) scale(0.95);
+  }
+}

@@ -226,6 +226,159 @@ setupStatsButtons(): void {
   }
 }
 
+// Add this method to show individual game session details
+showGameSessionModal(matchId: string): void {
+  const modal = document.getElementById('gameSessionModal');
+  const content = document.getElementById('gameSessionContent');
+  
+  if (!modal || !content) return;
+  
+  const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
+  const match = storedMatches.find((m: any) => m.id === parseInt(matchId));
+  
+  if (!match) return;
+  
+  const sessionStats = this.analyzeGameSession(match);
+  
+  content.innerHTML = `
+    <!-- Individual Game Session Analysis -->
+    <div class="space-y-6">
+      <!-- Session Overview -->
+      <div class="cyber-container">
+        <h6 class="font-cyber text-cyber-blue text-lg mb-4">🎮 Session Overview</h6>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="cyber-card text-center">
+            <div class="text-2xl font-cyber text-cyber-blue">${sessionStats.duration}</div>
+            <div class="text-xs text-gray-400">Duration</div>
+          </div>
+          <div class="cyber-card text-center">
+            <div class="text-2xl font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
+            <div class="text-xs text-gray-400">Total Points</div>
+          </div>
+          <div class="cyber-card text-center">
+            <div class="text-2xl font-cyber text-cyber-pink">${sessionStats.longestRally}</div>
+            <div class="text-xs text-gray-400">Longest Rally</div>
+          </div>
+          <div class="cyber-card text-center">
+            <div class="text-2xl font-cyber text-cyber-yellow">${sessionStats.avgPointDuration}</div>
+            <div class="text-xs text-gray-400">Avg Point Time</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Point-by-Point Breakdown -->
+      <div class="cyber-container">
+        <h6 class="font-cyber text-cyber-green text-lg mb-4">📊 Point Progression</h6>
+        <div class="bg-cyber-dark p-4 rounded">
+          ${this.generatePointProgressionChart(match)}
+        </div>
+      </div>
+      
+      <!-- Performance Metrics -->
+      <div class="cyber-container">
+        <h6 class="font-cyber text-cyber-pink text-lg mb-4">⚡ Performance Metrics</h6>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span>Scoring Efficiency:</span>
+              <span class="text-cyber-green">${sessionStats.scoringEfficiency}%</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Defensive Rating:</span>
+              <span class="text-cyber-blue">${sessionStats.defensiveRating}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Comeback Factor:</span>
+              <span class="text-cyber-yellow">${sessionStats.comebackFactor}</span>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span>Momentum Shifts:</span>
+              <span class="text-cyber-pink">${sessionStats.momentumShifts}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Consistency Score:</span>
+              <span class="text-cyber-purple">${sessionStats.consistency}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Pressure Performance:</span>
+              <span class="text-cyber-green">${sessionStats.pressurePerformance}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.remove('hidden');
+}
+
+
+
+
+analyzeGameSession(match: any): any {
+  const currentUser = app.getUsername();
+  const isPlayer1 = match.player1_name === currentUser;
+  const userScore = isPlayer1 ? match.player1_score : match.player2_score;
+  const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
+  
+  return {
+    duration: this.calculateMatchDuration(match),
+    totalPoints: userScore + opponentScore,
+    longestRally: Math.max(userScore, opponentScore), // Simulate
+    avgPointDuration: "45s", // Simulate
+    scoringEfficiency: Math.round((userScore / (userScore + opponentScore)) * 100),
+    defensiveRating: Math.round(Math.random() * 100),
+    comebackFactor: this.calculateComebackFactor(userScore, opponentScore),
+    momentumShifts: Math.floor(Math.random() * 5) + 1,
+    consistency: Math.round(Math.random() * 100),
+    pressurePerformance: Math.round(Math.random() * 100)
+  };
+}
+
+// Add these methods for better user interaction:
+generatePointProgressionChart(match: any): string {
+  const currentUser = app.getUsername();
+  const isPlayer1 = match.player1_name === currentUser;
+  const userScore = isPlayer1 ? match.player1_score : match.player2_score;
+  const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
+  
+  let html = '<div class="flex items-end space-x-2 h-32">';
+  
+  // Generate point progression bars
+  for (let i = 1; i <= Math.max(userScore, opponentScore); i++) {
+    const userHeight = i <= userScore ? 80 : 20;
+    const opponentHeight = i <= opponentScore ? 80 : 20;
+    
+    html += `
+      <div class="flex flex-col space-y-1">
+        <div class="bg-cyber-blue w-4 rounded-t" style="height: ${userHeight}px" title="You: Point ${i}"></div>
+        <div class="bg-cyber-pink w-4 rounded-b" style="height: ${opponentHeight}px" title="Opponent: Point ${i}"></div>
+        <div class="text-xs text-center text-gray-400">${i}</div>
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+calculateMatchDuration(match: any): string {
+  // Simulate match duration based on total points
+  const totalPoints = (match.player1_score || 0) + (match.player2_score || 0);
+  const minutes = Math.floor(totalPoints * 0.75) + Math.floor(Math.random() * 3);
+  const seconds = Math.floor(Math.random() * 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+calculateComebackFactor(userScore: number, opponentScore: number): string {
+  const diff = Math.abs(userScore - opponentScore);
+  if (diff <= 1) return "Close Match";
+  if (diff <= 2) return "Moderate";
+  return userScore > opponentScore ? "Dominant" : "Challenging";
+}
+
 calculateDetailedStats(matchHistory: any[]): any {
   const currentUser = app.getUsername();
   const stats = {
@@ -693,7 +846,125 @@ showDetailedStatsModal(): void {
   
   modal.classList.remove('hidden');
 }
+// Update showGameSessionModal to showGameSessionPopup
+showGameSessionPopup(matchId: string, buttonElement: HTMLElement): void {
+  const popup = document.getElementById('gameSessionPopup');
+  const content = document.getElementById('gameSessionPopupContent');
+  
+  if (!popup || !content) return;
+  
+  const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
+  const match = storedMatches.find((m: any) => m.id === parseInt(matchId));
+  
+  if (!match) return;
+  
+  const sessionStats = this.analyzeGameSession(match);
+  
+  // Compact popup content
+  content.innerHTML = `
+    <div class="space-y-3">
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-blue">
+          <div class="text-lg font-cyber text-cyber-blue">${sessionStats.duration}</div>
+          <div class="text-xs text-gray-400">Duration</div>
+        </div>
+        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-green">
+          <div class="text-lg font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
+          <div class="text-xs text-gray-400">Total Points</div>
+        </div>
+      </div>
+      
+      <!-- Performance Bars -->
+      <div class="space-y-2">
+        <div class="flex justify-between text-xs">
+          <span>Scoring Efficiency</span>
+          <span class="text-cyber-green">${sessionStats.scoringEfficiency}%</span>
+        </div>
+        <div class="w-full bg-cyber-dark h-2 rounded">
+          <div class="bg-cyber-green h-2 rounded transition-all duration-500" style="width: ${sessionStats.scoringEfficiency}%"></div>
+        </div>
+        
+        <div class="flex justify-between text-xs">
+          <span>Defensive Rating</span>
+          <span class="text-cyber-blue">${sessionStats.defensiveRating}</span>
+        </div>
+        <div class="w-full bg-cyber-dark h-2 rounded">
+          <div class="bg-cyber-blue h-2 rounded transition-all duration-500" style="width: ${sessionStats.defensiveRating}%"></div>
+        </div>
+      </div>
+      
+      <!-- Mini Point Progression -->
+      <div>
+        <div class="text-xs text-gray-400 mb-2">Point Progression</div>
+        <div class="flex space-x-1 h-12">
+          ${this.generateMiniProgressionBars(match)}
+        </div>
+      </div>
+      
+  
+    </div>
+  `;
+  
+  // Position popup next to the button
+  this.positionPopup(popup, buttonElement);
+  
+  // Show popup
+  popup.classList.remove('hidden');
+}
 
+// Position popup relative to the clicked button
+positionPopup(popup: HTMLElement, buttonElement: HTMLElement): void {
+  const buttonRect = buttonElement.getBoundingClientRect();
+  const popupWidth = 320; // 80 * 4 (w-80)
+  
+  // Calculate position
+  let left = buttonRect.right + 10; // 10px spacing
+  let top = buttonRect.top - 10;
+  
+  // Adjust if popup would go off-screen
+  if (left + popupWidth > window.innerWidth) {
+    left = buttonRect.left - popupWidth - 10; // Show on left side
+  }
+  
+  if (top + 400 > window.innerHeight) {
+    top = window.innerHeight - 420; // Adjust for popup height
+  }
+  
+  if (top < 10) top = 10; // Don't go above viewport
+  
+  popup.style.left = `${left}px`;
+  popup.style.top = `${top}px`;
+}
+
+// Generate mini bars for popup
+generateMiniProgressionBars(match: any): string {
+  const currentUser = app.getUsername();
+  const isPlayer1 = match.player1_name === currentUser;
+  const userScore = isPlayer1 ? match.player1_score : match.player2_score;
+  const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
+  
+  let html = '';
+  for (let i = 1; i <= Math.max(userScore, opponentScore); i++) {
+    const userWon = i <= userScore;
+    const opponentWon = i <= opponentScore;
+    const height = userWon && opponentWon ? '24px' : userWon ? '16px' : opponentWon ? '8px' : '4px';
+    const color = userWon ? 'bg-cyber-green' : 'bg-cyber-pink';
+    
+    html += `<div class="${color} w-2 rounded-t opacity-80" style="height: ${height}" title="Point ${i}"></div>`;
+  }
+  
+  return html;
+}
+
+// Method to show full detailed session (opens the original modal)
+showDetailedGameSession(matchId: string): void {
+  // Hide popup first
+  document.getElementById('gameSessionPopup')?.classList.add('hidden');
+  
+  // Show full modal with detailed analysis
+  this.showGameSessionModal(matchId );
+}
 showMatchHistoryModal(): void {
   const modal = document.getElementById('matchHistoryModal');
   const tbody = document.getElementById('fullMatchHistoryTable');
@@ -736,14 +1007,20 @@ showMatchHistoryModal(): void {
                      match.match_type === '1vAi' ? 'vs AI' :
                      match.match_type === 'multiplayer' ? 'Multiplayer' : '1v1';
     
+    // In showMatchHistoryModal, update the table row generation:
     tr.innerHTML = `
-      <td class="px-4 py-3 text-sm">${new Date(match.created_at).toLocaleDateString()}</td>
-      <td class="px-4 py-3">${matchType}</td>
-      <td class="px-4 py-3">${opponent}</td>
-      <td class="px-4 py-3">${score}</td>
-      <td class="px-4 py-3">${userWon ? '🏆 Win' : '❌ Loss'}</td>
-      <td class="px-4 py-3">${match.status}</td>
-    `;
+    <td class="px-4 py-3 text-sm">${new Date(match.created_at).toLocaleDateString()}</td>
+    <td class="px-4 py-3">${matchType}</td>
+    <td class="px-4 py-3">${opponent}</td>
+    <td class="px-4 py-3">${score}</td>
+    <td class="px-4 py-3">${userWon ? '🏆 Win' : '❌ Loss'}</td>
+    <td class="px-4 py-3">${match.status}</td>
+    <td class="px-4 py-3">
+      <button class="cyber-btn-small text-xs py-1 px-2 hover:bg-cyber-green transition-colors" onclick="event.stopPropagation(); profile.showGameSessionPopup('${match.id}', this)">
+        📊
+      </button>
+    </td>
+  `;
     
     tbody.appendChild(tr);
   });
@@ -1617,6 +1894,7 @@ init2FA(): void {
         tableBody.appendChild(tr);
       }
     });
+    
 }
 // Render tournament matches grouped with a blank separator before each
 renderTournamentMatches(tableBody: HTMLElement): void {
@@ -1819,5 +2097,13 @@ async handlePasswordUpdate(): Promise<void> {
 }
 
 }
-export default new Profile();
+
+
+// At the end of profile.ts
+const profile = new Profile();
+
+// Make it globally available  
+(window as any).profile = profile;
+
+export default profile;
 export { ProfileForm, MatchEntry };
