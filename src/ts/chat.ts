@@ -130,9 +130,10 @@ class Chat {
     cleanupSocketHandlers(): void {
         if (!this.socketService) return;
         
-        this.socketService.off('messageReceivedInform');
-        this.socketService.off('friendRequestInform');
-        this.socketService.off('friendRequestAccept');
+        chat.socketService.off('messageReceivedInform');
+        chat.socketService.off('friendRequestInform');
+        chat.socketService.off('friendRequestAccept');
+        this.socketService.off('newMessage');
         console.log('Chat socket handlers cleaned up');
     }
      initializeChatPage(): void {
@@ -283,15 +284,22 @@ class Chat {
     }
 
      setupSocketHandlers(): void {
-        if (!this.socketService) return;
-
-        // // Handle new messages
-        // this.socketService.on('messageReceivedInform', (message: any) => {
+        // if (!this.socketService) return;
+        if (!notificationManager.initialized) {
+            console.log('NotificationManager not initialized, skipping socket handlers setup');
+            return;
+        }
+        // Socket event handlers
+     
+        // // Handle new messages there is two sockets one in the newMessage event and one in the messageReceivedInform event
+        // this.socketService.on('newMessage', (message: any) => {
+        //     console.log('New message received:', message);
         //     if ((message.chat_id == this.currentChatId)) {
         //         console.log(`New emmiting message in current chat ${this.currentChatId}:`, message);
         //         this.appendMessage(message);
         //         // return; // Ignore messages not in current chat
         //     }
+        //     this.debouncedReloadChats(); // Use debounced reload
         //     // console.log(`New message received in chat ${message.chatId}:`, message);
         //     // if (!chat.currentChatId || chat.currentChatId.toString() !== message.chatId?.toString()) {
         //     // toastManager.showToast("Message", message.content);
@@ -332,7 +340,7 @@ class Chat {
         this.chatReloadTimeout = setTimeout(() => {
             this.loadChats();
             this.chatReloadTimeout = null;
-        }, 300);
+        }, 500);
     }
 
     /**
@@ -426,6 +434,7 @@ class Chat {
             // Join the room
             console.log(`Joining chat room from selectChatFromList: ${chatId}`);
             this.currentChatWithUsername = user.username || null; // Store current username for later use
+            console.log(`Current chat with username: ${this.currentChatWithUsername}`);
             await this.joinRoom(chatId);
             // Mark notifications as read for the current chat
             if (notificationManager.getMailboxCount() > 0 && this.elements.mailboxBtn) {
@@ -438,12 +447,15 @@ class Chat {
             );
             
             if (res.ok) {
+                
                 this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
                 notificationManager.decrementMailboxCount();
                 if (this.elements.mailboxBtn) {
                     // this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
                     this.elements.mailboxBtn.setAttribute('data-count', notificationManager.getMailboxCount().toString());
                 }
+            }else {
+                console.error('Failed to mark messages as read:', res.statusText);
             }
         }
             // Update URL
@@ -471,11 +483,12 @@ class Chat {
 
 
            //protection for not loading messages again if you already inside  a chat
-         if (this.currentChatId == chatId) {
-           return;
-        }
+        //  if (this.currentChatId == chatId) {
+        //    return;
+        // }
         // Leave current room
         if (this.currentChatId !== null && this.socketService) {
+            console.log(`Leaving current chat room: ${this.currentChatId}`);
             this.socketService.emit('leaveRoom', this.currentChatId);
         }
 
@@ -505,6 +518,7 @@ class Chat {
             }
         }else {
             console.error('Invalid chatId:', chatId);
+            toastManager.showToast('error', 'Invalid Chat');
         }
         
     
@@ -589,7 +603,7 @@ class Chat {
             const result = await api.sendMessage(this.currentChatId.toString(), content);
             
             if (result.ok) {
-                this.appendMessage({ sender_id: this.currentUserId ,content: content});
+                // this.appendMessage({ sender_id: this.currentUserId ,content: content});
                 this.elements.messageInput.value = '';
             } else {
                 components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
@@ -603,7 +617,7 @@ class Chat {
      appendMessage(message: any): void {
         if (!this.elements.messageBox) return;
     
-        console.log(`Appending message: ${message.content} from ${message.sender_id}`);
+        // console.log(`Appending message: ${message.content} from ${message.sender_id}`);
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
         
@@ -1831,9 +1845,10 @@ window.chatMessages = {
 };
 
 // ADD THIS in constructor
-window.addEventListener('beforeunload', () => {
-    chat.cleanupSocketHandlers();
-});
+// window.addEventListener('beforeunload', () => {
+//     // chat.cleanupSocketHandlers();
+//     // chat.socketService.emit("leaveRoom", chat.currentChatId);
+// });
 
 
 export default chat;

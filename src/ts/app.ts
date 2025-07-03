@@ -644,10 +644,11 @@ class App {
       login.updateUIAuthState();
       
       components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
-       
+      chat.cleanupSocketHandlers();
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
+
       
       return true;
     } catch (error) {

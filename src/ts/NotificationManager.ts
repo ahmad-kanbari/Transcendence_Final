@@ -25,7 +25,7 @@ interface NotificationManagerElementRefs {
 class NotificationManager {
     private socketService: any = null;
     private elements: NotificationManagerElementRefs = {} as NotificationManagerElementRefs;
-    private initialized: boolean = false;
+    public initialized: boolean = false;
     private notificationCount: number = 0;
     private mailboxNotificationCount: number = 0;
     private baseURL: string = CONFIG.baseURL || '';
@@ -35,12 +35,13 @@ class NotificationManager {
     }
     
 
-        init(): void {
+    init(): void {
         if (this.initialized) return;
         
         console.log('NotificationManager: Starting initialization...');
             // Add this line to get the socket service from chat
         if (!this.socketService && window.chat?.socketService) {
+            console.log('NotificationManager: Using socket service from chat');
             this.socketService = window.chat.socketService;
         }
         // Use longer delay and retry mechanism for DOM elements
@@ -406,16 +407,39 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 }
 
     private setupSocketHandlers(): void {
-        if (!this.socketService) return;
+    
+        if (!this.socketService) {
+            console.log('NotificationManager: Socket service not available, skipping setup');
+            return;
+        }
+        this.socketService.on('newMessage', (message: any) => {
+            console.log('New message received:', message);
+            if ((message.chat_id == chat.currentChatId)) {
+                console.log(`New emmiting message in current chat ${chat.currentChatId}:`, message);
+                chat.appendMessage(message);
+                // return; // Ignore messages not in current chat
+            }
+            chat.debouncedReloadChats(); // Use debounced reload
+            // console.log(`New message received in chat ${message.chatId}:`, message);
+            // if (!chat.currentChatId || chat.currentChatId.toString() !== message.chatId?.toString()) {
+            // toastManager.showToast("Message", message.content);
+            // // }
 
+            // this.debouncedReloadChats(); // Use debounced reload
+            // // this.messagesCount++;
+            // notificationManager.incrementMailboxCount();
+            // this.updateDashboardStats();
+        });
+        
         // Handle message notifications
         this.socketService.on('messageReceivedInform', async (data: any) => {
         //     // Only show toast if not in the current chat
-                console.log(' new Message received:', data);
+            console.log(' new Message received:', data);
             if (!chat.currentChatId || chat.currentChatId.toString() != data.chatId) {
                 toastManager.addToQueue(data.username, data.message);
             }
-            if ((data.chat_id == chat.currentChatId)) {
+            console.log('Current chat ID:', chat.currentChatId, 'Received chat ID:', data.chatId);
+            if ((data.chatId == chat.currentChatId)) {
                 console.log(`New emmiting message in current chat ${chat.currentChatId}:`, data);
                 chat.appendMessage(data);
         //         // return; // Ignore messages not in current chat
@@ -445,7 +469,17 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             } catch (error) {
                 console.error('Error updating message notifications:', error);
             }
+                console.log('=== DEBUG MESSAGE RECEIVED ===');
+                console.log('Full data object:', JSON.stringify(data, null, 2));
+                console.log('chat.currentChatId:', chat.currentChatId, 'Type:', typeof chat.currentChatId);
+                console.log('data.chatId:', data.chatId, 'Type:', typeof data.chatId);
+                console.log('data.chat_id:', data.chat_id, 'Type:', typeof data.chat_id);
+                console.log('NotificationManager socketService:', !!this.socketService);
+                console.log('Chat socketService:', !!chat.socketService);
+                console.log('Are they the same?', this.socketService === chat.socketService);
+                console.log('===============================');
         });
+
 
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
