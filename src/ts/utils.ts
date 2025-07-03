@@ -97,19 +97,13 @@ class Utils {
     document.cookie = name + "=" + (value || "") + expires + "; path=/; Secure; SameSite=Strict";
   }
 
-  getCookie(name: string): string | null {
-    const cookies = document.cookie.split(';');
-    console.log('Utils: Retrieving all cookies:', cookies);
-    for (let cookie of cookies) {
-      const [cookieName, cookieValue] = cookie.trim().split('=');
-      if (cookieName === name) {
-        // Handle signed cookies - you might need to unsign them
-        // For now, return the raw value (backend should handle unsigning)
-        return decodeURIComponent(cookieValue);
-      }
-    }
-    return null;
+  
+ preventSpaces(event: KeyboardEvent): void {
+  if (event.key === ' ' || event.code === 'Space') {
+    event.preventDefault();
   }
+}
+
   
   deleteCookie(name: string): void {
     document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; Secure; SameSite=Strict';

@@ -1150,11 +1150,13 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     if (this.profileForm.displayNameField) {
         this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
         this.profileForm.displayNameField.readOnly = false; // Make it editable
+        this.profileForm.displayNameField.addEventListener('keydown', (event) => utils.preventSpaces(event));
     }
     
     if (this.profileForm.emailField) {
         this.profileForm.emailField.value = user.email || app.getEmail() || '';
         this.profileForm.emailField.readOnly = false; // Make it editable
+        this.profileForm.emailField.addEventListener('keydown', (event) => utils.preventSpaces(event));
         // Remove the bg-cyber-dark class to make it look editable
         // this.profileForm.emailField.classList.remove('bg-cyber-dark');
     }
@@ -1163,6 +1165,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         this.profileForm.passwordField.value = '';
         this.profileForm.passwordField.placeholder = 'Enter new password';
         this.profileForm.passwordField.readOnly = false; // Make it editable
+        this.profileForm.passwordField.addEventListener('keydown', (event) => utils.preventSpaces(event));
         // Remove the bg-cyber-dark class to make it look editable
         // this.profileForm.passwordField.classList.remove('bg-cyber-dark');
     }
@@ -1170,6 +1173,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         this.profileForm.currentPasswordField.value = '';
         this.profileForm.currentPasswordField.placeholder = 'Enter current password';
         this.profileForm.currentPasswordField.readOnly = false; // Make it editable
+         this.profileForm.currentPasswordField.addEventListener('keydown', (event) => utils.preventSpaces(event));
         // Remove the bg-cyber-dark class to make it look editable
         // this.profileForm.passwordField.classList.remove('bg-cyber-dark');
     }

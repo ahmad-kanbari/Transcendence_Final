@@ -6,6 +6,7 @@
 import api from "./api";
 import app from "./app";
 import { t } from "./localization";
+import utils from "./utils";
 
 class PongGame {
  
@@ -236,6 +237,19 @@ class PongGame {
                 (overlay as HTMLElement).style.background = 'rgba(0, 0, 0, 1)';
             }
         }
+
+        // Prevent spaces in player name inputs
+        const playerNameInputs = [
+            'player1NameInput', 'player2NameInput', 
+            'tournament-p1', 'tournament-p2', 'tournament-p3', 'tournament-p4'
+        ];
+
+        playerNameInputs.forEach(id => {
+            const input = document.getElementById(id) as HTMLInputElement;
+            if (input) {
+                input.addEventListener('keydown', (event) => utils.preventSpaces(event));
+            }
+        });
 
         // Initialize game dimensions
         this.updateGameDimensions();
