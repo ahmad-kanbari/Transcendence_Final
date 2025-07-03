@@ -283,30 +283,33 @@ class Chat {
         if (!this.socketService) return;
 
         // Handle new messages
-        this.socketService.on('newMessage', (message: any) => {
-            if (message.chat_id === this.currentChatId) {
-                console.log(`New emmiting message in current chat ${this.currentChatId}:`, message);
+        // this.socketService.on('newMessage', (message: any) => {
+        //     if (message.chat_id === this.currentChatId) {
+        //         console.log(`New emmiting message in current chat ${this.currentChatId}:`, message);
                
-                this.appendMessage(message);
-            }
-            this.debouncedReloadChats(); // Use debounced reload
-            this.messagesCount++;
-            this.updateDashboardStats();
-        });
+        //         this.appendMessage(message);
+        //     }
+        //     this.debouncedReloadChats(); // Use debounced reload
+        //     // this.messagesCount++;
+        //     notificationManager.incrementMailboxCount();
+        //     this.updateDashboardStats();
+        // });
 
-        // Handle friend requests
-        this.socketService.on('friendRequestInform', (data: any) => {
-            toastManager.addToQueue('Friend Request', data.message);
-            notificationManager.incrementNotificationCount();
-            this.loadFriendData();
-        });
+        // // Handle friend requests
+        // this.socketService.on('friendRequestInform', (data: any) => {
+        //     this.loadFriendData();
+        //     toastManager.addToQueue('Friend Request', data.message);
+        //     notificationManager.incrementNotificationCount();
+            
+        // });
 
-        this.socketService.on('friendRequestAccept', (data: any) => {
+        // this.socketService.on('friendRequestAccept', (data: any) => {
 
-            toastManager.addToQueue('Friend Request', data.message);
-            notificationManager.incrementNotificationCount();
-            this.loadFriendData();
-        });
+        //     this.loadFriendData();
+        //     toastManager.addToQueue('Friend Request', data.message);
+        //     notificationManager.incrementNotificationCount();
+         
+        // });
     }
 
     // ===== IMPROVED CHAT FUNCTIONALITY =====
@@ -340,7 +343,9 @@ class Chat {
             const res = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`);
             
             if (!res.ok) {
+                toastManager.showToast('Error', `Failed to load chats : ${res.statusText}`);
                 throw new Error(`Failed to fetch chats: ${res.status}`);
+
             }
             
             const chats = await res.json();
@@ -426,8 +431,10 @@ class Chat {
             
             if (res.ok) {
                 this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+                notificationManager.decrementMailboxCount();
                 if (this.elements.mailboxBtn) {
-                    this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+                    // this.elements.mailboxBtn.setAttribute('data-count', this.mailboxNotificationCount.toString());
+                    this.elements.mailboxBtn.setAttribute('data-count', notificationManager.getMailboxCount().toString());
                 }
             }
         }
@@ -454,10 +461,17 @@ class Chat {
         }
         console.log(`Current user ID: ${this.currentUserId}`);
 
+
+           //protection for not loading messages again if you already inside  a chat
+         if (this.currentChatId == chatId) {
+           return;
+        }
         // Leave current room
         if (this.currentChatId !== null && this.socketService) {
             this.socketService.emit('leaveRoom', this.currentChatId);
         }
+
+     
 
         this.currentChatId = chatId;
 
@@ -758,6 +772,7 @@ class Chat {
                     });
                     
                     if (!createChatRes.ok) {
+                        toastManager.showToast('Error', `Failed to create chat : ${createChatRes.statusText}`);
                         throw new Error(`Failed to create chat: ${createChatRes.status}`);
                     }
                     

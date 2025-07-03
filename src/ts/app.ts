@@ -89,7 +89,7 @@ class App {
       components.showSpinner();
       components.init(this.appContainer);
 
-      // this.initializeSocket();
+      this.initializeSocket();
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
