@@ -4,6 +4,7 @@ import utils from './utils';
 import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
 import notificationManager from './NotificationManager';
+import localization from './localization';
 
 // Declare socket.io global
 declare const io: any;
@@ -368,7 +369,9 @@ class Chat {
             console.log(`Loaded ${chats.length} chats`);
             if (chats.length === 0) {
                 const noChatsMsg = document.createElement('div');
-                noChatsMsg.textContent = 'No chats yet.';
+                noChatsMsg.setAttribute('data-i18n', 'chat.noChats');
+                // noChatsMsg.textContent = 'No chats yet.';
+                noChatsMsg.textContent = localization.getTranslation('chat.noChats');
                 noChatsMsg.style.cssText = 'text-align: center; color: #999; padding: 20px;';
                 this.elements.chatRows.appendChild(noChatsMsg);
                 return;
@@ -398,7 +401,7 @@ class Chat {
                             <span class="online-status"></span>
                             <span>${user.username || 'Unknown User'}</span>
                         </div>
-                        <div style="font-size: 12px; color: #999; margin-top: 5px;">Click to open chat</div>
+                        <div data-i18n="chat.clickToOpenChat" style="font-size: 12px; color: #999; margin-top: 5px;">Click to open chat</div>
                     `;
 
                     // Mark active chat
@@ -856,8 +859,10 @@ class Chat {
             await Promise.all([
                 this.loadIncomingRequests(),
                 this.loadOutgoingRequests(),
-                this.loadFriendsList()
+                this.loadFriendsList(),
+                
             ]);
+            localization.updatePageContent()
             this.updateDashboardStats();
         } catch (error) {
             console.error('Error loading friend data:', error);
@@ -873,7 +878,7 @@ class Chat {
             this.elements.incomingRequests.innerHTML = '';
             
             if (requests.length === 0) {
-                this.elements.incomingRequests.innerHTML = '<li style="color: #999;">No incoming requests</li>';
+                this.elements.incomingRequests.innerHTML = `<li style="color: #999;" data-i18n="chat.noIncomingRequests">No incoming requests</li>`;
                 return;
             }
 
@@ -884,8 +889,8 @@ class Chat {
                 li.innerHTML = `
                     <span>${request.senderUsername}</span>
                     <div>
-                        <button onclick="window.chat.handleFriendRequest('${request.friendshipId}', 'accept')" style="margin-right: 5px; padding: 2px 8px; background: #4CAF50; border: none; color: white; border-radius: 3px; cursor: pointer;">Accept</button>
-                        <button onclick="window.chat.handleFriendRequest('${request.friendshipId}', 'reject')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Reject</button>
+                        <button data-i18n="chat.accept" onclick="window.chat.handleFriendRequest('${request.friendshipId}', 'accept')" style="margin-right: 5px; padding: 2px 8px; background: #4CAF50; border: none; color: white; border-radius: 3px; cursor: pointer;">Accept</button>
+                        <button data-i18n="chat.reject" onclick="window.chat.handleFriendRequest('${request.friendshipId}', 'reject')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Reject</button>
                     </div>
                 `;
                 
@@ -905,7 +910,7 @@ class Chat {
             this.elements.outgoingRequests.innerHTML = '';
             
             if (requests.length === 0) {
-                this.elements.outgoingRequests.innerHTML = '<li style="color: #999;">No outgoing requests</li>';
+                this.elements.outgoingRequests.innerHTML = `<li style="color: #999;" data-i18n="chat.noOutgoingRequests">No outgoing requests</li>`;
                 return;
             }
 
@@ -937,7 +942,7 @@ class Chat {
             this.elements.friendsList.innerHTML = '';
             
             if (friends.length === 0) {
-                this.elements.friendsList.innerHTML = '<li style="color: #999;">No friends yet</li>';
+                this.elements.friendsList.innerHTML = `<li style="color: #999;" data-i18n="chat.noFriends">No friends yet</li>`;
                 return;
             }
 
@@ -951,11 +956,11 @@ class Chat {
                         <span>${friend.username}</span>
                     </div>
                     <div>
-                        <button onclick="window.chat.startChatWithFriend('${friend.userId}')" 
+                        <button data-i18n="chat.chatBtn" onclick="window.chat.startChatWithFriend('${friend.userId}')" 
                             style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer;">
                                 Chat
                         </button>
-                        <button onclick="window.chat.removeFriend('${friend.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Remove</button>
+                        <button data-i18n="chat.remove" onclick="window.chat.removeFriend('${friend.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Remove</button>
                     </div>
                 `;
                 
@@ -1710,8 +1715,10 @@ class Chat {
 
         if (this.blockedUsersList.length === 0) {
             const li = document.createElement('li');
+            li.setAttribute('data-i18n', 'chat.noBlockedUsers');
             li.style.cssText = 'color: #999; padding: 8px; text-align: center; font-style: italic; background: none;';
-            li.textContent = 'No blocked users';
+            // li.textContent = 'No blocked users';
+            li.textContent = localization.getTranslation('chat.noBlockedUsers');
             this.elements.blockedUsersList.appendChild(li);
             return;
         }
@@ -1723,7 +1730,7 @@ class Chat {
                     <span class="blocked-user-icon">🚫</span>
                     <span>${user.username}</span>
                 </div>
-                <button class="unblock-btn" onclick="window.chat.unblockUser('${user.id}')">
+                <button data-i18n="chat.unblock" class="unblock-btn" onclick="window.chat.unblockUser('${user.id}')">
                     Unblock
                 </button>
             `;

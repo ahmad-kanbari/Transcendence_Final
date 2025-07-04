@@ -1933,17 +1933,20 @@ renderTournamentMatches(tableBody: HTMLElement): void {
 
 setupUpdateHandlers(): void {
     const updateUsernameBtn = document.createElement('button');
-    updateUsernameBtn.textContent = 'Update Username';
+    updateUsernameBtn.setAttribute('data-i18n', 'profile.updateUsername');
+    updateUsernameBtn.textContent = window.localization?.getTranslation('profile.updateUsername') || 'Update Username';
     updateUsernameBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 whitespace-nowrap';
     updateUsernameBtn.type = 'button';
 
     const updateEmailBtn = document.createElement('button');
-    updateEmailBtn.textContent = 'Update Email';
+    updateEmailBtn.setAttribute('data-i18n', 'profile.updateEmail');
+    updateEmailBtn.textContent = window.localization?.getTranslation('profile.updateEmail') || 'Update Email';
     updateEmailBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2';
     updateEmailBtn.type = 'button';
 
     const updatePasswordBtn = document.createElement('button');
-    updatePasswordBtn.textContent = 'Update Password';
+    updatePasswordBtn.setAttribute('data-i18n', 'profile.updatePassword');
+    updatePasswordBtn.textContent = window.localization?.getTranslation('profile.updatePassword') || 'Update Password';
     updatePasswordBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 border-cyber-blue border-2 h-8';
     updatePasswordBtn.type = 'button';
 

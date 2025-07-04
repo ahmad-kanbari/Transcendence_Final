@@ -12,16 +12,17 @@
                             <div class="profile-actions flex flex-row justify-between">
                                 <input type="file" id="profilePictureInput" accept="image/*" style="display: none">
                                 <button id="uploadBtn" class="profile-btn">
-                                    <i class="bi bi-upload mr-1"></i>Upload
+                                    <i class="bi bi-upload mr-1" ></i><span data-i18n="profile.upload">Upload</span>
+                                </button>
                                 </button>
                                 <button id="removeBtn" class="profile-btn">
-                                    <i class="bi bi-trash mr-1"></i>Remove
+                                    <i class="bi bi-trash mr-1"></i><span data-i18n="profile.remove">Remove</span>
                                 </button>
                             </div>
                         </div>
                         <p class="font-cyber text-cyber-blue text-xl mb-3 animate-glow" id="profileUsername"></p>
                         <div class="mt-4 inline-block bg-cyber-dark border border-cyber-blue px-4 py-2 rounded-md shadow-neon-blue">
-                            <p class="font-cyber text-cyber-green text-sm" id="statsRank">Beginner</p>
+                            <p class="font-cyber text-cyber-green text-sm" id="statsRank" data-i18n="profile.beginner">Beginner</p>
                         </div>
                     </div>
                 </div>
@@ -30,29 +31,29 @@
                 <!-- Stats and Settings -->
                 <div class="lg:col-span-8 space-y-6">
                     <div class="cyber-container">
-                        <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4">Player Statistics</div>
+                        <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4" data-i18n="profile.playerStatistics">Player Statistics</div>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="cyber-card col-span-1">
                                 <div class="flex flex-col items-center justify-center h-full p-4">
-                                    <p class="font-cyber text-cyber-blue text-lg mb-2">Total Games</p>
-                                    <p class="font-cyber text-white text-3xl" id="statsTotalGames">0</p>
+                                    <p class="font-cyber text-cyber-blue text-lg mb-2" data-i18n="profile.totalGames">Total Games</p>
+                                    <p class="font-cyber text-white text-3xl" id="statsTotalGames"  >0</p>
                                 </div>
                             </div>
                             <div class="cyber-card col-span-1">
                                 <div class="flex flex-col items-center justify-center h-full p-4">
-                                    <p class="font-cyber text-cyber-green text-lg mb-2">Win Rate</p>
+                                    <p class="font-cyber text-cyber-green text-lg mb-2" data-i18n="profile.winRate">Win Rate</p>
                                     <p class="font-cyber text-white text-3xl" id="statsWinRate">0%</p>
                                 </div>
                             </div>
                             <div class="cyber-card col-span-1">
                                 <div class="flex flex-col items-center justify-center h-full p-4">
-                                    <p class="font-cyber text-cyber-blue text-lg mb-2">Wins</p>
+                                    <p class="font-cyber text-cyber-blue text-lg mb-2" data-i18n="profile.wins">Wins</p>
                                     <p class="font-cyber text-cyber-green text-3xl" id="statsWins">0</p>
                                 </div>
                             </div>
                             <div class="cyber-card col-span-1">
                                 <div class="flex flex-col items-center justify-center h-full p-4">
-                                    <p class="font-cyber text-cyber-pink text-lg mb-2">Losses</p>
+                                    <p class="font-cyber text-cyber-pink text-lg mb-2" data-i18n="profile.losses">Losses</p>
                                     <p class="font-cyber text-cyber-pink text-3xl" id="statsLosses">0</p>
                                 </div>
                             </div>
@@ -80,33 +81,33 @@
                     </div>
                     </div>
                     <div class="cyber-container">
-                        <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4">Account Information</div>
+                        <div class="cyber-heading text-xl border-b border-cyber-blue pb-3 mb-4" data-i18n="profile.accountInformation">Account Information</div>
                         <div class="space-y-4">
                         
                             <div>
-                                <label class="font-cyber text-cyber-blue block mb-2">Display Name</label>
+                                <label class="font-cyber text-cyber-blue block mb-2" data-i18n="profile.displayName">Display Name</label>
                 
-                                    <input type="text" class="cyber-input flex-1 rounded" id="settingDisplayName" placeholder="Update your display name">
+                                    <input type="text" class="cyber-input flex-1 rounded" id="settingDisplayName" data-i18n-attr="placeholder:profile.updateDisplayName" placeholder="Update your display name">
                              
                             </div>
                             <div>
-                                <label class="font-cyber text-cyber-blue block mb-2">Email</label>
-                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingEmail" placeholder="Update your email">
+                                <label class="font-cyber text-cyber-blue block mb-2" data-i18n="profile.email">Email</label>
+                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" data-i18n-attr="placeholder:profile.updateEmail" id="settingEmail" placeholder="Update your email">
                             </div>
                              <div>
                                 <label class="font-cyber text-cyber-blue block mb-2">Current Password</label>
-                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="currentPassword" placeholder="Update your password">
+                                <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" data-i18n="profile.currentPassword" id="currentPassword" placeholder="Update your password">
                             </div>
                             <div>
-                                <label class="font-cyber text-cyber-blue block mb-2">New Password</label>
+                                <label class="font-cyber text-cyber-blue block mb-2" data-i18n="profile.newPassword">New Password</label>
                                 <input type="text" class="cyber-input text-white w-full rounded bg-cyber-dark" id="settingPassword" placeholder="Update your password">
                             </div>
                             <div class="mt-4 flex gap-2 justify-center">
                                 <button id="showDetailedStatsBtn" class="cyber-btn-blue text-sm py-2 px-4 rounded">
-                                    <i class="bi bi-bar-chart mr-1"></i>Detailed Stats
+                                    <i class="bi bi-bar-chart mr-1"></i><span data-i18n="profile.detailedStats">Detailed Stats</span>
                                 </button>
                                 <button id="showMatchHistoryBtn" class="cyber-btn-green text-sm py-2 px-4 rounded">
-                                    <i class="bi bi-list-ul mr-1"></i>Match History
+                                    <i class="bi bi-list-ul mr-1"></i><span data-i18n="profile.detailedStats">Detailed Stats</span>
                                 </button>
                             </div>
                        
@@ -115,7 +116,7 @@
                             <div id="detailedStatsModal" class="fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-70">
                                 <div class="bg-cyber-darker border-2 border-cyber-blue rounded-lg max-w-4xl w-full mx-4 shadow-neon-blue max-h-[80vh] overflow-y-auto">
                                     <div class="flex items-center justify-between p-4 border-b border-cyber-blue">
-                                        <h5 class="font-cyber text-cyber-blue text-xl">Detailed Statistics</h5>
+                                        <h5 class="font-cyber text-cyber-blue text-xl" data-i18n="profile.detailedStats">Detailed Statistics</h5>
                                         <button type="button" class="text-cyber-blue hover:text-cyber-pink text-2xl" id="closeDetailedStatsBtn">&times;</button>
                                     </div>
                                     <div class="p-6">
@@ -134,7 +135,7 @@
                             <div id="matchHistoryModal" class="fixed inset-0 flex items-center justify-center z-5 hidden bg-black bg-opacity-70">
                                 <div class="bg-cyber-darker border-2 border-cyber-blue rounded-lg max-w-6xl w-full mx-4 shadow-neon-blue max-h-[80vh] overflow-y-auto">
                                     <div class="flex items-center justify-between p-4 border-b border-cyber-blue">
-                                        <h5 class="font-cyber text-cyber-blue text-xl">Complete Match History</h5>
+                                        <h5 class="font-cyber text-cyber-blue text-xl" data-i18n="profile.completeMatchHistory">Complete Match History</h5>
                                         <button type="button" class="text-cyber-blue hover:text-cyber-pink text-2xl" id="closeMatchHistoryBtn">&times;</button>
                                     </div>
                                     <div class="p-4">
@@ -142,12 +143,12 @@
                                             <table class="w-full">
                                                 <thead class="bg-cyber-darker border-b border-cyber-blue">
                                                     <tr>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Date</th>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Type</th>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Opponent</th>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Score</th>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Result</th>
-                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left">Status</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.date">Date</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.type">Type</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.opponent">Opponent</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.score">Score</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.result">Result</th>
+                                                        <th class="font-cyber text-cyber-blue px-4 py-3 text-left" data-i18n="profile.status">Status</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="fullMatchHistoryTable" class="divide-y divide-cyber-blue divide-opacity-30">
@@ -159,19 +160,19 @@
                             </div>
                             <div class="p-4 border border-cyber-blue rounded bg-cyber-darker shadow-neon-blue bg-opacity-70">
                                 <div class="flex items-center justify-between mb-3">
-                                    <h5 class="font-cyber text-cyber-blue mb-0 twoFA-header">Two-Factor Authentication</h5>
+                                    <h5 class="font-cyber text-cyber-blue mb-0 twoFA-header" data-i18n="profile.twoFactorAuth">Two-Factor Authentication</h5>
                                     <span id="twoFAStatus" class="font-cyber bg-cyber-pink text-cyber-dark px-2 py-1 rounded text-sm">Disabled</span>
                                 </div>
                                 <p class="text-gray-300 text-sm mb-4">
                                     <i class="bi bi-shield-lock-fill mr-1"></i>
-                                    Secure your account with an additional layer of protection using an authenticator app.
+                                    <span data-i18n="profile.secureAccount">Secure your account with an additional layer of protection using an authenticator app.</span>
                                 </p>
                                 <div class="grid grid-cols-1 gap-2">
                                     <button type="button" id="enableTwoFABtn" class="cyber-btn-green text-sm py-2 px-4 rounded border-0" onclick="event.preventDefault();">
-                                        <i class="bi bi-lock-fill mr-1"></i>Enable 2FA
+                                        <i class="bi bi-lock-fill mr-1"></i><span data-i18n="profile.enable2fa">Enable 2FA</span>
                                     </button>
                                     <button type="button" id="disableTwoFABtn" class="cyber-btn-pink text-sm py-2 px-4 rounded border-0 hidden" onclick="event.preventDefault();">
-                                        <i class="bi bi-unlock-fill mr-1"></i>Disable 2FA
+                                        <i class="bi bi-unlock-fill mr-1"></i><span data-i18n="profile.disable2fa">Disable 2FA</span>
                                     </button>
                                 </div>
                             </div>
@@ -208,7 +209,7 @@
             <div id="twoFAModal" class="two-fa-container cyber-container fixed inset-0 flex items-center justify-center z-50 hidden bg-black bg-opacity-70">
                 <div class="two-fa-content bg-cyber-darker border-2 border-cyber-blue rounded-lg max-w-md w-full mx-4 shadow-neon-blue">
                     <div class="two-fa-header flex items-center justify-between p-4 border-b border-cyber-blue">
-                        <h5 class="two-fa-title font-cyber text-cyber-blue text-xl">Two-Factor Authentication</h5>
+                        <h5 class="two-fa-title font-cyber text-cyber-blue text-xl" data-i18n="profile.twoFactorAuth">Two-Factor Authentication</h5>
                         <button type="button" class="close-button text-cyber-blue hover:text-cyber-pink text-2xl" id="twoFACloseButton">&times;</button>
                     </div>
                     <div class="two-fa-body p-4">
@@ -216,31 +217,31 @@
                         
                         <!-- QR Code Section (shown when enabling 2FA) -->
                         <div id="qrCodeSection" class="hidden text-center mb-4">
-                            <h6 class="font-cyber text-cyber-blue mb-3">Scan this QR code with your authenticator app</h6>
+                            <h6 class="font-cyber text-cyber-blue mb-3" data-i18n="profile.scanQr">Scan this QR code with your authenticator app</h6>
                             <div id="qrCodeContainer" class="qr-code-container border-2 border-cyber-blue p-3 rounded bg-white inline-block mb-3">
                                 <div class="animate-spin text-cyber-blue h-12 w-12 border-4 border-cyber-blue border-t-transparent rounded-full mx-auto" role="status">
-                                    <span class="sr-only">Loading...</span>
+                                    <span class="sr-only" data-i18n="profile.loading">Loading...</span>
                                 </div>
                             </div>
-                            <div class="text-gray-300 mb-2 text-sm">Or enter this setup key manually:</div>
+                            <div class="text-gray-300 mb-2 text-sm" data-i18n="profile.setupKeyManually">Or enter this setup key manually:</div>
                             <div id="secretKey" class="secret-key bg-cyber-dark text-cyber-blue p-2 mb-3 font-mono border border-cyber-blue rounded break-all"></div>
                             <p class="text-gray-300 text-sm">
                                 <i class="bi bi-info-circle-fill mr-1"></i>
-                                After scanning, enter the 6-digit code from your app below to verify and activate 2FA.
+                                <span data-i18n="profile.afterScanning">After scanning, enter the 6-digit code from your app below to verify and activate 2FA.</span>
                             </p>
                         </div>
                         
                         <form id="twoFAForm">
                             <div class="form-group mb-4">
-                                <label for="twoFACode" class="font-cyber text-cyber-blue block mb-2">Verification Code</label>
+                                <label for="twoFACode" class="font-cyber text-cyber-blue block mb-2" data-i18n="profile.verificationCode">Verification Code</label>
                                 <input type="text" class="cyber-input w-full rounded text-center text-2xl tracking-widest" id="twoFACode" maxlength="6" inputmode="numeric" pattern="[0-9]*" placeholder="000000" required>
-                                <div class="text-cyber-pink mt-1 text-sm hidden" id="codeError">Please enter a valid 6-digit code</div>
+                                <div class="text-cyber-pink mt-1 text-sm hidden" data-i18n="profile.invalidCode" id="codeError">Please enter a valid 6-digit code</div>
                             </div>
                             
                             <div class="form-button-container flex justify-center">
                                 <button type="submit" class="cyber-btn w-full py-3">
                                     <span class="hidden w-4 h-4 border-2 border-cyber-blue border-t-transparent rounded-full animate-spin mr-2" data-spinner></span>
-                                    <span data-button-text>Verify</span>
+                                    <span data-button-text data-i18n="profile.verify">Verify</span>
                                 </button>
                             </div>
                         </form>

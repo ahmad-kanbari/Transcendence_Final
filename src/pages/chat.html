@@ -1,6 +1,6 @@
 <div class="chat-page">
     <!-- Skip to content link for accessibility -->
-    <a href="#main-content" class="skip-to-content" style="position: absolute; top: -50px; left: 0; padding: 8px 16px; background: var(--cyber-blue); color: var(--cyber-darker); z-index: 9999; transition: top 0.3s;">Skip to content</a>
+    <a href="#main-content" class="skip-to-content" data-i18n="chat.skipToContent" style="position: absolute; top: -50px; left: 0; padding: 8px 16px; background: var(--cyber-blue); color: var(--cyber-darker); z-index: 9999; transition: top 0.3s;">Skip to content</a>
 
     <!-- Floating Particles -->
     <div class="particles" id="particles"></div>
@@ -53,9 +53,9 @@
                 color: var(--cyber-blue, #00f);
                 margin-bottom: 10px;
                 font-size: 24px;
-            ">User Actions</h3>
+            " data-i18n="chat.userActions">User Actions</h3>
             
-            <p style="color: #ccc; margin-bottom: 30px;">
+            <p style="color: #ccc; margin-bottom: 30px;" data-i18n="chat.whatToDo">
                 What would you like to do with 
                 <strong id="friendSearchPopupUsername" style="color: var(--cyber-green, #0f0);"></strong>?
             </p>
@@ -73,7 +73,7 @@
                     transition: all 0.3s ease;
                     flex: 1;
                     max-width: 120px;
-                ">Add Friend</button>
+                " data-i18n="chat.addFriend">Add Friend</button>
                 
                 <button id="friendSearchPopupBlockBtn" style="
                     background: linear-gradient(45deg, #ff0040, #ff4444);
@@ -87,31 +87,31 @@
                     transition: all 0.3s ease;
                     flex: 1;
                     max-width: 120px;
-                ">Block User</button>
+                " data-i18n="chat.blockUser">Block User</button>
             </div>
         </div>
     </div>
 
     <!-- Dashboard Stats View -->
     <div class="dashboard-view" id="dashboardView">
-        <button class="close-dashboard" id="closeDashboard">&times;</button>
-        <h2 style="font-family: 'Orbitron', sans-serif; color: var(--cyber-blue); text-align: center; margin-bottom: 30px; font-size: 2rem; text-transform: uppercase; letter-spacing: 2px;">Dashboard Overview</h2>
+        <!-- <button class="close-dashboard" id="closeDashboard">&times;</button>
+        <h2 style="font-family: 'Orbitron', sans-serif; color: var(--cyber-blue); text-align: center; margin-bottom: 30px; font-size: 2rem; text-transform: uppercase; letter-spacing: 2px;">Dashboard Overview</h2> -->
                 
         <div class="dashboard-stats">
             <div class="stat-card">
-                <h3>Total Friends</h3>
+                <h3 data-i18n="chat.totalFriends">Total Friends</h3>
                 <div class="stat-number" id="totalFriends">0</div>
             </div>
             <div class="stat-card">
-                <h3>Active Chats</h3>
+                <h3 data-i18n="chat.activeChats">Active Chats</h3>
                 <div class="stat-number" id="activeChats">0</div>
             </div>
             <div class="stat-card">
-                <h3>Messages Today</h3>
+                <h3 data-i18n="chat.messagesToday">Messages Today</h3>
                 <div class="stat-number" id="messagesToday">0</div>
             </div>
             <div class="stat-card">
-                <h3>Online Friends</h3>
+                <h3 data-i18n="chat.onlineFriends">Online Friends</h3>
                 <div class="stat-number" id="onlineFriends">0</div>
             </div>
         </div>
@@ -120,38 +120,39 @@
     <div class="dashboard-container" id="main-content">
         <!-- Friends Management Sidebar -->
         <div class="sidebar">
-            <h2>Friend Management</h2>
+            <h2 data-i18n="chat.friendManagement"> Friend Management</h2>
 
             <div class="section">
-                <h3>Search User</h3>
+                <h3 data-i18n="chat.searchUser">Search User</h3>
                 <input
                     type="text"
                     id="userSearch"
                     placeholder="Search for a friend..."
                     aria-label="Search for users"
+                    data-i18n-attr="placeholder:chat.searchForFriend"
                 />
                 <ul id="userSearchResults" role="listbox" aria-label="Search results"></ul>
             </div>
 
             <div class="section">
-                <h3>Incoming Requests</h3>
-                <ul id="incomingRequests" role="list" aria-label="Incoming friend requests"></ul>
+                <h3 data-i18n="chat.incomingRequests">Incoming Requests</h3>
+                <ul id="incomingRequests" role="list" data-i18n-attr="placeholder:chat.incomingFrinedRequests" aria-label="Incoming friend requests"></ul>
             </div>
 
             <div class="section">
-                <h3>Outgoing Requests</h3>
-                <ul id="outgoingRequests" role="list" aria-label="Outgoing friend requests"></ul>
+                <h3 data-i18n="chat.outgoingRequests">Outgoing Requests</h3>
+                <ul id="outgoingRequests" role="list" data-i18n-attr="placeholder:chat.outgoingFrinedRequests" aria-label="Outgoing friend requests"></ul>
             </div>
 
             <div class="section">
-                <h3>Friends</h3>
-                <ul id="friendsList" role="list" aria-label="Friends list"></ul>
+                <h3 data-i18n="chat.friends">Friends</h3>
+                <ul id="friendsList" role="list" data-i18n-attr="placeholder:chat.Frinedlists" aria-label="Friends list"></ul>
             </div>
 
             <!-- NEW: Blocked Users Section -->
             <div class="section">
                 <h3 style="display: flex; align-items: center; gap: 10px;">
-                    Blocked Users 
+                    <span data-i18n="chat.blockedUsers">Blocked Users</span>
                     <span class="badge blocked-badge" id="blockedUsersBadge" style="
                         display: none; 
                         background: #ff4444; 
@@ -177,10 +178,10 @@
         <div class="main">
             <!-- Top Bar -->
             <div class="topbar">
-                <h1>Cyber Chat</h1>
+                <h1 data-i18n="chat.cyberChat">Cyber Chat</h1>
                 <div class="notifications-area">
                     <button class="dashboard-toggle" id="showDashboard">
-                        <i class="bi bi-graph-up"></i> Dashboard
+                        <i class="bi bi-graph-up"></i><span data-i18n="chat.dashboard">Dashboard</span>
                     </button>
                 </div>
             </div>
@@ -195,10 +196,11 @@
                             id="userSearchInput"
                             placeholder="Start chat with..."
                             aria-label="Search users to start chat"
+                             data-i18n-attr="placeholder:chat.startChatWith"
                         />
                         <div id="userSearchResultsChat" role="listbox" aria-label="User search results" style="display: none;"></div>
                     </div>
-                    <h3>Your Chats</h3>
+                    <h3 data-i18n="chat.yourChats">Your Chats</h3>
                     <div id="chatRows" role="list" aria-label="Active chats">
                         <!-- Chat rows will be populated by JavaScript -->
                     </div>
@@ -206,7 +208,7 @@
 
                 <!-- Chat Panel -->
                 <div class="chatPanel">
-                    <div id="chatHeader" role="banner">
+                    <div id="chatHeader" role="banner" data-i18n="chat.selectChat">
                         Select a chat to start messaging
                     </div>
                     <div id="messageBox" role="log" aria-live="polite" aria-label="Chat messages">
@@ -218,9 +220,10 @@
                             id="messageInput"
                             placeholder="Type a message..."
                             aria-label="Message input"
+                            data-i18n-attr="placeholder:chat.typeMessage"
                         />
                         <button id="sendBtn" aria-label="Send message">
-                            <i class="bi bi-send"></i> Send
+                            <i class="bi bi-send"></i> <span data-i18n="chat.send">Send</span>
                         </button>
                     </div>
                 </div>

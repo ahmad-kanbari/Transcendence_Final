@@ -8,7 +8,7 @@ import arTranslations from '../locales/ar.json';
 import trTranslations from '../locales/tr.json';
 
 // Define language types
-export type Language = 'en' | 'ar' | 'tr';
+export type Language = 'en' | 'ar' ;
 export type Translations = typeof enTranslations;
 
 // Define interface for the localization service
@@ -35,14 +35,14 @@ class Localization implements LocalizationService {
   private languageNames = {
     en: 'English',
     ar: 'العربية',
-    tr: 'Türkçe'
+    // tr: 'Türkçe'
   };
   
   // Available translations map
   private translationsMap: Record<Language, Translations> = {
     en: enTranslations,
     ar: arTranslations,
-    tr: trTranslations
+    // tr: trTranslations
   };
   
   // RTL languages
@@ -68,6 +68,18 @@ class Localization implements LocalizationService {
     
     // Initialize language switcher if available in DOM
     this.initializeLanguageSwitcher();
+
+  
+  // Listen for page changes
+  document.addEventListener('pageShown', (event: Event) => {
+    const customEvent = event as CustomEvent;
+    console.log('Page shown:', customEvent.detail.page);
+    // Re-apply translations when page changes
+    setTimeout(() => {
+      this.updatePageContent();
+    }, 100);
+  });
+
   }
   
   /**
@@ -93,7 +105,7 @@ class Localization implements LocalizationService {
     localStorage.setItem('language', lang);
     
     // Update translations
-    this.translations = this.translationsMap[lang];
+   this.translations = this.translationsMap[lang];
     
     // Check if we need to update RTL
     const wasRTL = this.isRTL;
@@ -148,7 +160,13 @@ class Localization implements LocalizationService {
    * @param params Optional parameters to substitute in the translation
    * @returns The translated string
    */
-  getTranslation(key: string, params?: Record<string, string>): string {
+/**
+
+/**
+ * Get a translation by key with optional parameters
+ */
+getTranslation(key: string, params?: Record<string, string>): string {
+  try {
     // Split the key path by dots to traverse the nested translation object
     const keys = key.split('.');
     
@@ -161,6 +179,7 @@ class Localization implements LocalizationService {
         translation = translation[k];
       } else {
         // If key doesn't exist, return the key itself as a fallback
+        console.warn(`Translation key not found: ${key}`);
         return key;
       }
     }
@@ -173,8 +192,11 @@ class Localization implements LocalizationService {
     }
     
     return typeof translation === 'string' ? translation : key;
+  } catch (error) {
+    console.error(`Error getting translation for key: ${key}`, error);
+    return key;
   }
-  
+}
   /**
    * Get the display name of a language
    * @param lang Language code
@@ -260,44 +282,54 @@ class Localization implements LocalizationService {
       setTimeout(() => this.createLanguageSwitcher(), 1000);
     }
   }
+  /**
+   * Get text direction for current language
+   */
+  public getDirection(): 'ltr' | 'rtl' {
+    return this.isRTL ? 'rtl' : 'ltr';
+  }
+
+  /**
+   * Check if current language is RTL
+   */
+  public isCurrentLanguageRTL(): boolean {
+    return this.isRTL;
+  }
   
   /**
    * Update all translatable elements on the page
    */
-  private updatePageContent(): void {
-    // Update elements with data-i18n attribute
-    document.querySelectorAll('[data-i18n]').forEach(element => {
-      const key = element.getAttribute('data-i18n');
-      if (key) {
-        // For input elements, update the placeholder attribute
-        if (element instanceof HTMLInputElement && element.hasAttribute('data-i18n-placeholder')) {
-          element.placeholder = this.getTranslation(key);
-        }
-        // For other elements, update the inner text
-        else {
-          element.textContent = this.getTranslation(key);
-        }
+/**
+ * Update all translatable elements on the page
+ */
+public updatePageContent(): void {
+  // Update elements with data-i18n attribute
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (key) {
+      element.textContent = this.getTranslation(key);
+    }
+  });
+  
+  // Update elements with data-i18n-attr attributes
+  document.querySelectorAll('[data-i18n-attr]').forEach(element => {
+    const keyAndAttr = element.getAttribute('data-i18n-attr');
+    if (keyAndAttr) {
+      const [attr, key] = keyAndAttr.split(':');
+      if (attr && key) {
+        element.setAttribute(attr, this.getTranslation(key));
       }
-    });
-    
-    // Update elements with data-i18n-attr attributes
-    document.querySelectorAll('[data-i18n-attr]').forEach(element => {
-      const keyAndAttr = element.getAttribute('data-i18n-attr');
-      if (keyAndAttr) {
-        const [attr, key] = keyAndAttr.split(':');
-        if (attr && key) {
-          element.setAttribute(attr, this.getTranslation(key));
-        }
-      }
-    });
-    
-    // Dispatch a custom event that other components can listen to
-    document.dispatchEvent(new CustomEvent('languageChanged', {
-      detail: { language: this.currentLanguage, isRTL: this.isRTL }
-    }));
-  }
+    }
+  });
+  
+  // Dispatch a custom event that other components can listen to
+  document.dispatchEvent(new CustomEvent('languageChanged', {
+    detail: { language: this.currentLanguage, isRTL: this.isRTL }
+  }));
 }
 
+
+}
 // Singleton instance of the localization service
 const localization = new Localization();
 
@@ -305,5 +337,12 @@ const localization = new Localization();
 export function t(key: string, params?: Record<string, string>): string {
   return localization.getTranslation(key, params);
 }
+declare global {
+  interface Window {
+    localization: typeof localization;
+  }
+}
+
+window.localization = localization;
 
 export default localization;

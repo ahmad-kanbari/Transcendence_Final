@@ -1,5 +1,6 @@
 // Tailwind CSS is now loaded via CDN
 import socketService from './socketService';
+
 import api from './api';
 import utils from './utils';
 import login from './login';
@@ -112,6 +113,9 @@ class App {
       
       utils.initLogoutButton(this);
       
+
+      // Force initialization
+      localization.updatePageContent();
       document.dispatchEvent(new CustomEvent('appInitialized', {
         detail: { app: this }
       }));
