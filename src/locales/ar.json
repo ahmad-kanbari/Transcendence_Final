@@ -15,6 +15,7 @@
     "profile": "الملف الشخصي",
     "logout": "تسجيل الخروج"
   },
+
  
   "settings": {
     "pointsToWin": "النقاط للفوز:",
@@ -77,7 +78,8 @@
     "textSizeSmall": "صغير",
     "textSizeMedium": "متوسط",
     "textSizeLarge": "كبير",
-    "skipToContent": "انتقل إلى المحتوى"
+    "skipToContent": "انتقل إلى المحتوى",
+    "language":  " اللغة - "
   },
  
  "twofa": {

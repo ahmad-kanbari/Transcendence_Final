@@ -76,7 +76,8 @@
     "textSizeSmall": "Small",
     "textSizeMedium": "Medium",
     "textSizeLarge": "Large",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "language": "Language  -"
   },
   "twofa": {
     "title": "Two-Factor Authentication",

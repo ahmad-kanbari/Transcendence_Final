@@ -76,7 +76,8 @@
     "textSizeSmall": "Küçük",
     "textSizeMedium": "Orta",
     "textSizeLarge": "Büyük",
-    "skipToContent": "İçeriğe Geç"
+    "skipToContent": "İçeriğe Geç",
+    "language": "Dil  -"
   },
   "twofa": {
     "title": "İki Faktörlü Kimlik Doğrulama",
