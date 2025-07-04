@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Dashboard</title>
+		<style>
+			body {
+				font-family: sans-serif;
+				margin: 0;
+				padding: 0;
+				display: flex;
+				flex-direction: row;
+				height: 100vh;
+				visibility: hidden; /* till the user authenticates */
+				opacity: 0;
+			}
+			.sidebar {
+				width: 300px;
+				background: #f1f1f1;
+				padding: 1rem;
+				overflow-y: auto;
+				border-right: 1px solid #ccc;
+			}
+			.main {
+				flex: 1;
+				padding: 1rem;
+				display: flex;
+				flex-direction: column;
+				position: relative;
+			}
+			section {
+				margin-bottom: 2rem;
+				border: 1px solid #ccc;
+				padding: 1rem;
+				border-radius: 5px;
+				background: white;
+			}
+			input,
+			button {
+				display: block;
+				margin-bottom: 0.5rem;
+				padding: 0.5rem;
+				width: 100%;
+				box-sizing: border-box;
+			}
+
+			/* Action buttons in main section */
+			.main button {
+				display: inline-block;
+				width: auto;
+				margin-right: 1rem;
+				background-color: #007bff;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				transition: background-color 0.2s;
+			}
+
+			.main button:hover {
+				background-color: #0056b3;
+			}
+
+			.notification-bell {
+				position: absolute;
+				cursor: pointer;
+				font-size: 1.5rem;
+			}
+			#bellBtn {
+				right: 4rem;
+				top: 1rem;
+			}
+
+			#mailboxBtn {
+				right: 1rem;
+				top: 1rem;
+			}
+
+			#generalNotifications {
+				position: absolute;
+				top: 3rem;
+				right: 4rem;
+				width: 300px;
+				max-height: 400px;
+				overflow-y: auto;
+				border: 1px solid #ccc;
+				background: white;
+				padding: 1rem;
+				border-radius: 5px;
+				display: none;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				z-index: 999;
+			}
+
+			#messageNotifications {
+				position: absolute;
+				top: 3rem;
+				right: 1rem;
+				width: 300px;
+				max-height: 400px;
+				overflow-y: auto;
+				border: 1px solid #ccc;
+				background: white;
+				padding: 1rem;
+				border-radius: 5px;
+				display: none;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				z-index: 999;
+			}
+
+			.notification {
+				padding: 0.5rem;
+				border-bottom: 1px solid #eee;
+			}
+
+			.notification:last-child {
+				border-bottom: none;
+			}
+
+			#bellBtn::after,
+			#mailboxBtn::after {
+				content: attr(data-count);
+				position: absolute;
+				top: -5px;
+				right: -5px;
+				background: red;
+				color: white;
+				border-radius: 50%;
+				width: 1.2rem;
+				height: 1.2rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 0.75rem;
+				visibility: hidden;
+			}
+
+			#bellBtn[data-count]:not([data-count="0"])::after,
+			#mailboxBtn[data-count]:not([data-count="0"])::after {
+				visibility: visible;
+			}
+
+			/* Search dropdown styling */
+			#userSearchResults {
+				max-height: 200px;
+				overflow-y: auto;
+				border: 1px solid #ccc;
+				background: white;
+				position: absolute;
+				width: calc(100% - 20px);
+				box-sizing: border-box;
+				border-radius: 5px;
+				display: none;
+			}
+			#userSearchResults li {
+				padding: 0.5rem;
+				cursor: pointer;
+			}
+			#userSearchResults li:hover {
+				background-color: #f1f1f1;
+			}
+
+			/* Toast Notification Styles */
+			.toast-notification {
+				position: fixed;
+				left: 20px;
+				top: 20px;
+				width: 240px;
+				background: #ffffff;
+				border-radius: 8px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+				padding: 12px;
+				z-index: 10000;
+				opacity: 0;
+				transform: translateX(-20px);
+				transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+				pointer-events: none;
+			}
+
+			.toast-notification.show {
+				opacity: 1;
+				transform: translateX(0);
+			}
+
+			.toast-notification .header {
+				font-weight: bold;
+				margin-bottom: 6px;
+				font-size: 14px;
+				color: #1a1a1a;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.toast-notification .message {
+				font-size: 13px;
+				color: #666666;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			/* Remove the security button styles */
+			.security-button {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="sidebar">
+			<h2>Friend Actions</h2>
+
+			<section>
+				<h3>Search User</h3>
+				<input
+					type="text"
+					id="userSearch"
+					placeholder="Search for a friend..."
+				/>
+				<ul id="userSearchResults"></ul>
+				<!-- Dropdown for search results -->
+			</section>
+
+			<section>
+				<h3>Incoming Requests</h3>
+				<ul id="incomingRequests"></ul>
+			</section>
+
+			<section>
+				<h3>Outgoing Requests</h3>
+				<ul id="outgoingRequests"></ul>
+			</section>
+
+			<section>
+				<h3>Friends</h3>
+				<ul id="friendsList"></ul>
+			</section>
+
+			<section>
+				<h3>Blocked Users</h3>
+				<ul id="blockedList"></ul>
+			</section>
+		</div>
+
+		<div class="main">
+			<h1>Welcome to the Dashboard 👋</h1>
+			<button id="showUserBtn">Show Current User</button>
+			<button id="profileBtn">My Profile</button>
+			<button id="logoutBtn">Logout</button>
+			<button onclick="window.location.href='chat/chat.html'">
+				Go to Chat
+			</button>
+
+			<div class="notification-bell" id="bellBtn">🔔</div>
+			<div class="notification-bell" id="mailboxBtn">📬</div>
+			<div id="generalNotifications">
+				<em>No notifications yet.</em>
+			</div>
+			<div id="messageNotifications" class="notification-box">
+				<em>No message notifications yet.</em>
+			</div>
+		</div>
+
+		<!-- Scripts -->
+		<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+		<script src="utils.js"></script>
+		<script src="dashboard.js"></script>
+	</body>
+</html>

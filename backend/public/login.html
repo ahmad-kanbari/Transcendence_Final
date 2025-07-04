@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Login</title>
+		<style>
+			body {
+				font-family: sans-serif;
+				padding: 2rem;
+			}
+			form,
+			button {
+				margin-bottom: 1rem;
+			}
+			input {
+				display: block;
+				margin-bottom: 0.5rem;
+			}
+			#googleLoginBtn {
+				display: inline-flex;
+				align-items: center;
+				background-color: white;
+				color: #444;
+				border: 1px solid #ccc;
+				border-radius: 4px;
+				padding: 0.5rem 1rem;
+				text-decoration: none;
+				font-weight: bold;
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+				transition: background-color 0.3s;
+			}
+			#googleLoginBtn:hover {
+				background-color: #f7f7f7;
+			}
+			#googleLoginBtn img {
+				width: 20px;
+				height: 20px;
+				margin-right: 0.5rem;
+			}
+			#twoFactorForm {
+				display: none;
+				margin-top: 1rem;
+			}
+			.form-container {
+				max-width: 300px;
+				margin: 0 auto;
+			}
+			.code-input {
+				font-size: 1.2rem;
+				letter-spacing: 0.5rem;
+				text-align: center;
+				width: 100%;
+				padding: 0.5rem;
+			}
+			.error-message {
+				color: red;
+				margin-top: 0.5rem;
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="form-container">
+			<h1>Login</h1>
+			<form id="loginForm">
+				<input type="email" id="email" placeholder="Email" required />
+				<input
+					type="password"
+					id="password"
+					placeholder="Password"
+					required
+				/>
+				<button type="submit">Login</button>
+			</form>
+
+			<form id="twoFactorForm">
+				<h2>Two-Factor Authentication</h2>
+				<p>Please enter the 6-digit code from your authenticator app</p>
+				<input
+					type="text"
+					id="totpCode"
+					class="code-input"
+					maxlength="6"
+					pattern="[0-9]*"
+					inputmode="numeric"
+					autocomplete="one-time-code"
+					required
+				/>
+				<div id="error2FA" class="error-message"></div>
+				<button type="submit">Verify</button>
+			</form>
+
+			<!-- Google Login Button -->
+			<a
+				href="http://localhost:3000/api/v1/auth/google/login"
+				id="googleLoginBtn"
+			>
+				<img
+					src="https://developers.google.com/identity/images/g-logo.png"
+					alt="Google logo"
+				/>
+				<span>Sign in with Google</span>
+			</a>
+		</div>
+
+		<script src="utils.js"></script>
+		<script src="login.js"></script>
+	</body>
+</html>

@@ -1,0 +1,232 @@
+<div class="game-page-wrapper">
+    <div class="cyber-container bg-cyber-darker rounded-lg shadow-neon-blue bg-opacity-90 backdrop-blur-sm p-6 my-8 max-w-6xl mx-auto">
+        <h2 class="cyber-heading text-3xl text-center mb-6" data-i18n="game.title">Pong Game</h2>
+        
+        <!-- Game mode buttons at the top in a single row -->
+        <div class="game-buttons top-buttons flex flex-wrap justify-center gap-3 mb-6">
+            <button class="cyber-btn" id="pvpButton" data-i18n="game.pvp">1 VS 1</button>
+            <button class="cyber-btn-pink" id="pveButton" data-i18n="game.pve">1 VS AI</button>
+            <button class="cyber-btn-green" id="multiplayerButton" data-i18n="game.multiplayer">MULTIPLAYER</button>
+            <button class="cyber-btn" id="tournamentButton" data-i18n="game.tournament">TOURNAMENT</button>
+        </div>
+        
+        <!-- Game Area -->
+        <div class="gameContainer bg-cyber-dark border border-cyber-blue rounded-lg overflow-hidden">
+            <!-- Player 1 info on the left side -->
+            <div class="player1Info p-3 bg-cyber-darker border-r border-cyber-blue flex flex-col justify-center items-center">
+                <span class="playerName font-cyber text-cyber-blue text-lg mb-2" id="player1Name" data-i18n="game.player1">PLAYER 1</span>
+                <span class="score player1Score font-cyber text-cyber-green text-4xl animate-glow" id="player1Score">0</span>
+            </div>
+            
+            <!-- Game area in the middle -->
+            <div class="gameArea relative border-x border-cyber-blue">
+                <!-- Video Background - Hidden by default -->
+                <div class="video-background" id="videoBackground" style="display: none;">
+                    <div class="video-overlay cyber-grid-bg"></div>
+                    <video autoplay muted loop playsinline> 
+                        <source src="src/assets/videos/bg1.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                
+                <div class="paddle1 paddle bg-cyber-blue shadow-neon-blue" id="paddle1"></div>
+                <div class="paddle2 paddle bg-cyber-pink shadow-neon-pink" id="paddle2"></div>
+                <div class="paddle3 paddle bg-cyber-green shadow-neon-green" id="paddle3" style="display: none;"></div>
+                <div class="paddle4 paddle bg-cyber-yellow shadow-neon-yellow" id="paddle4" style="display: none;"></div>
+                <div class="ball bg-cyber-purple shadow-neon-purple" id="ball"></div>
+                <div class="net bg-cyber-blue bg-opacity-30"></div>
+                
+                <!-- Tournament announcement overlay -->
+                <div id="tournamentAnnouncement" class="font-cyber text-cyber-yellow p-3 bg-cyber-darker bg-opacity-80 rounded shadow-neon-yellow" style="display: none;">
+                    Semifinal 1: Player 1 vs Player 2
+                </div>
+            </div>
+            
+            <!-- Player 2 info on the right side -->
+            <div class="player2Info p-3 bg-cyber-darker border-l border-cyber-blue flex flex-col justify-center items-center">
+                <span class="playerName font-cyber text-cyber-pink text-lg mb-2" id="player2Name" data-i18n="game.player2">PLAYER 2</span>
+                <span class="score player2Score font-cyber text-cyber-green text-4xl animate-glow" id="player2Score">0</span>
+            </div>
+        </div>
+        
+        <!-- Start Game Instructions -->
+        <h3 class="startText font-cyber text-cyber-green text-xl my-4 animate-glow" id="startText" style="display: none;" data-i18n="game.start">
+            Press any key to Start
+        </h3>
+        
+        <!-- Game buttons at the bottom in a single row -->
+        <div class="game-buttons bottom-buttons flex justify-center gap-3 mt-6">
+            <button class="cyber-btn" id="settingsButton" data-i18n="game.settings">SETTINGS</button>
+            <button class="cyber-btn" id="howToPlayButton" data-i18n="game.howToPlay">HOW TO PLAY</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div class="screen cyber-container bg-cyber-darker bg-opacity-90 rounded-lg p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-3xl border-2 border-cyber-blue shadow-neon-blue z-10" id="settingsScreen" style="display: none;">
+            <h3 class="cyber-heading text-2xl mb-6" data-i18n="game.gameSettings">Game Settings</h3>
+            <div class="settings-container grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="settings-column space-y-4">
+                    <div class="setting">
+                        <label for="winScore" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.pointsToWin">Points to Win:</label>
+                        <select id="winScore" class="cyber-input w-full rounded">
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="7">7</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="player1NameInput" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.player1Name">Player 1 Name:</label>
+                        <input type="text" id="player1NameInput" placeholder="Player_1" data-i18n-attr="placeholder:game.player1" pattern="[^ ]+"  maxlength="10" class="cyber-input w-full rounded">
+                    </div>
+                    <div class="setting">
+                        <label for="player2NameInput" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.player2Name">Player 2 Name:</label>
+                        <input type="text" id="player2NameInput" placeholder="Player_2" data-i18n-attr="placeholder:game.player2"  pattern="[^ ]+" maxlength="10" class="cyber-input w-full rounded">
+                    </div>
+                </div>
+                <div class="settings-column space-y-4">
+                    <div class="setting">
+                        <label for="ballSpeedSelect" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.ballSpeed">Ball Speed:</label>
+                        <select id="ballSpeedSelect" class="cyber-input w-full rounded">
+                            <option value="3" data-i18n="game.slow">Slow</option>
+                            <option value="5" selected data-i18n="game.normal">Normal</option>
+                            <option value="8" data-i18n="game.fast">Fast</option>
+                        </select>
+                    </div>
+                    <div class="setting" id="aiDifficultyContainer">
+                        <label for="aiDifficultySelect" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.aiDifficulty">AI Difficulty:</label>
+                        <select id="aiDifficultySelect" class="cyber-input w-full rounded">
+                            <option value="easy" data-i18n="game.easy" >Easy</option>
+                            <option value="medium" selected data-i18n="game.medium">Medium</option>
+                            <option value="hard" data-i18n="game.hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="paddleSize" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.paddleSize">Paddle Size:</label>
+                        <select id="paddleSize" class="cyber-input w-full rounded">
+                            <option value="small" data-i18n="game.small">Small</option>
+                            <option value="normal" selected data-i18n="game.normal">Normal</option>
+                            <option value="large" data-i18n="game.large">Large</option>
+                        </select>
+                    </div>
+                    <div class="setting">
+                        <label for="backgroundSelect" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.map">Map:</label>
+                        <select id="backgroundSelect" class="cyber-input w-full rounded">
+                            <option value="classic" selected data-i18n="game.classic">Classic</option>
+                            <option value="video" data-i18n="game.sparkle">Sparkle</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center gap-4 mt-8">
+                <button class="cyber-btn-green" id="saveSettingsButton" data-i18n="game.saveSettings">Save Settings</button>
+                <button class="cyber-btn-pink" id="backButton" data-i18n="game.backToMenu">Back to Menu</button>
+            </div>
+        </div>
+        
+        <!-- How to Play Screen -->
+        <div class="screen cyber-container bg-cyber-darker bg-opacity-90 rounded-lg p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-4xl border-2 border-cyber-green shadow-neon-green z-10" id="howToPlayScreen" style="display: none;">
+            <h3 class="cyber-heading text-2xl mb-6" data-i18n="game.howToPlay">How to Play</h3>
+            <div class="instructionsContainer grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="instructionSection cyber-card">
+                    <h4 class="font-cyber text-cyber-blue text-xl mb-3" data-i18n="game.controls">Controls:</h4>
+                    <p class="font-body text-white mb-2" data-i18n="game.player1Controls">Player 1: W (up) and S (down)</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.player2Controls">Player 2: ↑ (up) and ↓ (down)</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.multiplayerMode">In Multiplayer Mode:</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.player3Controls">Player 3: E (up) and D (down)</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.player4Controls">Player 4: I (up) and K (down)</p>
+                </div>
+                <div class="instructionSection cyber-card">
+                    <h4 class="font-cyber text-cyber-blue text-xl mb-3" data-i18n="game.gameplay">Gameplay:</h4>
+                    <p class="font-body text-white mb-2" data-i18n="game.hitBall">Hit the ball with your paddle to return it to your opponent.</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.scorePoints">Score points when your opponent misses the ball.</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.firstToWin">First player to reach the win score wins the game!</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.multiplayerDesc"><strong class="text-cyber-green">Multiplayer (4P) Mode:</strong> In this tag-team mode, when a paddle hits the ball, it becomes inactive until its teammate hits the ball. Teams score points together.</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.tournamentDesc"><strong class="text-cyber-yellow">Tournament Mode:</strong> 4 players compete in semifinals and then a final match to determine the champion.</p>
+                </div>
+                <div class="instructionSection cyber-card">
+                    <h4 class="font-cyber text-cyber-blue text-xl mb-3" data-i18n="game.tips">Tips:</h4>
+                    <p class="font-body text-white mb-2" data-i18n="game.ballSpeedTip">The ball speeds up after each hit.</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.paddleEdgeTip">Hitting the ball with the edge of the paddle gives it a steeper angle.</p>
+                    <p class="font-body text-white mb-2" data-i18n="game.adjustSettingsTip">You can adjust game settings before starting a match.</p>
+                </div>
+            </div>
+            <div class="flex justify-center mt-8">
+                <button class="cyber-btn" id="backFromHowToPlayButton" data-i18n="game.backToMenu">Back to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Tournament Setup Screen -->
+        <div class="screen cyber-container bg-cyber-darker bg-opacity-90 rounded-lg p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-w-4xl border-2 border-cyber-yellow shadow-neon-yellow z-10" id="tournamentScreen" style="display: none;">
+            <h3 class="cyber-heading text-2xl mb-6" data-i18n="game.tournamentMode">Tournament Mode</h3>
+            <div id="tournamentBracket" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="tournament-round cyber-card">
+                    <h4 class="font-cyber text-cyber-blue text-xl mb-4" data-i18n="game.semifinals">Semifinals</h4>
+                    <div class="tournament-match p-3 mb-4 border border-cyber-blue rounded bg-cyber-dark" id="semifinal1">
+                        <span id="semi1Player1" class="text-cyber-blue" data-i18n="game.player1" >Player 1</span> 
+                        <span class="text-cyber-yellow" data-i18n="game.vs">vs</span>
+                        <span id="semi1Player2" class="text-cyber-pink" data-i18n="game.player2">Player 2</span>
+                    </div>
+                    <div class="tournament-match p-3 border border-cyber-blue rounded bg-cyber-dark" id="semifinal2">
+                        <span id="semi2Player1" class="text-cyber-green" data-i18n="game.player3">Player 3</span> 
+                        <span class="text-cyber-yellow">vs</span> 
+                        <span id="semi2Player2" class="text-cyber-yellow" data-i18n="game.player4">Player 4</span>
+                    </div>
+                </div>
+                <div class="tournament-round cyber-card">
+                    <h4 class="font-cyber text-cyber-blue text-xl mb-4" data-i18n="game.final">Final</h4>
+                    <div class="tournament-match p-3 border border-cyber-yellow rounded bg-cyber-dark h-16 flex items-center justify-center" id="final">
+                        <span id="finalPlayer1" class="text-cyber-blue" data-i18n="game.winner">Winner</span> 
+                        <span class="text-cyber-yellow mx-2" data-i18n="game.vs">vs</span> 
+                        <span id="finalPlayer2" class="text-cyber-pink" data-i18n="game.winner">Winner</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tournament-inputs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="setting">
+                    <label for="tournament-p1" class="font-cyber text-cyber-blue block mb-2" data-i18n="game.player1Name">Player 1:</label>
+                    <input type="text" id="tournament-p1" placeholder="Player_1" pattern="[^ ]+" maxlength="10" class="cyber-input w-full rounded">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p2" class="font-cyber text-cyber-pink block mb-2" data-i18n="game.player2Name">Player 2:</label>
+                    <input type="text" id="tournament-p2" placeholder="Player_2" pattern="[^ ]+" maxlength="10" class="cyber-input w-full rounded">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p3" class="font-cyber text-cyber-green block mb-2" data-i18n="game.player3">Player 3:</label>
+                    <input type="text" id="tournament-p3" placeholder="Player_3" maxlength="10" pattern="[^ ]+" class="cyber-input w-full rounded">
+                </div>
+                <div class="setting">
+                    <label for="tournament-p4" class="font-cyber text-cyber-yellow block mb-2" data-i18n="game.player4">Player 4:</label>
+                    <input type="text" id="tournament-p4" placeholder="Player_4" maxlength="10" pattern="[^ ]+" class="cyber-input w-full rounded">
+                </div>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button class="cyber-btn-yellow" id="startTournamentButton" data-i18n="game.startTournament">Start Tournament</button>
+                <button class="cyber-btn" id="backFromTournamentButton" data-i18n="game.backToMenu">Back to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Win Screen Overlay -->
+        <div class="screen cyber-container bg-cyber-darker bg-opacity-90 rounded-lg p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-2xl border-2 border-cyber-green shadow-neon-green z-10" id="winScreen" style="display: none;">
+            <h2 class="cyber-heading text-3xl mb-4 animate-glow" data-i18n="game.gameOver">Game Over!</h2>
+            <!-- <h3 id="winnerText" class="font-cyber text-cyber-yellow text-2xl mb-6">Player 1 Wins!</h3> -->
+            <h3 id="winnerText" class="font-cyber text-cyber-yellow text-2xl mb-6">[Player] <span data-i18n="game.wins">Wins!</span></h3>
+            <p class="text-white text-xl mb-8"><span data-i18n="game.finalScore">Final Score:</span><span id="finalScore" class="font-cyber text-cyber-blue">0 - 0</span></p>
+            <div class="flex justify-center gap-4">
+                <button class="cyber-btn-green" id="nextMatchButton" style="display: none;" data-i18n="game.nextMatch">Next Match</button>
+                <button class="cyber-btn" id="menuButton" data-i18n="game.backToMenu">Back to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Window Size Warning Overlay -->
+        <div class="screen cyber-container bg-cyber-darker bg-opacity-90 rounded-lg p-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-md border-2 border-cyber-pink shadow-neon-pink z-10" id="sizeWarningScreen" style="display: none;">
+            <h2 class="cyber-heading text-cyber-pink text-2xl mb-4" data-i18n="game.windowTooSmall">Window Too Small!</h2>
+            <p class="text-white mb-3" data-i18n="game.increaseWindow">Please increase your window size to play the game properly.</p>
+            <p class="text-white" data-i18n="game.bestExperience">For the best experience, use a larger screen or maximize your browser window.</p>
+        </div>
+    </div>
+    
+    <!-- Audio elements for sound effects -->
+    <audio src="src/assets/sound/paddle.wav" id="paddleSound"></audio>
+    <audio src="src/assets/sound/wall.wav" id="wallSound"></audio>
+    <audio src="src/assets/sound/loss.wav" id="lossSound"></audio>
+</div>

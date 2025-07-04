@@ -1,0 +1,79 @@
+ █████╗ ██████╗ ██╗    ███████╗███╗   ██╗██████╗ ██████╗  ██████╗ ██╗███╗   ██╗████████╗███████╗
+██╔══██╗██╔══██╗██║    ██╔════╝████╗  ██║██╔══██╗██╔══██╗██╔═══██╗██║████╗  ██║╚══██╔══╝██╔════╝
+███████║██████╔╝██║    █████╗  ██╔██╗ ██║██║  ██║██████╔╝██║   ██║██║██╔██╗ ██║   ██║   ███████╗
+██╔══██║██╔═══╝ ██║    ██╔══╝  ██║╚██╗██║██║  ██║██╔═══╝ ██║   ██║██║██║╚██╗██║   ██║   ╚════██║
+██║  ██║██║     ██║    ███████╗██║ ╚████║██████╔╝██║     ╚██████╔╝██║██║ ╚████║   ██║   ███████║
+╚═╝  ╚═╝╚═╝     ╚═╝    ╚══════╝╚═╝  ╚═══╝╚═════╝ ╚═╝      ╚═════╝ ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚═════
+
+
+Action:
+    Create a chat between two users. DO NOT create a chat as soon as a user clicks start chat! Instead, 
+    the front-end should create the chat once the initiating user actually sends the first message. This 
+    is to prevent an empty chat box being displayed on the receiving (as well as the sending) user's list 
+    of chatrooms, creating an awkward UX.
+
+Endpoint:
+    POST /chats
+
+        Body:
+
+            {
+                "user2Id": 4
+            }
+
+======================================================================================
+
+
+███████╗██╗   ██╗███████╗███╗   ██╗████████╗███████╗
+██╔════╝██║   ██║██╔════╝████╗  ██║╚══██╔══╝██╔════╝
+█████╗  ██║   ██║█████╗  ██╔██╗ ██║   ██║   ███████╗
+██╔══╝  ╚██╗ ██╔╝██╔══╝  ██║╚██╗██║   ██║   ╚════██║
+███████╗ ╚████╔╝ ███████╗██║ ╚████║   ██║   ███████║
+╚══════╝  ╚═══╝  ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
+                                                    
+
+Event names:
+* joinRoom
+* leaveRoom
+* newMessage
+* messageReceivedInform
+
+Notes:
+
+        Event Name:
+            leaveRoom
+
+        Description:
+            Front-end must emit it when:
+                * User switches to another chat
+                * User closes/refreshes/switches the page
+                * User logs out
+    
+    ==========================================================================================
+
+        Event Name:
+            newMessage
+        
+        Description:
+            Front-end must create a listener for it, here is a sample:
+            
+                socket.on("newMessage", (message) => {
+                    if (message.chat_id === currentChatId) {
+                        appendMessage(message);
+                    }
+                });
+
+            because the back-end emits this event when a new message is sent in a chat.
+
+    ==========================================================================================
+
+        Event Name:
+            messageReceivedInform
+
+        Description:
+            Front-end must create a listener for it.
+
+            If the user is online and not actively in the chatroom, the backend would detect that 
+            and send the user a notification letting them know that they have received a message. 
+            The front-end should now add that to the notification box associated with messages (a 
+            mailbox).
