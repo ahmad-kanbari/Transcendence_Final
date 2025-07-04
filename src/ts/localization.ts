@@ -8,7 +8,7 @@ import arTranslations from '../locales/ar.json';
 import trTranslations from '../locales/tr.json';
 
 // Define language types
-export type Language = 'en' | 'ar' ;
+export type Language = 'en' | 'ar' | 'tr' ;
 export type Translations = typeof enTranslations;
 
 // Define interface for the localization service
@@ -35,14 +35,14 @@ class Localization implements LocalizationService {
   private languageNames = {
     en: 'English',
     ar: 'العربية',
-    // tr: 'Türkçe'
+    tr: 'Türkçe'
   };
   
   // Available translations map
   private translationsMap: Record<Language, Translations> = {
     en: enTranslations,
     ar: arTranslations,
-    // tr: trTranslations
+    tr: trTranslations
   };
   
   // RTL languages
