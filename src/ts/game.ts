@@ -17,6 +17,9 @@ class PongGame {
     gameOver: boolean = false;
     lastTime: number = 0;
     deltaTime: number = 0;
+    initializationAttempts: number = 0;
+    maxInitializationAttempts: number = 10;
+    isInitialized: boolean = false;
 
     // Game elements
     gameArea: HTMLElement | null = null;
@@ -201,7 +204,7 @@ class PongGame {
         console.log('Game page initialized with user:', this.userName);
         this.submitMatch = submitMatchFn;
         this.submitTournament = submitTournamentFn;
-
+        this.waitForGameElements();
                 
         // Get game elements
         this.gameArea = document.querySelector('.gameArea');
@@ -291,7 +294,19 @@ class PongGame {
                 this.initializePositions();
             }
         });
-        
+                // Add observer for game area changes (useful for SPA)
+        if (this.gameArea && 'ResizeObserver' in window) {
+            const resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    console.log('Game area resized');
+                    this.updateGameDimensions();
+                    if (!this.gameRunning) {
+                        this.initializePositions();
+                    }
+                }
+            });
+            resizeObserver.observe(this.gameArea);
+        }
         // Game mode buttons
         const pvpButton = document.getElementById('pvpButton');
         if (pvpButton) {
@@ -452,13 +467,28 @@ class PongGame {
      * Update game dimensions based on current window size
      */
     updateGameDimensions(): void {
-        if (!this.gameArea) return;
-        
+          if (!this.gameArea) {
+            console.warn('GameArea not available for dimension update');
+            return;
+        }
+               // Force a reflow to ensure accurate measurements
+        this.gameArea.offsetHeight;
         // Get dimensions from the computed style
+     // Get dimensions from the computed style
         const gameAreaStyle = window.getComputedStyle(this.gameArea);
-        this.gameWidth = parseFloat(gameAreaStyle.width);
-        this.gameHeight = parseFloat(gameAreaStyle.height);
-        
+        const width = parseFloat(gameAreaStyle.width);
+        const height = parseFloat(gameAreaStyle.height)
+              // Validate dimensions
+        if (width <= 0 || height <= 0) {
+            console.warn('Invalid game area dimensions:', { width, height });
+            // Try again after a short delay
+            setTimeout(() => this.updateGameDimensions(), 50);
+            return;
+        }
+          this.gameWidth = width;
+        this.gameHeight = height;
+         console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
+        console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
         // Update paddle dimensions
         this.paddleHeight = this.gameHeight * 0.15; // 15% of game height
         this.paddleWidth = this.gameWidth * 0.01;   // 1% of game width
@@ -2066,7 +2096,155 @@ createMultiplayerMatchData(
         console.log("Player 1 Name:", this.player1Name!.textContent);
         console.log("Player 2 Name:", this.player2Name!.textContent);
     }
+
+     /**
+     * Wait for game elements to be properly loaded in the DOM
+     */
+    private waitForGameElements(): void {
+        this.initializationAttempts++;
+        
+        // Try to get game elements
+        this.gameArea = document.querySelector('.gameArea');
+        this.ball = document.getElementById('ball');
+        this.paddle1 = document.getElementById('paddle1');
+        this.paddle2 = document.getElementById('paddle2');
+        this.paddle3 = document.getElementById('paddle3');
+        this.paddle4 = document.getElementById('paddle4');
+        this.player1Score = document.getElementById('player1Score');
+        this.player2Score = document.getElementById('player2Score');
+        this.player1Name = document.getElementById('player1Name');
+        this.player2Name = document.getElementById('player2Name');
+
+        // Check if all critical elements are available
+        const criticalElements = [
+            this.gameArea, this.ball, this.paddle1, this.paddle2,
+            this.player1Score, this.player2Score, this.player1Name, this.player2Name
+        ];
+
+        const allElementsLoaded = criticalElements.every(element => element !== null);
+
+        if (allElementsLoaded && this.gameArea) {
+            // Additional check: ensure gameArea has proper dimensions
+            const gameAreaStyle = window.getComputedStyle(this.gameArea);
+            const width = parseFloat(gameAreaStyle.width);
+            const height = parseFloat(gameAreaStyle.height);
+            
+            if (width > 0 && height > 0) {
+                console.log('Game elements loaded successfully');
+                this.finishInitialization();
+                return;
+            }
+        }
+
+        // If elements not ready and we haven't exceeded max attempts, try again
+        if (this.initializationAttempts < this.maxInitializationAttempts) {
+            console.log(`Game elements not ready, attempt ${this.initializationAttempts}/${this.maxInitializationAttempts}`);
+            setTimeout(() => this.waitForGameElements(), 100);
+        } else {
+            console.error('Failed to initialize game: elements not found after maximum attempts');
+            // Show error message to user
+            const errorMsg = document.createElement('div');
+            errorMsg.innerHTML = '<p style="color: red; text-align: center;">Game failed to load. Please refresh the page.</p>';
+            document.querySelector('#pageSection')?.appendChild(errorMsg);
+        }
+    }
+
+    /**
+     * Complete the game initialization once all elements are ready
+     */
+    private finishInitialization(): void {
+        if (this.isInitialized) return;
+
+        // Load sound effects
+        this.paddleSound = document.getElementById('paddleSound') as HTMLAudioElement;
+        this.wallSound = document.getElementById('wallSound') as HTMLAudioElement;
+        this.lossSound = document.getElementById('lossSound') as HTMLAudioElement;
+
+        // Initialize video background
+        const videoBgInit = document.getElementById('videoBackground');
+        if (videoBgInit) {
+            videoBgInit.style.display = 'none';
+            videoBgInit.style.zIndex = '1';
+            if ('pause' in videoBgInit) {
+                (videoBgInit as HTMLVideoElement).pause();
+                (videoBgInit as HTMLVideoElement).currentTime = 0;
+            }
+
+            const overlay = videoBgInit.querySelector('.video-overlay');
+            if (overlay) {
+                (overlay as HTMLElement).style.background = 'rgba(0, 0, 0, 1)';
+            }
+        }
+
+        // Prevent spaces in player name inputs
+        const playerNameInputs = [
+            'player1NameInput', 'player2NameInput', 
+            'tournament-p1', 'tournament-p2', 'tournament-p3', 'tournament-p4'
+        ];
+
+        playerNameInputs.forEach(id => {
+            const input = document.getElementById(id) as HTMLInputElement;
+            if (input) {
+                input.addEventListener('keydown', (event) => utils.preventSpaces(event));
+            }
+        });
+
+        // Initialize game dimensions - this is crucial for SPA
+        this.updateGameDimensions();
+        
+        // Set up event listeners
+        this.setupEventListeners();
+
+        // Initialize positions
+        this.initializePositions();
+        
+        // Set initial paddle sizes
+        this.updatePaddleSizes();
+
+        // Set initial player names
+        this.updatePlayerNames();
+
+        // Check window size
+        this.checkWindowSize();
+
+        // Reset game state
+        this.resetGame();
+
+        this.isInitialized = true;
+        console.log('Game initialization completed successfully');
+    }
+
+
+
+
+
+
+    /**
+     * Cleanup method for SPA navigation
+     */
+    cleanup(): void {
+        console.log('Cleaning up game...');
+        
+        // Cancel animation frame
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        
+        // Remove event listeners
+        document.removeEventListener('keydown', this.handleKeyDown);
+        document.removeEventListener('keyup', this.handleKeyUp);
+        
+        // Reset state
+        this.gameRunning = false;
+        this.gameOver = false;
+        this.isInitialized = false;
+        this.initializationAttempts = 0;
+        
+        console.log('Game cleanup completed');
+    }
 }
+
 
 const game = new PongGame();
 

@@ -385,6 +385,9 @@ class App {
         if (this.state.user) {
             pages.showPage('game');
             // login.updateUIAuthState();
+              if (game.isInitialized) {
+                  game.cleanup();
+              }
             game.init(
               this.getUsername(),
               this.setSubmitMatchFunction.bind(this),
