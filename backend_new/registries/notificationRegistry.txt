@@ -1,3 +1,0 @@
-Event names:
-* friendRequestInform
-* friendRequestAccept

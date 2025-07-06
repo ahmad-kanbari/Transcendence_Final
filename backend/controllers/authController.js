@@ -33,7 +33,6 @@ const attachCookiesToReply = (fastify, reply, user, refreshTokenId) => {
 		path: "/", // Makes cookie available to ALL routes [see Note 0]
 		secure: process.env.NODE_ENV === "production", // Must match plugin config
 		sameSite: "lax", // Basic CSRF protection
-		// httpOnly: true,
 		httpOnly: true, // Must match plugin config
 		signed: true, // Must match plugin config
 		expires: new Date(Date.now() + 5 * 60 * 1000), // When the browser deletes the cookie, set it up to match JWT expiration above
@@ -41,8 +40,7 @@ const attachCookiesToReply = (fastify, reply, user, refreshTokenId) => {
 
 	const refreshToken = createJWT(fastify, { user, refreshTokenId }, "15m"); // must match cookie expriation below
 	reply.setCookie("refreshToken", refreshToken, {
-		// path: "/api/v1/auth/refresh", // Makes cookie available to ALL routes
-		path: "/api/v1/auth/refresh",
+		path: "/api/v1/auth/refresh", // Makes cookie available to ALL routes
 		secure: process.env.NODE_ENV === "production", // Must match plugin config
 		sameSite: "lax", // Basic CSRF protection
 		httpOnly: true, // Must match plugin config
@@ -191,41 +189,46 @@ module.exports = (userModel, tokenModel, fastify) => ({
 
 	googleCallback: async function (request, reply) {
 		try {
-		const { token } =
-			await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
-				request
-			); // 'this' must refer to the fastify instance, NO arrow function here
+			const { token } =
+				await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
+					request
+				); // 'this' must refer to the fastify instance, NO arrow function here
 
-		// You now have token.access_token, you can fetch user info using it
-		const userResponse = await fetch(
-			"https://www.googleapis.com/oauth2/v2/userinfo",
-			{
-				headers: {
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
-		const userInfo = await userResponse.json();
-		const deviceId = request.deviceId; // added to the request object via our checkStateFunction in oAuthPlugin configuration
-		const userPayload = await googleLogin(
-			userInfo,
-			deviceId,
-			userModel,
-			tokenModel,
-			fastify,
-			request,
-			reply
-		);
+			// You now have token.access_token, you can fetch user info using it
+			const userResponse = await fetch(
+				"https://www.googleapis.com/oauth2/v2/userinfo",
+				{
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			const userInfo = await userResponse.json();
+			const deviceId = request.deviceId; // added to the request object via our checkStateFunction in oAuthPlugin configuration
 
-		// reply.send({ message: "Logged in with Google", userPayload });
-
-		    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+			const userPayload = await googleLogin(
+				userInfo,
+				deviceId,
+				userModel,
+				tokenModel,
+				fastify,
+				request,
+				reply
+			);
+			const frontendUrl =
+				process.env.FRONTEND_URL || "http://localhost:5173";
 			reply.redirect(`${frontendUrl}/?oauth=success`);
-		
 		} catch (error) {
-			console.error('Google OAuth callback error:', error);
-			const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-			reply.redirect(`${frontendUrl}/?oauth=error&message=${encodeURIComponent(error.message)}`);
+			console.error("Google OAuth callback error:", error);
+
+			const frontendUrl =
+				process.env.FRONTEND_URL || "http://localhost:5173";
+
+			reply.redirect(
+				`${frontendUrl}/?oauth=error&message=${encodeURIComponent(
+					error.message
+				)}`
+			);
 		}
 	},
 
