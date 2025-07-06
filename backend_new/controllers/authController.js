@@ -188,40 +188,48 @@ module.exports = (userModel, tokenModel, fastify) => ({
 	},
 
 	googleCallback: async function (request, reply) {
-		const { token } =
-			await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
-				request
-			); // 'this' must refer to the fastify instance, NO arrow function here
+		try {
+			const { token } =
+				await this.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(
+					request
+				); // 'this' must refer to the fastify instance, NO arrow function here
 
-		// You now have token.access_token, you can fetch user info using it
-		const userResponse = await fetch(
-			"https://www.googleapis.com/oauth2/v2/userinfo",
-			{
-				headers: {
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
-		const userInfo = await userResponse.json();
-		const deviceId = request.deviceId; // added to the request object via our checkStateFunction in oAuthPlugin configuration
-		const redirectUrl = request.redirectUrl; // added to the request object via our checkStateFunction in oAuthPlugin configuration
+			// You now have token.access_token, you can fetch user info using it
+			const userResponse = await fetch(
+				"https://www.googleapis.com/oauth2/v2/userinfo",
+				{
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			const userInfo = await userResponse.json();
+			const deviceId = request.deviceId; // added to the request object via our checkStateFunction in oAuthPlugin configuration
 
-		const userPayload = await googleLogin(
-			userInfo,
-			deviceId,
-			userModel,
-			tokenModel,
-			fastify,
-			request,
-			reply
-		);
+			const userPayload = await googleLogin(
+				userInfo,
+				deviceId,
+				userModel,
+				tokenModel,
+				fastify,
+				request,
+				reply
+			);
+			const frontendUrl =
+				process.env.FRONTEND_URL || "http://localhost:5173";
+			reply.redirect(`${frontendUrl}/?oauth=success`);
+		} catch (error) {
+			console.error("Google OAuth callback error:", error);
 
-		// Build the redirect URL using environment variable as base
-		const finalRedirectUrl = `http://localhost:3000/${redirectUrl}`;
+			const frontendUrl =
+				process.env.FRONTEND_URL || "http://localhost:5173";
 
-		console.log(finalRedirectUrl);
-		// Redirect to the dashboard instead of sending JSON response
-		reply.redirect(finalRedirectUrl);
+			reply.redirect(
+				`${frontendUrl}/?oauth=error&message=${encodeURIComponent(
+					error.message
+				)}`
+			);
+		}
 	},
 
 	logout: async (request, reply) => {
