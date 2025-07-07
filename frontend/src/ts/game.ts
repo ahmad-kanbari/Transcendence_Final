@@ -97,6 +97,7 @@ class PongGame {
 
     // Function to submit tournament data
     submitTournament: Function | null = null;
+    aliasUsernamePlayer1: string | null = null;
 
        // Prepare match data for backend submission
     matchObj: {
@@ -113,6 +114,7 @@ class PongGame {
     tournamentId?: number | null;
     team_1_score?: number;
     team_2_score?: number;
+
 
    
 
@@ -219,7 +221,8 @@ class PongGame {
         this.player2Score = document.getElementById('player2Score');
         this.player1Name = document.getElementById('player1Name');
         this.player2Name = document.getElementById('player2Name');
-
+        const player1NameInput = document.getElementById('player1NameInput') as HTMLInputElement;
+        const player2NameInput = document.getElementById('player2NameInput') as HTMLInputElement;
              
         // Load sound effects
         this.paddleSound = document.getElementById('paddleSound') as HTMLAudioElement;
@@ -314,8 +317,9 @@ class PongGame {
         if (pvpButton) {
             pvpButton.addEventListener('click', () => {
                 // On 1 VS 1, set Player 1's name to current user and Player 2's name to RANDOM
-                // this.player1Name!.textContent =  this.matchObj.player1_name ?? this.userName;
-                // this.player2Name!.textContent = this.matchObj.player2_name  ?? 'RANDOM';
+            
+                // this.player1Name!.textContent =   this.player1NameInput!.value  ||  this.userName;
+                // this.player2Name!.textContent = this.matchObj.player2_name || 'RANDOM';
                 this.updatePlayerNames();
                 this.setGameMode('1v1');
             });
@@ -327,7 +331,8 @@ class PongGame {
         if (pveButton) {
             pveButton.addEventListener('click', () => {
                 // On 1 VS AI, set Player 1's name to current user and Player 2's name to AI
-                this.player1Name!.textContent = this.matchObj.player1_name ??  this.userName;
+                // this.player1Name!.textContent = this.player1NameInput!.value || this.userName;
+                 this.updatePlayerNames();
                 this.player2Name!.textContent = 'AI';
                 this.setGameMode('1vAi');
             });
@@ -338,7 +343,7 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = `${this.matchObj.player1_name ?? this.userName}_team `;
+                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}_team `;
                 this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
@@ -389,6 +394,11 @@ class PongGame {
             this.applySettings();
             document.getElementById('settingsScreen')!.style.display = 'none';
             this.showGameButtons();
+
+               console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
+                this.player1Name!.textContent =  this.aliasUsernamePlayer1 || this.userName || 'PLAYER_1';
+                this.player2Name!.textContent =  this.matchObj.player2_name || 'PLAYER_2';
+                
         });
         
         // Back buttons
@@ -594,8 +604,9 @@ class PongGame {
         if (startText) startText.style.display = 'none';
         
         // Reset player names to defaults when returning to menu
-        this.player1Name!.textContent =  app.getUsername() ?? this.userName ?? 'PLAYER_1';
-        this.player2Name!.textContent = 'PLAYER_2';
+        console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
+        this.player1Name!.textContent =  this.aliasUsernamePlayer1 || this.userName || 'PLAYER_1';
+        this.player2Name!.textContent =  this.matchObj.player2_name || 'PLAYER_2'
         
         // Reset game state if needed
         this.gameRunning = false;
@@ -617,10 +628,10 @@ class PongGame {
         const modeButtons = document.querySelectorAll('.top-buttons .game-btn');
         modeButtons.forEach(btn => btn.classList.remove('active'));
         
-        const player1NameInput = document.getElementById('player1NameInput');
-        if (player1NameInput) {
-            (player1NameInput as HTMLInputElement).value = app.getUsername() ?? this.userName ?? 'PLAYER_1';
-            (player1NameInput as HTMLInputElement).readOnly = false;
+        // const player1NameInput = document.getElementById('player1NameInput');
+        if (this.player1NameInput) {
+            (this.player1NameInput as HTMLInputElement).value = this.userName || 'PLAYER_1';
+            (this.player1NameInput as HTMLInputElement).readOnly = false;
         }
 
         // Add active class to the clicked button
@@ -643,8 +654,8 @@ class PongGame {
                 this.isMultiplayerMode = true;
                 activeButton = document.getElementById('multiplayerButton');
                 // Determine team names: respect settings overrides or use defaults
-                const team2InputEl = document.getElementById('team2NameInput');
-                const team2Name = (team2InputEl && (team2InputEl as HTMLInputElement).value) ? (team2InputEl as HTMLInputElement).value : 'Opp_team';
+                // const team2InputEl = document.getElementById('team2NameInput');
+                const team2Name =  `${this.matchObj.player2_name}_team` || 'Opp_team';
                 if (this.player2Name) {
                     this.player2Name.textContent = team2Name;
                 }
@@ -715,6 +726,9 @@ class PongGame {
         // Reset game state
         this.gameRunning = false;
         this.gameOver = false;
+
+      
+
     }
 
     /**
@@ -743,7 +757,7 @@ async startGame(): Promise<void> {
         player1_id: Number(userData.user?.id) || 0,
         player2_id: null,
         player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER_1',
-        player2_name: this.player2Name!.textContent || 'PLAYER_2',
+        player2_name: this.player2NameInput!.value || 'PLAYER_2',
         player1_score: 0,
         player2_score: 0,
         winner: '',
@@ -1990,6 +2004,7 @@ createMultiplayerMatchData(
      * Apply settings from the settings screen
      */
     applySettings() {
+
         // Get win score setting
         const winScoreSelect = document.getElementById('winScore') as HTMLInputElement;
         this.winScore = parseInt(winScoreSelect.value);
@@ -2010,23 +2025,36 @@ createMultiplayerMatchData(
         this.aiDifficulty = aiDifficultySelect!.value;
         
         // Get player names
-        const player1NameInput = document.getElementById('player1NameInput') as  HTMLInputElement;
-        const player2NameInput = document.getElementById('player2NameInput') as HTMLInputElement;
+        const player1NameInput_2 = document.getElementById('player1NameInput') as  HTMLInputElement;
+        const player2NameInput_2 = document.getElementById('player2NameInput') as HTMLInputElement;
         
         // Override stored username if Player 1 name is set in settings
-        if (player1NameInput!.value) {
-           
-            this.player1Name!.textContent = player1NameInput.value ?? this.userName;
+        if (player1NameInput_2!.value) {
+            console.log("Player 1 name input value:", player1NameInput_2!.value);
+            this.player1Name!.textContent = player1NameInput_2!.value || this.userName;
+            this.aliasUsernamePlayer1 = player1NameInput_2!.value || this.userName; // Store alias for Player 1
+            if (this.player1NameInput != null && this.player1NameInput!.value) {
+                this.player1NameInput!.value = player1NameInput_2!.value;}
         }
         
-        if (player2NameInput.value) {
-            
-            this.player2Name!.textContent = player2NameInput.value;
-            this.matchObj.player2_name = player2NameInput.value;
+        if (player2NameInput_2!.value) {
+            console.log("Player 2 name input value:", player2NameInput_2!.value);
+            this.player2Name!.textContent = player2NameInput_2!.value || "PLAYER_2";
+            // this.aliasUsernamePlayer1 = player2NameInput_2!.value || this.userName; // Store alias for Player 1
+            this.matchObj.player2_name = player2NameInput_2!.value || "PLAYER_2"; // Update match object
+            if (this.player2NameInput != null && this.player2NameInput!.value) {
+                this.player2NameInput!.value = player2NameInput_2!.value;}
         }
+        // if (this.player2NameInput != null && this.player2NameInput!.value) {
+            
+        //     this.player2Name!.textContent = this.player2NameInput!.value;
+        //     this.matchObj.player2_name = this.player2NameInput!.value;
+        // }
         
         // If in AI mode, update player 2 name based on difficulty
         if (this.isAIMode) {
+
+            // this.player1Name!.textContent = player1NameInput.value || this.userName;
             const difficultyName = this.aiDifficulty.charAt(0).toUpperCase() + this.aiDifficulty.slice(1);
             this.player2Name!.textContent = `AI (${difficultyName})`;
         }
@@ -2128,8 +2156,8 @@ createMultiplayerMatchData(
         
         // Set default names if inputs are empty
         if (!player1NameInput!.value) {
-            player1NameInput!.value = this.userName ?? 'Player1';
-            console.log("Default Player 1 Name:", this.userName ?? 'Player1');
+            player1NameInput!.value = this.userName || 'Player1';
+            console.log("Default Player 1 Name:", this.userName || 'Player1');
         
         }
         
@@ -2141,6 +2169,7 @@ createMultiplayerMatchData(
 
         this.player1Name!.textContent = player1NameInput!.value;
         this.player2Name!.textContent = player2NameInput!.value;
+        this.aliasUsernamePlayer1 =  player1NameInput!.value;
 
         console.log("Player 1 Name:", this.player1Name!.textContent);
         console.log("Player 2 Name:", this.player2Name!.textContent);
