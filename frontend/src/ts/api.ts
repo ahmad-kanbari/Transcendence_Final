@@ -765,7 +765,8 @@ class API {
           player1_id: matchData.player1_id,
           player2_id: matchData.player2_id,
           player1_name: matchData.player1_name,
-          player2_name: matchData.player2_name
+          player2_name: matchData.player2_name,
+      
         })
       });
       console.log('Creating tournament and response is', response);

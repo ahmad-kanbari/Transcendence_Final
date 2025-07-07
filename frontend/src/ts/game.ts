@@ -6,6 +6,7 @@
 import api from "./api";
 import app from "./app";
 import { t } from "./localization";
+import toastManager from "./toastManager";
 import utils from "./utils";
 
 class PongGame {
@@ -179,6 +180,7 @@ class PongGame {
     // Track current screen mode: 'menu', '1v1', '1vAi', 'multiplayer', 'tournament'
     currentMode: string = 'menu';
     tournamentId: number | null | undefined;
+    isSettingUpNextMatch: boolean = false; // Flag to prevent multiple setups
 
     /**
      * Initialize the game when the document is ready
@@ -403,10 +405,15 @@ class PongGame {
             this.backToMenu();
         });
         
+        
         document.getElementById('nextMatchButton')!.addEventListener('click', () => {
+            if (this.isSettingUpNextMatch) return;
+            
             document.getElementById('winScreen')!.style.display = 'none';
+            console.log("Next match button clicked, current tournament match before incrementing:", this.currentTournamentMatch);
             this.setupNextTournamentMatch();
-        });
+            this.isSettingUpNextMatch = true;
+        },);
     }
 
         /**
@@ -1420,22 +1427,33 @@ createMultiplayerMatchData(
         if (this.isTournamentMode) {
             // Record this match after populating matchObj
             this.tournamentArr.push({ ...this.matchObj });
+            console.log("Tournament match current state: in showwinscreen", this.currentTournamentMatch, this.tournamentArr);
             if (this.currentTournamentMatch < 3) {
              
                 if (this.matchObj && this.matchObj.tournamentId) {
                     // Submit tournament match
-                    console.log("Submitting Tournament match:", this.matchObj);
+                    console.log(`Submitting normal match in Tournament ${this.currentTournamentMatch} match:`, this.matchObj);
                     console.log("Tournament ID:", this.matchObj.tournamentId);
                     console.log("Match ID:", this.matchObj.matchId);
-                    
+                    console.log( "player1_score from matchObj", this.matchObj.player1_score);
+                    console.log("this.currentTournamentMatch", this.currentTournamentMatch);
+                    this.tournamentArr[this.currentTournamentMatch - 1  ].player1_score = this.matchObj.player1_score;
+                    this.tournamentArr[this.currentTournamentMatch - 1 ].player2_score = this.matchObj.player2_score;
+                    if (this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score === undefined || this.tournamentArr[this.currentTournamentMatch - 1 ].player2_score === undefined) {
+                        console.error("Player 1 or Player 2 scores is undefined");
+                        toastManager.showToast("Player 1 score or Player 2 is undefined", "error");
+                        return;
+                    }
                   const response_submission = await api.submitTournamentMatch(this.matchObj.tournamentId!, this.tournamentMatchId!, {
-                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1].player1_score!,
-                    player2_score:  this.tournamentArr[this.currentTournamentMatch - 1].player2_score!,
+                    player1_score: this.matchObj.player1_score,
+                    player2_score:  this.matchObj.player2_score,
                 });
                 console.log("Tournament Match1 Submitted:", response_submission);
                 }
 
                 document.getElementById('nextMatchButton')!.style.display = 'inline-block';
+                this.isSettingUpNextMatch = false;
+                console.log("Next match button displayed for Tournament match:", this.isSettingUpNextMatch);
             } else {
                 // Final completed: submit and clear
                 // if (this.submitTournament) {
@@ -1443,12 +1461,19 @@ createMultiplayerMatchData(
                 // }
                 if (this.matchObj && this.matchObj.tournamentId) {
                     // Submit tournament match
-                    console.log("Submitting Tournament match:", this.matchObj);
+                    console.log("Submitting Tournament final match:", this.matchObj);
                     console.log("Tournament ID:", this.matchObj.tournamentId);
                     console.log("Match ID:", this.matchObj.matchId);
-                    
+                    console.log("this.currentTournamentMatch in final", this.currentTournamentMatch);
+                    this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score = this.matchObj.player1_score;
+                    this.tournamentArr[this.currentTournamentMatch - 1].player2_score = this.matchObj.player2_score;
+                    if (this.tournamentArr[this.currentTournamentMatch - 1  ].player1_score === undefined || this.tournamentArr[this.currentTournamentMatch - 1].player2_score === undefined) {
+                        console.error("Player 1 or Player 2 scores is undefined");
+                        toastManager.showToast("Player 1 score or Player 2 is undefined", "error");
+                        return;
+                    }
                   const response_submission = await api.submitTournamentMatch(this.matchObj.tournamentId!, this.tournamentMatchId!, {
-                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1].player1_score!,
+                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score!,
                     player2_score:  this.tournamentArr[this.currentTournamentMatch - 1].player2_score!,
                 });
                 console.log("Tournament Match final Submitted:", response_submission);
@@ -1456,6 +1481,7 @@ createMultiplayerMatchData(
                 this.tournamentArr = [];
                 this.tournamentWinners = [];
                 document.getElementById('nextMatchButton')!.style.display = 'none';
+                this.currentTournamentMatch = 0;
             }
         } else {
             const nextMatchButton = document.getElementById('nextMatchButton');
@@ -1780,8 +1806,8 @@ createMultiplayerMatchData(
          this.tournamentPlayers = [
             (document.getElementById('tournament-p1')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p1')! as HTMLInputElement).value : this.userName || 'Player_1',
             (document.getElementById('tournament-p2')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_2',
-            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_3',
-            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value :  'Player_4'
+            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p3')! as HTMLInputElement).value  : 'Player_3',
+            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value : 'Player_4'
         ];
         
         // Reset tournament state
@@ -1812,8 +1838,10 @@ createMultiplayerMatchData(
                 this.matchObj.tournamentId = response.data.tournament.id;
                  // Store the match ID
                 console.log("Tournament match created successfully with ID:", response.data.tournament.id);
+                this.currentTournamentMatch = 0; // Reset match counter
             } else {
                 console.error("Error creating tournament match:", response.message);
+                toastManager.showToast("Error creating tournament match: " + response.message, "error");
             }
         } 
         // Start first match
@@ -1827,9 +1855,11 @@ createMultiplayerMatchData(
     async setupNextTournamentMatch() : Promise<void> {
         // Hide tournament screen
         document.getElementById('tournamentScreen')!.style.display = 'none';
-        
+        // console.log("Setting up next tournament match, current match:", this.currentTournamentMatch);
+        this.currentTournamentMatch++;
+        console.log("increasing tournament match to:", this.currentTournamentMatch);
         // Determine which match to play
-        if (this.currentTournamentMatch === 0) {
+        if (this.currentTournamentMatch == 1) {
             // First semifinal
             document.getElementById('tournamentAnnouncement')!.textContent = 
                 `Semifinal 1: ${this.tournamentPlayers[0]} vs ${this.tournamentPlayers[1]}`;
@@ -1850,12 +1880,19 @@ createMultiplayerMatchData(
                 });
                 console.log("Tournament Match1 Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
+                console.log("Tournament Match1 Data id:", response.data.match.id);
+                if (response.data.match.id === undefined) {
+                    console.error("Match ID is undefined in the response");
+                    toastManager.showToast("Match ID is undefined in the response", "error");
+                    return;
+                }
                 // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id']; // Store the match ID for later use
+                this.matchObj.matchId = response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id; // Store the match ID for later use
+                console.log("Current Tournament Match: this after increment", this.currentTournamentMatch);
+                 
 
-        } else if (this.currentTournamentMatch === 1) {
+        } else if (this.currentTournamentMatch == 2) {
             // Second semifinal
             document.getElementById('tournamentAnnouncement')!.textContent = 
                 `Semifinal 2: ${this.tournamentPlayers[2]} vs ${this.tournamentPlayers[3]}`;
@@ -1866,7 +1903,7 @@ createMultiplayerMatchData(
             
             //create match 2
               console.log("Tournament ID", this.tournamentId);
-                console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
+                console.log("Tournament Match  2 Object:", this.matchObj, this.tournamentPlayers);
                 const response  = await api.createTournamentMatch(this.tournamentId!, {
                     player1_id: null,
                     player2_id: null,
@@ -1874,16 +1911,18 @@ createMultiplayerMatchData(
                     player2_name: this.tournamentPlayers[3],
                 
                 });
-                console.log("Tournament Match1 Created:", response);
+                console.log("Tournament Match2 Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
-                console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id'];
+                console.log("Tournament Match2 Data id:",  response.data.match.id);
+                // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
+                this.matchObj.matchId =  response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id;
+
+                console.log("Current Tournament Match: this after increment", this.currentTournamentMatch);
+                // this.currentTournamentMatch++;
 
 
-
-        } else if (this.currentTournamentMatch === 2) {
+        } else if (this.currentTournamentMatch == 3) {
             // Final match - announce based on stored tournamentArr winners
             const winner1 = this.getWinnerName(this.tournamentArr[0]);
             const winner2 = this.getWinnerName(this.tournamentArr[1]);
@@ -1905,7 +1944,7 @@ createMultiplayerMatchData(
 
             //create match 3
               console.log("Tournament ID", this.tournamentId);
-                console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
+                console.log("Tournament Match 3 Object:", this.matchObj, this.tournamentPlayers);
                 const response  = await api.createTournamentMatch(this.tournamentId!, {
                     player1_id: player1ID,
                     player2_id: null,
@@ -1913,20 +1952,30 @@ createMultiplayerMatchData(
                     player2_name: winner2,
                 
                 });
-                console.log("Tournament Match1 Created:", response);
+                console.log("Tournament Match 3 final Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
-                console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id'];
+                console.log("Tournament Match3 final Data id:",  response.data.match.id);
+                // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
+                this.matchObj.matchId =  response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id;
+                console.log("Current Tournament Final Match: this after increment", this.currentTournamentMatch);
+                // this.currentTournamentMatch++;
+                console.log("resetting currentTournamentMatch to 0 for next tournament", this.currentTournamentMatch);
         }
         
         // Increment match counter
-        this.currentTournamentMatch++;
+        // if (this.currentTournamentMatch  >= 2) {
+        //     this.currentTournamentMatch = 0; // Reset for next tournament
+        //     console.log("Tournament completed, resetting match counter.");
+        // }else 
+        // {
+        //     this.currentTournamentMatch++;
+        //     console.log("Current Tournament Match after increment:", this.currentTournamentMatch);
+        // }
         
         // Show tournament announcement briefly, then start the game
         document.getElementById('tournamentAnnouncement')!.style.display = 'block';
-        
+
         // Reset game for the new match
         this.resetGame();
         
