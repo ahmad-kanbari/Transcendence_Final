@@ -6,6 +6,7 @@
 import api from "./api";
 import app from "./app";
 import { t } from "./localization";
+import toastManager from "./toastManager";
 import utils from "./utils";
 
 class PongGame {
@@ -96,6 +97,7 @@ class PongGame {
 
     // Function to submit tournament data
     submitTournament: Function | null = null;
+    aliasUsernamePlayer1: string | null = null;
 
        // Prepare match data for backend submission
     matchObj: {
@@ -112,6 +114,7 @@ class PongGame {
     tournamentId?: number | null;
     team_1_score?: number;
     team_2_score?: number;
+
 
    
 
@@ -179,6 +182,7 @@ class PongGame {
     // Track current screen mode: 'menu', '1v1', '1vAi', 'multiplayer', 'tournament'
     currentMode: string = 'menu';
     tournamentId: number | null | undefined;
+    isSettingUpNextMatch: boolean = false; // Flag to prevent multiple setups
 
     /**
      * Initialize the game when the document is ready
@@ -217,7 +221,8 @@ class PongGame {
         this.player2Score = document.getElementById('player2Score');
         this.player1Name = document.getElementById('player1Name');
         this.player2Name = document.getElementById('player2Name');
-
+        const player1NameInput = document.getElementById('player1NameInput') as HTMLInputElement;
+        const player2NameInput = document.getElementById('player2NameInput') as HTMLInputElement;
              
         // Load sound effects
         this.paddleSound = document.getElementById('paddleSound') as HTMLAudioElement;
@@ -312,8 +317,9 @@ class PongGame {
         if (pvpButton) {
             pvpButton.addEventListener('click', () => {
                 // On 1 VS 1, set Player 1's name to current user and Player 2's name to RANDOM
-                // this.player1Name!.textContent =  this.matchObj.player1_name ?? this.userName;
-                // this.player2Name!.textContent = this.matchObj.player2_name  ?? 'RANDOM';
+            
+                // this.player1Name!.textContent =   this.player1NameInput!.value  ||  this.userName;
+                // this.player2Name!.textContent = this.matchObj.player2_name || 'RANDOM';
                 this.updatePlayerNames();
                 this.setGameMode('1v1');
             });
@@ -325,7 +331,8 @@ class PongGame {
         if (pveButton) {
             pveButton.addEventListener('click', () => {
                 // On 1 VS AI, set Player 1's name to current user and Player 2's name to AI
-                this.player1Name!.textContent = this.matchObj.player1_name ??  this.userName;
+                // this.player1Name!.textContent = this.player1NameInput!.value || this.userName;
+                 this.updatePlayerNames();
                 this.player2Name!.textContent = 'AI';
                 this.setGameMode('1vAi');
             });
@@ -336,7 +343,7 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = `${this.matchObj.player1_name ?? this.userName}_team `;
+                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}_team `;
                 this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
@@ -387,6 +394,11 @@ class PongGame {
             this.applySettings();
             document.getElementById('settingsScreen')!.style.display = 'none';
             this.showGameButtons();
+
+               console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
+                this.player1Name!.textContent =  this.aliasUsernamePlayer1 || this.userName || 'PLAYER_1';
+                this.player2Name!.textContent =  this.matchObj.player2_name || 'PLAYER_2';
+                
         });
         
         // Back buttons
@@ -403,10 +415,15 @@ class PongGame {
             this.backToMenu();
         });
         
+        
         document.getElementById('nextMatchButton')!.addEventListener('click', () => {
+            if (this.isSettingUpNextMatch) return;
+            
             document.getElementById('winScreen')!.style.display = 'none';
+            console.log("Next match button clicked, current tournament match before incrementing:", this.currentTournamentMatch);
             this.setupNextTournamentMatch();
-        });
+            this.isSettingUpNextMatch = true;
+        },);
     }
 
         /**
@@ -587,8 +604,9 @@ class PongGame {
         if (startText) startText.style.display = 'none';
         
         // Reset player names to defaults when returning to menu
-        this.player1Name!.textContent =  app.getUsername() ?? this.userName ?? 'PLAYER_1';
-        this.player2Name!.textContent = 'PLAYER_2';
+        console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
+        this.player1Name!.textContent =  this.aliasUsernamePlayer1 || this.userName || 'PLAYER_1';
+        this.player2Name!.textContent =  this.matchObj.player2_name || 'PLAYER_2'
         
         // Reset game state if needed
         this.gameRunning = false;
@@ -610,10 +628,10 @@ class PongGame {
         const modeButtons = document.querySelectorAll('.top-buttons .game-btn');
         modeButtons.forEach(btn => btn.classList.remove('active'));
         
-        const player1NameInput = document.getElementById('player1NameInput');
-        if (player1NameInput) {
-            (player1NameInput as HTMLInputElement).value = app.getUsername() ?? this.userName ?? 'PLAYER_1';
-            (player1NameInput as HTMLInputElement).readOnly = false;
+        // const player1NameInput = document.getElementById('player1NameInput');
+        if (this.player1NameInput) {
+            (this.player1NameInput as HTMLInputElement).value = this.userName || 'PLAYER_1';
+            (this.player1NameInput as HTMLInputElement).readOnly = false;
         }
 
         // Add active class to the clicked button
@@ -636,8 +654,8 @@ class PongGame {
                 this.isMultiplayerMode = true;
                 activeButton = document.getElementById('multiplayerButton');
                 // Determine team names: respect settings overrides or use defaults
-                const team2InputEl = document.getElementById('team2NameInput');
-                const team2Name = (team2InputEl && (team2InputEl as HTMLInputElement).value) ? (team2InputEl as HTMLInputElement).value : 'Opp_team';
+                // const team2InputEl = document.getElementById('team2NameInput');
+                const team2Name =  `${this.matchObj.player2_name}_team` || 'Opp_team';
                 if (this.player2Name) {
                     this.player2Name.textContent = team2Name;
                 }
@@ -708,6 +726,9 @@ class PongGame {
         // Reset game state
         this.gameRunning = false;
         this.gameOver = false;
+
+      
+
     }
 
     /**
@@ -736,7 +757,7 @@ async startGame(): Promise<void> {
         player1_id: Number(userData.user?.id) || 0,
         player2_id: null,
         player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER_1',
-        player2_name: this.player2Name!.textContent || 'PLAYER_2',
+        player2_name: this.player2NameInput!.value || 'PLAYER_2',
         player1_score: 0,
         player2_score: 0,
         winner: '',
@@ -1420,22 +1441,33 @@ createMultiplayerMatchData(
         if (this.isTournamentMode) {
             // Record this match after populating matchObj
             this.tournamentArr.push({ ...this.matchObj });
+            console.log("Tournament match current state: in showwinscreen", this.currentTournamentMatch, this.tournamentArr);
             if (this.currentTournamentMatch < 3) {
              
                 if (this.matchObj && this.matchObj.tournamentId) {
                     // Submit tournament match
-                    console.log("Submitting Tournament match:", this.matchObj);
+                    console.log(`Submitting normal match in Tournament ${this.currentTournamentMatch} match:`, this.matchObj);
                     console.log("Tournament ID:", this.matchObj.tournamentId);
                     console.log("Match ID:", this.matchObj.matchId);
-                    
+                    console.log( "player1_score from matchObj", this.matchObj.player1_score);
+                    console.log("this.currentTournamentMatch", this.currentTournamentMatch);
+                    this.tournamentArr[this.currentTournamentMatch - 1  ].player1_score = this.matchObj.player1_score;
+                    this.tournamentArr[this.currentTournamentMatch - 1 ].player2_score = this.matchObj.player2_score;
+                    if (this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score === undefined || this.tournamentArr[this.currentTournamentMatch - 1 ].player2_score === undefined) {
+                        console.error("Player 1 or Player 2 scores is undefined");
+                        toastManager.showToast("Player 1 score or Player 2 is undefined", "error");
+                        return;
+                    }
                   const response_submission = await api.submitTournamentMatch(this.matchObj.tournamentId!, this.tournamentMatchId!, {
-                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1].player1_score!,
-                    player2_score:  this.tournamentArr[this.currentTournamentMatch - 1].player2_score!,
+                    player1_score: this.matchObj.player1_score,
+                    player2_score:  this.matchObj.player2_score,
                 });
                 console.log("Tournament Match1 Submitted:", response_submission);
                 }
 
                 document.getElementById('nextMatchButton')!.style.display = 'inline-block';
+                this.isSettingUpNextMatch = false;
+                console.log("Next match button displayed for Tournament match:", this.isSettingUpNextMatch);
             } else {
                 // Final completed: submit and clear
                 // if (this.submitTournament) {
@@ -1443,12 +1475,19 @@ createMultiplayerMatchData(
                 // }
                 if (this.matchObj && this.matchObj.tournamentId) {
                     // Submit tournament match
-                    console.log("Submitting Tournament match:", this.matchObj);
+                    console.log("Submitting Tournament final match:", this.matchObj);
                     console.log("Tournament ID:", this.matchObj.tournamentId);
                     console.log("Match ID:", this.matchObj.matchId);
-                    
+                    console.log("this.currentTournamentMatch in final", this.currentTournamentMatch);
+                    this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score = this.matchObj.player1_score;
+                    this.tournamentArr[this.currentTournamentMatch - 1].player2_score = this.matchObj.player2_score;
+                    if (this.tournamentArr[this.currentTournamentMatch - 1  ].player1_score === undefined || this.tournamentArr[this.currentTournamentMatch - 1].player2_score === undefined) {
+                        console.error("Player 1 or Player 2 scores is undefined");
+                        toastManager.showToast("Player 1 score or Player 2 is undefined", "error");
+                        return;
+                    }
                   const response_submission = await api.submitTournamentMatch(this.matchObj.tournamentId!, this.tournamentMatchId!, {
-                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1].player1_score!,
+                    player1_score: this.tournamentArr[this.currentTournamentMatch - 1 ].player1_score!,
                     player2_score:  this.tournamentArr[this.currentTournamentMatch - 1].player2_score!,
                 });
                 console.log("Tournament Match final Submitted:", response_submission);
@@ -1456,6 +1495,7 @@ createMultiplayerMatchData(
                 this.tournamentArr = [];
                 this.tournamentWinners = [];
                 document.getElementById('nextMatchButton')!.style.display = 'none';
+                this.currentTournamentMatch = 0;
             }
         } else {
             const nextMatchButton = document.getElementById('nextMatchButton');
@@ -1780,8 +1820,8 @@ createMultiplayerMatchData(
          this.tournamentPlayers = [
             (document.getElementById('tournament-p1')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p1')! as HTMLInputElement).value : this.userName || 'Player_1',
             (document.getElementById('tournament-p2')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_2',
-            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_3',
-            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value :  'Player_4'
+            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p3')! as HTMLInputElement).value  : 'Player_3',
+            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value : 'Player_4'
         ];
         
         // Reset tournament state
@@ -1812,8 +1852,10 @@ createMultiplayerMatchData(
                 this.matchObj.tournamentId = response.data.tournament.id;
                  // Store the match ID
                 console.log("Tournament match created successfully with ID:", response.data.tournament.id);
+                this.currentTournamentMatch = 0; // Reset match counter
             } else {
                 console.error("Error creating tournament match:", response.message);
+                toastManager.showToast("Error creating tournament match: " + response.message, "error");
             }
         } 
         // Start first match
@@ -1827,9 +1869,11 @@ createMultiplayerMatchData(
     async setupNextTournamentMatch() : Promise<void> {
         // Hide tournament screen
         document.getElementById('tournamentScreen')!.style.display = 'none';
-        
+        // console.log("Setting up next tournament match, current match:", this.currentTournamentMatch);
+        this.currentTournamentMatch++;
+        console.log("increasing tournament match to:", this.currentTournamentMatch);
         // Determine which match to play
-        if (this.currentTournamentMatch === 0) {
+        if (this.currentTournamentMatch == 1) {
             // First semifinal
             document.getElementById('tournamentAnnouncement')!.textContent = 
                 `Semifinal 1: ${this.tournamentPlayers[0]} vs ${this.tournamentPlayers[1]}`;
@@ -1850,12 +1894,19 @@ createMultiplayerMatchData(
                 });
                 console.log("Tournament Match1 Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
+                console.log("Tournament Match1 Data id:", response.data.match.id);
+                if (response.data.match.id === undefined) {
+                    console.error("Match ID is undefined in the response");
+                    toastManager.showToast("Match ID is undefined in the response", "error");
+                    return;
+                }
                 // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id']; // Store the match ID for later use
+                this.matchObj.matchId = response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id; // Store the match ID for later use
+                console.log("Current Tournament Match: this after increment", this.currentTournamentMatch);
+                 
 
-        } else if (this.currentTournamentMatch === 1) {
+        } else if (this.currentTournamentMatch == 2) {
             // Second semifinal
             document.getElementById('tournamentAnnouncement')!.textContent = 
                 `Semifinal 2: ${this.tournamentPlayers[2]} vs ${this.tournamentPlayers[3]}`;
@@ -1866,7 +1917,7 @@ createMultiplayerMatchData(
             
             //create match 2
               console.log("Tournament ID", this.tournamentId);
-                console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
+                console.log("Tournament Match  2 Object:", this.matchObj, this.tournamentPlayers);
                 const response  = await api.createTournamentMatch(this.tournamentId!, {
                     player1_id: null,
                     player2_id: null,
@@ -1874,16 +1925,18 @@ createMultiplayerMatchData(
                     player2_name: this.tournamentPlayers[3],
                 
                 });
-                console.log("Tournament Match1 Created:", response);
+                console.log("Tournament Match2 Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
-                console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id'];
+                console.log("Tournament Match2 Data id:",  response.data.match.id);
+                // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
+                this.matchObj.matchId =  response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id;
+
+                console.log("Current Tournament Match: this after increment", this.currentTournamentMatch);
+                // this.currentTournamentMatch++;
 
 
-
-        } else if (this.currentTournamentMatch === 2) {
+        } else if (this.currentTournamentMatch == 3) {
             // Final match - announce based on stored tournamentArr winners
             const winner1 = this.getWinnerName(this.tournamentArr[0]);
             const winner2 = this.getWinnerName(this.tournamentArr[1]);
@@ -1905,7 +1958,7 @@ createMultiplayerMatchData(
 
             //create match 3
               console.log("Tournament ID", this.tournamentId);
-                console.log("Tournament Match Object:", this.matchObj, this.tournamentPlayers);
+                console.log("Tournament Match 3 Object:", this.matchObj, this.tournamentPlayers);
                 const response  = await api.createTournamentMatch(this.tournamentId!, {
                     player1_id: player1ID,
                     player2_id: null,
@@ -1913,20 +1966,30 @@ createMultiplayerMatchData(
                     player2_name: winner2,
                 
                 });
-                console.log("Tournament Match1 Created:", response);
+                console.log("Tournament Match 3 final Created:", response);
                 // let matchData = JSON.parse(r);
-                console.log("Tournament Match1 Data id:", response.data.match['id']);
-                console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
-                this.matchObj.matchId = response.data.match['id']; // Update matchId from the response
-                this.tournamentMatchId = response.data.match['id'];
+                console.log("Tournament Match3 final Data id:",  response.data.match.id);
+                // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
+                this.matchObj.matchId =  response.data.match.id; // Update matchId from the response
+                this.tournamentMatchId =  response.data.match.id;
+                console.log("Current Tournament Final Match: this after increment", this.currentTournamentMatch);
+                // this.currentTournamentMatch++;
+                console.log("resetting currentTournamentMatch to 0 for next tournament", this.currentTournamentMatch);
         }
         
         // Increment match counter
-        this.currentTournamentMatch++;
+        // if (this.currentTournamentMatch  >= 2) {
+        //     this.currentTournamentMatch = 0; // Reset for next tournament
+        //     console.log("Tournament completed, resetting match counter.");
+        // }else 
+        // {
+        //     this.currentTournamentMatch++;
+        //     console.log("Current Tournament Match after increment:", this.currentTournamentMatch);
+        // }
         
         // Show tournament announcement briefly, then start the game
         document.getElementById('tournamentAnnouncement')!.style.display = 'block';
-        
+
         // Reset game for the new match
         this.resetGame();
         
@@ -1941,6 +2004,7 @@ createMultiplayerMatchData(
      * Apply settings from the settings screen
      */
     applySettings() {
+
         // Get win score setting
         const winScoreSelect = document.getElementById('winScore') as HTMLInputElement;
         this.winScore = parseInt(winScoreSelect.value);
@@ -1961,23 +2025,36 @@ createMultiplayerMatchData(
         this.aiDifficulty = aiDifficultySelect!.value;
         
         // Get player names
-        const player1NameInput = document.getElementById('player1NameInput') as  HTMLInputElement;
-        const player2NameInput = document.getElementById('player2NameInput') as HTMLInputElement;
+        const player1NameInput_2 = document.getElementById('player1NameInput') as  HTMLInputElement;
+        const player2NameInput_2 = document.getElementById('player2NameInput') as HTMLInputElement;
         
         // Override stored username if Player 1 name is set in settings
-        if (player1NameInput!.value) {
-           
-            this.player1Name!.textContent = player1NameInput.value ?? this.userName;
+        if (player1NameInput_2!.value) {
+            console.log("Player 1 name input value:", player1NameInput_2!.value);
+            this.player1Name!.textContent = player1NameInput_2!.value || this.userName;
+            this.aliasUsernamePlayer1 = player1NameInput_2!.value || this.userName; // Store alias for Player 1
+            if (this.player1NameInput != null && this.player1NameInput!.value) {
+                this.player1NameInput!.value = player1NameInput_2!.value;}
         }
         
-        if (player2NameInput.value) {
-            
-            this.player2Name!.textContent = player2NameInput.value;
-            this.matchObj.player2_name = player2NameInput.value;
+        if (player2NameInput_2!.value) {
+            console.log("Player 2 name input value:", player2NameInput_2!.value);
+            this.player2Name!.textContent = player2NameInput_2!.value || "PLAYER_2";
+            // this.aliasUsernamePlayer1 = player2NameInput_2!.value || this.userName; // Store alias for Player 1
+            this.matchObj.player2_name = player2NameInput_2!.value || "PLAYER_2"; // Update match object
+            if (this.player2NameInput != null && this.player2NameInput!.value) {
+                this.player2NameInput!.value = player2NameInput_2!.value;}
         }
+        // if (this.player2NameInput != null && this.player2NameInput!.value) {
+            
+        //     this.player2Name!.textContent = this.player2NameInput!.value;
+        //     this.matchObj.player2_name = this.player2NameInput!.value;
+        // }
         
         // If in AI mode, update player 2 name based on difficulty
         if (this.isAIMode) {
+
+            // this.player1Name!.textContent = player1NameInput.value || this.userName;
             const difficultyName = this.aiDifficulty.charAt(0).toUpperCase() + this.aiDifficulty.slice(1);
             this.player2Name!.textContent = `AI (${difficultyName})`;
         }
@@ -2079,8 +2156,8 @@ createMultiplayerMatchData(
         
         // Set default names if inputs are empty
         if (!player1NameInput!.value) {
-            player1NameInput!.value = this.userName ?? 'Player1';
-            console.log("Default Player 1 Name:", this.userName ?? 'Player1');
+            player1NameInput!.value = this.userName || 'Player1';
+            console.log("Default Player 1 Name:", this.userName || 'Player1');
         
         }
         
@@ -2092,6 +2169,7 @@ createMultiplayerMatchData(
 
         this.player1Name!.textContent = player1NameInput!.value;
         this.player2Name!.textContent = player2NameInput!.value;
+        this.aliasUsernamePlayer1 =  player1NameInput!.value;
 
         console.log("Player 1 Name:", this.player1Name!.textContent);
         console.log("Player 2 Name:", this.player2Name!.textContent);
