@@ -489,6 +489,7 @@ class App {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
             login.updateUIAuthState();
+             profile.loadProfileData();
             pages.showPage('profile');
           }
           else {
