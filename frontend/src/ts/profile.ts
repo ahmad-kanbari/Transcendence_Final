@@ -989,14 +989,13 @@ showDetailedGameSession(matchId: string): void {
     let player1_name = '';
     
     if (match.match_type === 'multiplayer') {
-      const userTeam = match.teams?.find((team: any) => 
-        team.players.some((player: any) => player.player_name === currentUser)
-      );
-      const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
-      
-      userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
-      opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
-      score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+    const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        player1_name = userTeam.name || 'team1';
+        opponent = opponentTeam?.name || 'team2';
+        score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
     } else {
       // const isPlayer1 = match.player1_name == currentUser;
       const isPlayer1 = true; // Assuming current user is always player 1 for simplicity
@@ -1114,13 +1113,11 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     
     if (match.match_type === 'multiplayer') {
       // For multiplayer, check if user's team won
-      const userTeam = match.teams?.find((team: any) => 
-        team.players.some((player: any) => player.user_id === parseInt(userId))
-      );
-      if (userTeam) {
-        const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam.id);
-        userWon = userTeam.score > (opponentTeam?.score || 0);
-      }
+         const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        
     } else {
       // For regular/tournament matches
       if (match.player1_name === currentUser) {
@@ -1129,6 +1126,9 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         userWon = match.player2_score > match.player1_score;
       }
     }
+    // if (match.player1_score > match.player2_score) {  
+    //     userWon = true;
+    // }
 
     if (userWon) {
       stats.wins++;
@@ -1864,28 +1864,28 @@ init2FA(): void {
         let userWon = false;
         let opponent = '';
         let score = '';
+        let player1_name = '';
         
         if (match.match_type === 'multiplayer') {
-          // Handle multiplayer matches
-          const userTeam = match.teams?.find((team: any) => 
-            team.players.some((player: any) => player.user_id === parseInt(userID.toString()))
-          );
-          const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
-          
-          userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
-          opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
-          score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+        // Handle multiplayer matches
+        const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        player1_name = userTeam.name || 'team1';
+        opponent = opponentTeam?.name || 'team2';
+        score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+      } else {
+        // Handle regular/tournament matches
+        if (match.player1_name === currentUser) {
+          userWon = match.player1_score > match.player2_score;
+          opponent = match.player2_name;
         } else {
-          // Handle regular/tournament matches
-          if (match.player1_name === currentUser) {
-            userWon = match.player1_score > match.player2_score;
-            opponent = match.player2_name;
-          } else {
-            userWon = match.player2_score > match.player1_score;
-            opponent = match.player1_name;
-          }
-          score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+          userWon = match.player2_score > match.player1_score;
+          opponent = match.player1_name;
         }
+        score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+      }
         
         // Style based on result
         if (userWon) {
@@ -1904,6 +1904,7 @@ init2FA(): void {
         tr.innerHTML = `
           <td class="px-4 py-3 text-sm">${date}</td>
           <td class="px-4 py-3">${matchType}</td>
+           <td class="px-4 py-3">${player1_name}</td>
           <td class="px-4 py-3">${opponent}</td>
           <td class="px-4 py-3">${score}</td>
           <td class="px-4 py-3">${result}</td>

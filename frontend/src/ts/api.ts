@@ -671,7 +671,7 @@ class API {
           body: JSON.stringify({
             team1_score: matchData.team1_score,
             team2_score: matchData.team2_score,
-            is_multiplayer: matchData.is_multiplayer
+            is_multiplayer: true
           })
         });
 
