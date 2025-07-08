@@ -1,8 +1,9 @@
 import utils from './utils';
 import { PAGES, ENDPOINTS } from './constants';
-import { User } from './app';
+import app, { User } from './app';
 import { baseURL } from './constants';
 import { CONFIG } from './constants';
+import toastManager from './toastManager';
 // Define interfaces for API responses and data
 interface ApiResponse<T = any> {
   success: boolean;
@@ -818,6 +819,9 @@ class API {
             player2_score: matchData.player2_score
           })
         });
+        if (!(response.status == 201 || response.status == 200)) { 
+            toastManager.error( app.getUsername(),'Failed to submit tournament match');
+        }
 
         if (response.status === 401 && retryCount < 1) {
           const refreshResult = await this.refreshToken();

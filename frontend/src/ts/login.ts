@@ -6,6 +6,7 @@ import router from './router';
 import register from './register';
 import components from './components';
 import { baseURL } from './constants';
+import toastManager from './toastManager';
 
 // Define interface for the login form elements
 interface LoginForm {
@@ -223,7 +224,8 @@ class Login {
     const passwordElement = document.getElementById('loginPassword') as HTMLInputElement | null;
     
     if (!emailElement || !passwordElement) {
-      components.showToast('error', 'Login Error', 'Login form elements not found.');
+      // components.showToast('error', 'Login Error', 'Login form elements not found.');
+      toastManager.error(app.getUsername(), 'Login form elements not found.');
       return;
     }
     
@@ -231,17 +233,20 @@ class Login {
     const password = passwordElement.value;
     
     if (!email || !password) {
-      components.showToast('error', 'Login Error', 'Please enter both email and password.', 21);
+      // components.showToast('error', 'Login Error', 'Please enter both email and password.', 21);
+      toastManager.error(app.getUsername(), 'Please enter both email and password.');
       return;
     }
     
     if (email.length < utils.VALIDATION_INPUTS.email.minLength!) {
-      components.showToast('error', 'Login Error', `Email must be at least ${utils.VALIDATION_INPUTS.email.minLength} characters.`, 402);
+      // components.showToast('error', 'Login Error', `Email must be at least ${utils.VALIDATION_INPUTS.email.minLength} characters.`, 402);
+      toastManager.error(app.getUsername(), `Email must be at least ${utils.VALIDATION_INPUTS.email.minLength} characters.`);
       return;
     }
     
     if (password.length < utils.VALIDATION_INPUTS.password.minLength!) {
-      components.showToast('error', 'Login Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`, 402);
+      // components.showToast('error', 'Login Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`, 402);
+      toastManager.error(app.getUsername(), `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`);
       return;
     }
     
@@ -263,6 +268,7 @@ class Login {
 
       if (!response.ok) {
         const errorText = await response.text();
+        toastManager.error(app.getUsername(), `Login failed: ${JSON.stringify(response.statusText)} (${response.status})`);
         throw new Error(errorText || 'Login failed');
       }
 
@@ -281,7 +287,11 @@ class Login {
       utils.setFormLoading(this.loginForm.submitBtn, false);
     } catch (error: any) {
       console.error('Login submission error:', error);
-      components.showToast('error', 'Login Failed', error.message || 'Invalid email or password.');
+      let errorMessage = JSON.stringify(error.message);
+      // components.showToast('error', 'Login Failed', error.message || 'Invalid email or password.');
+      toastManager.error(app.getUsername(),  error.message.error || errorMessage);
+      
+      //  || 'Invalid email or password.');
       utils.setFormLoading(this.loginForm.submitBtn, false);
     }
   }
@@ -323,7 +333,8 @@ show2FAModal(): void {
   // Re-setup 2FA listeners to ensure they work
   this.setup2FAListeners();
   
-  components.showToast('info', '2FA Required', 'Please enter the 6-digit code from your authenticator app.');
+  // components.showToast('info', '2FA Required', 'Please enter the 6-digit code from your authenticator app.');
+  toastManager.info(app.getUsername(), 'Please enter the 6-digit code from your authenticator app.');
 }
 
   setup2FAListeners(): void {
@@ -388,7 +399,8 @@ show2FAModal(): void {
     event.preventDefault();
     event.stopPropagation();
     if (!this.loginForm.twoFactorCodeInput || !this.tempToken) {
-      components.showToast('error', '2FA Error', 'Missing required 2FA data.');
+      // components.showToast('error', '2FA Error', 'Missing required 2FA data.');
+      toastManager.error(app.getUsername(), 'Missing required 2FA data.');
       return;
     }
 
@@ -396,6 +408,7 @@ show2FAModal(): void {
 
     if (!totpCode || totpCode.length !== 6 || !/^\d+$/.test(totpCode)) {
       this.show2FAError('Please enter a valid 6-digit code.');
+      toastManager.error(app.getUsername(), 'Please enter a valid 6-digit code.');
       return;
     }
 
@@ -419,6 +432,7 @@ show2FAModal(): void {
 
       if (!response.ok) {
         console.log('2FA validation failed:', response.status, response.statusText);
+        toastManager.error(app.getUsername(), `2FA validation failed. Please try again. ${response.status}, ${response.statusText})`);
         const errorText = await response.text();
         this.show2FAError('Invalid code. Please try again.');
         throw new Error(errorText || '2FA validation failed');
@@ -477,7 +491,8 @@ show2FAModal(): void {
     this.tempToken = null;
     
     this.updateUIAuthState();
-    components.showToast('success', 'Login Successful', 'You have been logged in successfully.', 200);
+    // components.showToast('success', 'Login Successful', 'You have been logged in successfully.', 200);
+    toastManager.success(app.getUsername(), 'You have been logged in successfully.');
     console.log('Login successful:', userData);
     router.navigate('/');
   }
@@ -607,7 +622,8 @@ async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
     googleBtn.disabled = true;
   }
   
-  components.showToast('info', 'Connecting', 'Initializing Google authentication...');
+  // components.showToast('info', 'Connecting', 'Initializing Google authentication...');
+  toastManager.info(app.getUsername(), 'Initializing Google authentication...');
   
   try {
     // Get or generate deviceId
@@ -622,7 +638,8 @@ async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
     // Construct Google auth URL - this should redirect to Google, then back to your callback
     const authUrl = `${baseURL}/auth/google/login?state=${state}`;
     
-    components.showToast('success', 'Connected', 'Redirecting to Google login page...', 1000);
+    // components.showToast('success', 'Connected', 'Redirecting to Google login page...', 1000);
+    toastManager.success(app.getUsername(), 'Redirecting to Google login page...');
     
     // Redirect to Google's login page
     window.location.href = authUrl;
@@ -633,8 +650,9 @@ async handleGoogleLoginBtnClick(event: MouseEvent): Promise<void> {
       googleBtn.disabled = false;
     }
     
-    components.showToast('error', 'Google Login Failed', 
-      error.message || 'Could not connect to Google authentication service.', 5000);
+    toastManager.error(app.getUsername(), `Google login failed: ${error.message || 'An error occurred'}`);
+
+      
   }
 }
 

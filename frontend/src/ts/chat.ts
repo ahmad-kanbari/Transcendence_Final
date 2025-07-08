@@ -5,6 +5,7 @@ import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
 import notificationManager from './NotificationManager';
 import localization from './localization';
+import app from './app';
 
 // Declare socket.io global
 declare const io: any;
@@ -468,7 +469,8 @@ class Chat {
             
         } catch (error) {
             console.error('Error selecting chat:', error);
-            components.showToast('error', 'Chat Error', 'Failed to open chat', 3000);
+            // components.showToast('error', 'Chat Error', 'Failed to open chat', 3000);
+            toastManager.error(app.getUsername(), 'Failed to open chat');
         }
     }
 
@@ -597,7 +599,8 @@ class Chat {
             );
             
             if (blockedUser) {
-                components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
+                // components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
+                toastManager.error(app.getUsername(), 'Cannot send messages to blocked users');
         
                 return;
             }
@@ -609,11 +612,13 @@ class Chat {
                 // this.appendMessage({ sender_id: this.currentUserId ,content: content});
                 this.elements.messageInput.value = '';
             } else {
-                components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
+                // components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
+                toastManager.error(app.getUsername(), 'Failed to send message');
             }
         } catch (error) {
             console.error('Error sending message:', error);
-            components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
+            // components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
+            toastManager.error(app.getUsername(), 'Failed to send message');
         }
     }
 
@@ -657,6 +662,7 @@ class Chat {
             this.renderFriendSearchResults(users);
         } catch (error) {
             console.error('Error searching users:', error);
+
         }
     }
 
@@ -725,7 +731,8 @@ class Chat {
             const result = await api.sendFriendRequest(userId);
             
             if (result.ok) {
-                components.showToast('success', 'Friend Request Sent', 'Friend request sent successfully!', 3000);
+                // components.showToast('success', 'Friend Request Sent', 'Friend request sent successfully!', 3000);
+                toastManager.success(app.getUsername(), 'Friend request sent successfully!');
                 this.loadFriendData();
                 
                 // Clear search
@@ -735,17 +742,20 @@ class Chat {
                 }
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Request Failed', errorText || 'Failed to send friend request', 3000);
+                // components.showToast('error', 'Request Failed', errorText || 'Failed to send friend request', 3000);
+                toastManager.error(app.getUsername(), errorText || 'Failed to send friend request');
             }
         } catch (error) {
             console.error('Error sending friend request:', error);
-            components.showToast('error', 'Request Failed', 'An error occurred while sending the request', 3000);
+            // components.showToast('error', 'Request Failed', 'An error occurred while sending the request', 3000);
+            toastManager.error(app.getUsername(), 'An error occurred while sending the request');
         }
     }
 
     renderChatSearchResults(users: any[]): void {
     if (!this.elements.userSearchResultsChat) {
-        console.error('userSearchResultsChat element not found!');
+        // console.error('userSearchResultsChat element not found!');
+        toastManager.error(app.getUsername(), 'Chat search results element not found');
         return;
     } 
 
@@ -771,7 +781,8 @@ class Chat {
                     this.elements.userSearchInput.value = '';
                 }
                 
-                components.showToast('info', 'Creating Chat', `Creating chat with ${user.username}...`, 2000);
+                // components.showToast('info', 'Creating Chat', `Creating chat with ${user.username}...`, 2000);
+                toastManager.info(app.getUsername(), `Creating chat with ${user.username}...`);
                 
                 // Check if chat already exists
                 let chatId;
@@ -784,7 +795,8 @@ class Chat {
                     // Chat exists, get the chat ID
                     const existingChat = await existingChatRes.json();
                     chatId = existingChat.chat_id;
-                    components.showToast('success', 'Chat Found', `Opening existing chat with ${user.username}`, 2000);
+                    // components.showToast('success', 'Chat Found', `Opening existing chat with ${user.username}`, 2000);
+                    toastManager.success(app.getUsername(), `Opening existing chat with ${user.username}`);
                 } else if (existingChatRes.status === 404) {
                     // Chat doesn't exist, create new one
                     const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
@@ -800,19 +812,22 @@ class Chat {
                     });
                     
                     if (!createChatRes.ok) {
-                        toastManager.showToast('Error', `Failed to create chat : ${createChatRes.statusText}`);
+                        // toastManager.showToast('Error', `Failed to create chat : ${createChatRes.statusText}`);
+                        toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
                         throw new Error(`Failed to create chat: ${createChatRes.status}`);
                     }
                     
                     const newChat = await createChatRes.json();
                     chatId = newChat.chat_id || newChat.id;
                     
-                    components.showToast('success', 'Chat Created', `New chat created with ${user.username}`, 2000);
+                    // components.showToast('success', 'Chat Created', `New chat created with ${user.username}`, 2000);
+                    toastManager.success(app.getUsername(), `New chat created with ${user.username}`);
                     
                     // Reload chats to show the new chat in the list
                     await this.loadChats();
                 } else {
                     throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
+                    toastManager.error(app.getUsername(), `Failed to check existing chat: ${existingChatRes.status}`);
                 }
                 
                 // Join the chat room
@@ -840,13 +855,15 @@ class Chat {
                             activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                         
-                        components.showToast('success', 'Chat Ready', `Chat with ${user.username} is now active!`, 2000);
+                        // components.showToast('success', 'Chat Ready', `Chat with ${user.username} is now active!`, 2000);
+                        toastManager.success(app.getUsername(), `Chat with ${user.username} is now active!`);
                     }
                 }, 200);
                 
             } catch (error) {
                 console.error('Error creating/opening chat:', error);
-                components.showToast('error', 'Chat Error', `Failed to create chat with ${user.username}`, 3000);
+                // components.showToast('error', 'Chat Error', `Failed to create chat with ${user.username}`, 3000);
+                toastManager.error(app.getUsername(), `Failed to create chat with ${user.username}`);
             }
         });
         
@@ -866,6 +883,7 @@ class Chat {
             this.updateDashboardStats();
         } catch (error) {
             console.error('Error loading friend data:', error);
+            toastManager.error(app.getUsername(), 'Failed to load friend data');
         }
     }
 
@@ -994,7 +1012,8 @@ class Chat {
             const result = await api.updateFriendship(friendshipId, action);
             
             if (result.ok) {
-                components.showToast('success', 'Request Updated', `Friend request ${action}ed successfully!`, 3000);
+                // components.showToast('success', 'Request Updated', `Friend request ${action}ed successfully!`, 3000);
+                toastManager.success(app.getUsername(), `Friend request ${action}ed successfully!`);
                 await this.loadFriendData();
                 this.updateDashboardStats();
                 // Decrement notification count through NotificationManager
@@ -1005,7 +1024,8 @@ class Chat {
                 await this.refreshAllFriendData();
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Update Failed', errorText || `Failed to ${action} friend request`, 3000);
+                // components.showToast('error', 'Update Failed', errorText || `Failed to ${action} friend request`, 3000);
+                toastManager.error(app.getUsername(), errorText || `Failed to ${action} friend request`);
             }
         } catch (error) {
             console.error(`Error ${action}ing friend request:`, error);
@@ -1017,11 +1037,13 @@ class Chat {
             const result = await api.deleteFriendship(friendshipId);
             
             if (result.ok) {
-                components.showToast('success', 'Request Cancelled', 'Friend request cancelled successfully!', 3000);
+                // components.showToast('success', 'Request Cancelled', 'Friend request cancelled successfully!', 3000);
+                toastManager.success(app.getUsername(), 'Friend request cancelled successfully!');
                 this.loadFriendData();
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Cancel Failed', errorText || 'Failed to cancel friend request', 3000);
+                // components.showToast('error', 'Cancel Failed', errorText || 'Failed to cancel friend request', 3000);
+                toastManager.error(app.getUsername(), errorText || 'Failed to cancel friend request');
             }
         } catch (error) {
             console.error('Error cancelling friend request:', error);
@@ -1037,11 +1059,13 @@ class Chat {
             const result = await api.deleteFriendship(friendshipId);
             
             if (result.ok) {
-                components.showToast('success', 'Friend Removed', 'Friend removed successfully!', 3000);
+                // components.showToast('success', 'Friend Removed', 'Friend removed successfully!', 3000);
+                toastManager.success(app.getUsername(), 'Friend removed successfully!');
                 this.refreshAllFriendData()
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Remove Failed', errorText || 'Failed to remove friend', 3000);
+                // components.showToast('error', 'Remove Failed', errorText || 'Failed to remove friend', 3000);
+                toastManager.error(app.getUsername(), errorText || 'Failed to remove friend');
             }
         } catch (error) {
             console.error('Error removing friend:', error);
@@ -1052,7 +1076,8 @@ class Chat {
 
     public async startChatWithFriend(friendId: string): Promise<void> {
         try {
-            components.showToast('info', 'Chat Feature', 'Opening chat with friend...', 2000);
+            // components.showToast('info', 'Chat Feature', 'Opening chat with friend...', 2000);
+            toastManager.info(app.getUsername(), 'Opening chat with friend...');
             
             // First, check if a chat already exists between users using your backend route
             const existingChat = await this.checkExistingChatWithFriend(friendId);
@@ -1062,6 +1087,7 @@ class Chat {
                 if (userRes.ok) {
                     user = await userRes.json();
                 } else {
+                    toastManager.error(app.getUsername(), `Failed to get user info: ${userRes.status} : ${userRes.statusText}`);
                     throw new Error(`Failed to get user info: ${userRes.status}`);
                 }
             } catch (error) {
@@ -1073,7 +1099,8 @@ class Chat {
                 // If chat exists, join it directly
                 
                 await this.selectChatFromList(existingChat.chat_id, user);
-                components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
+                // components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
+                toastManager.success(app.getUsername(), 'Existing chat opened successfully!');
                 return;
             }
             
@@ -1089,14 +1116,17 @@ class Chat {
                 // Join the new chat
                 await this.selectChatFromList(chatId , user);
                 
-                components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
+                // components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
+                toastManager.success(app.getUsername(), 'New chat created successfully!');
             } else {
+                toastManager.error(app.getUsername(), 'Failed to create chat - no chat ID returned');
                 throw new Error('Failed to create chat - no chat ID returned');
             }
             
         } catch (error) {
             console.error('Error starting chat with friend:', error);
-            components.showToast('error', 'Chat Failed', 'Failed to start chat with friend', 3000);
+            // components.showToast('error', 'Chat Failed', 'Failed to start chat with friend', 3000);
+            toastManager.error(app.getUsername(), 'Failed to start chat with friend');
         }
     }
 
@@ -1117,6 +1147,7 @@ class Chat {
                 // Chat doesn't exist, which is expected
                 return null;
             } else {
+               toastManager.error(app.getUsername(), `Failed to check existing chat: ${res.status} - ${res.statusText}`);
                 throw new Error(`Failed to check existing chat: ${res.status}`);
             }
             
@@ -1153,6 +1184,7 @@ class Chat {
             
             if (!res.ok) {
                 const errorText = await res.text();
+                toastManager.error(app.getUsername(), `Failed to create chat: ${res.status} - ${errorText}`);
                 throw new Error(`Failed to create chat: ${res.status} - ${errorText}`);
             }
             
@@ -1188,7 +1220,8 @@ class Chat {
 
     // ===== UTILITY METHODS =====
      async startChatWithUser(user: any): Promise<void> {
-        components.showToast('info', 'Chat Feature', `Starting chat with ${user.username}...`, 2000);
+        toastManager.info(app.getUsername(), `Starting chat with ${user.username}...`);
+        // components.showToast('info', 'Chat Feature', `Starting chat with ${user.username}...`, 2000);
         
         // Clear search
         if (this.elements.userSearchInput && this.elements.userSearchResultsChat) {
@@ -1219,7 +1252,10 @@ class Chat {
 				body: JSON.stringify({ user2Id: user.id }),
 			});
 
-			if (!createRes.ok) throw new Error("Failed to create chat");
+			if (!createRes.ok) { 
+                toastManager.error(app.getUsername(), `Failed to create chat: ${createRes.status} - ${createRes.statusText}`);
+                throw new Error("Failed to create chat");
+            }
 			const newChat = await createRes.json();
 			chatId = newChat.chat_id;
             
@@ -1750,7 +1786,8 @@ class Chat {
             const confirmed = confirm(`Are you sure you want to block ${user.username}? This will prevent them from sending you messages or friend requests.`);
             if (!confirmed) return;
             
-            components.showToast('info', 'Blocking User', `Blocking ${user.username}...`, 2000);
+            // components.showToast('info', 'Blocking User', `Blocking ${user.username}...`, 2000);
+            toastManager.info(app.getUsername(), `Blocking ${user.username}...`);
             
             const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks`, {
                 method: 'POST',
@@ -1764,16 +1801,19 @@ class Chat {
             if (result.ok) {
                 this.blockedUsersCache.add(user.id.toString());
                 console.log(`User blocked successfully: ${user.username}`);
-                components.showToast('success', 'User Blocked', `${user.username} has been blocked successfully!`, 3000);
+                // components.showToast('success', 'User Blocked', `${user.username} has been blocked successfully!`, 3000);
+                toastManager.success(app.getUsername(), `${user.username} has been blocked successfully!`);
                 await this.loadBlockedUsers();
                 this.loadFriendData();
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Block Failed', errorText || 'Failed to block user', 3000);
+                // components.showToast('error', 'Block Failed', errorText || 'Failed to block user', 3000);
+                toastManager.error(app.getUsername(), errorText || 'Failed to block user');
             }
         } catch (error) {
             console.error('Error blocking user:', error);
-            components.showToast('error', 'Block Failed', 'An error occurred while blocking the user', 3000);
+            // components.showToast('error', 'Block Failed', 'An error occurred while blocking the user', 3000);
+            toastManager.error(app.getUsername(), 'An error occurred while blocking the user');
         }
     }
 
@@ -1782,7 +1822,8 @@ class Chat {
             const confirmed = confirm(`Are you sure you want to unblock ${user.username}? They will be able to send you messages and friend requests again.`);
             if (!confirmed) return;
             
-            components.showToast('info', 'Unblocking User', `Unblocking ${user.username}...`, 2000);
+            // components.showToast('info', 'Unblocking User', `Unblocking ${user.username}...`, 2000);
+            toastManager.info(app.getUsername(), `Unblocking ${user.username}...`);
             console.log(`Unblocking user with ID: ${user.id}`);
             const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${user.id}`, {
                 method: 'DELETE',
@@ -1791,16 +1832,19 @@ class Chat {
             
             if (result.ok) {
                 this.blockedUsersCache.delete(user.id.toString());
-                components.showToast('success', 'User Unblocked', `${user.username} has been unblocked successfully!`, 3000);
+                // components.showToast('success', 'User Unblocked', `${user.username} has been unblocked successfully!`, 3000);
+                toastManager.success(app.getUsername(), `${user.username} has been unblocked successfully!`);
                 await this.loadBlockedUsers();
                 this.loadFriendData();
             } else {
                 const errorText = await result.text();
-                components.showToast('error', 'Unblock Failed', errorText || 'Failed to unblock user', 3000);
+                // components.showToast('error', 'Unblock Failed', errorText || 'Failed to unblock user', 3000);
+                toastManager.error(app.getUsername(), errorText || 'Failed to unblock user');
             }
         } catch (error) {
             console.error('Error unblocking user:', error);
-            components.showToast('error', 'Unblock Failed', 'An error occurred while unblocking the user', 3000);
+            // components.showToast('error', 'Unblock Failed', 'An error occurred while unblocking the user', 3000);
+            toastManager.error(app.getUsername(), 'An error occurred while unblocking the user');
         }
     }
 
@@ -1809,7 +1853,8 @@ class Chat {
         if (user) {
             await this.handleUnblockUser(user);
         } else {
-            components.showToast('error', 'User Not Found', 'Blocked user not found', 3000);
+            // components.showToast('error', 'User Not Found', 'Blocked user not found', 3000);
+            toastManager.error(app.getUsername(), 'Blocked user not found');
         }
     }
 

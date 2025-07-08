@@ -180,7 +180,8 @@ class Profile {
       
     } catch (err) {
       console.error('Error loading profile:', err);
-      components.showToast('error', 'Profile Error', 'Failed to load profile data');
+      // components.showToast('error', 'Profile Error', 'Failed to load profile data');
+      toastManager.error(app.getUsername(), 'Failed to load profile data');
     }
   }
 
@@ -1250,7 +1251,8 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       const file = target.files?.[0];
       if (!file) return;
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        components.showToast('error', 'File Too Large', 'Please select an image smaller than 5MB');
+        // components.showToast('error', 'File Too Large', 'Please select an image smaller than 5MB');
+        toastManager.error(app.getUsername(), 'File Too Large , Please select an image smaller than 5MB');
         return;
       }
       const formData = new FormData();
@@ -1266,7 +1268,9 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           }
         );
 
-        if (!res.ok) throw new Error('Failed to upload profile picture');
+        if (!res.ok) {
+          toastManager.error(app.getUsername(), 'Failed to upload profile picture');
+          throw new Error('Failed to upload profile picture');}
 
         const data = await res.json();
         // Convert file to base64 and save to localStorage
@@ -1297,10 +1301,12 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         };
         reader.readAsDataURL(file);
         
-        components.showToast('success', 'Success', 'Profile picture updated successfully');
+        // components.showToast('success', 'Success', 'Profile picture updated successfully');
+        toastManager.success(app.getUsername(), 'Profile picture updated successfully');
       } catch (err) {
         console.error('Error uploading profile picture:', err);
-        components.showToast('error', 'Upload Error', 'Failed to upload profile picture');
+        // components.showToast('error', 'Upload Error', 'Failed to upload profile picture');
+        toastManager.error(app.getUsername(), 'Failed to upload profile picture');
       }
     });
 
@@ -1317,7 +1323,9 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
             }
           );
 
-          if (!res.ok) throw new Error('Failed to remove profile picture');
+          if (!res.ok) {
+            throw new Error('Failed to remove profile picture')
+          };
 
           // Remove from localStorage
           this.removeProfilePictureFromLocalStorage();
@@ -1332,10 +1340,12 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
             localStorage.setItem('user', JSON.stringify(app.state.user));
           }
           
-          components.showToast('success', 'Success', 'Profile picture removed successfully');
+          // components.showToast('success', 'Success', 'Profile picture removed successfully');
+          toastManager.success(app.getUsername(), 'Profile picture removed successfully');
         } catch (err) {
           console.error('Error removing profile picture:', err);
-          components.showToast('error', 'Remove Error', 'Failed to remove profile picture');
+          // components.showToast('error', 'Remove Error', 'Failed to remove profile picture');
+          toastManager.error(app.getUsername(), 'Failed to remove profile picture');
         }
       });
     }
@@ -1362,7 +1372,8 @@ saveProfilePictureToLocalStorage(base64String: string): void {
       console.error('Failed to save profile picture to localStorage:', error);
       // Handle localStorage quota exceeded
       if (error instanceof DOMException && error.code === 22) {
-        components.showToast('warning', 'Storage Full', 'Unable to cache profile picture locally');
+        // components.showToast('warning', 'Storage Full', 'Unable to cache profile picture locally');
+        toastManager.warning(app.getUsername(), 'Unable to cache profile picture locally');
       }
     }
   }
@@ -1662,7 +1673,8 @@ init2FA(): void {
         
         this.update2FAUI();
         
-        components.showToast('success', '2FA Enabled', 'Two-factor authentication has been successfully enabled.');
+        // components.showToast('success', '2FA Enabled', 'Two-factor authentication has been successfully enabled.');
+        toastManager.success(app.getUsername(), 'Two-factor authentication has been successfully enabled.');
         
         const modal = document.getElementById('twoFAModal');
         if (modal) {
@@ -1682,7 +1694,8 @@ init2FA(): void {
         }
       }
     } catch (error: any) {
-      components.showToast('error', '2FA Verification Error', error.message || 'Failed to verify 2FA');
+      // components.showToast('error', '2FA Verification Error', error.message || 'Failed to verify 2FA');
+      toastManager.error(app.getUsername(), error.message || 'Failed to verify 2FA');
       
       utils.setFormLoading(submitButton, false);
       
@@ -1738,7 +1751,8 @@ init2FA(): void {
         
         this.update2FAUI();
         
-        components.showToast('success', '2FA Disabled', 'Two-factor authentication has been successfully disabled.');
+        // components.showToast('success', '2FA Disabled', 'Two-factor authentication has been successfully disabled.');
+        toastManager.success(app.getUsername(), 'Two-factor authentication has been successfully disabled.');
         
         const modal = document.getElementById('twoFAModal');
         if (modal) {
@@ -1756,7 +1770,8 @@ init2FA(): void {
         }
       }
     } catch (error: any) {
-      components.showToast('error', '2FA Disable Error', error.message || 'Failed to disable 2FA');
+      // components.showToast('error', '2FA Disable Error', error.message || 'Failed to disable 2FA');
+      toastManager.error(app.getUsername(), error.message || 'Failed to disable 2FA');
       
       utils.setFormLoading(submitButton, false);
       
@@ -1989,12 +2004,14 @@ async handleUsernameUpdate(): Promise<void> {
     const newUsername = this.profileForm.displayNameField.value.trim();
     
     if (!newUsername) {
-        components.showToast('error', 'Validation Error', 'Username cannot be empty');
+        // components.showToast('error', 'Validation Error', 'Username cannot be empty');
+        toastManager.error(app.getUsername(), 'Username cannot be empty');
         return;
     }
 
     if (newUsername.length < 3 || newUsername.length > 25) {
-        components.showToast('error', 'Validation Error', 'Username must be between 3 and 25 characters');
+        // components.showToast('error', 'Validation Error', 'Username must be between 3 and 25 characters');
+        toastManager.error(app.getUsername(), 'Username must be between 3 and 25 characters');
         return;
     }
 
@@ -2002,7 +2019,8 @@ async handleUsernameUpdate(): Promise<void> {
         const result = await api.updateUserUsername(newUsername);
         
         if (result.success) {
-            components.showToast('success', 'Success', 'Username updated successfully');
+            // components.showToast('success', 'Success', 'Username updated successfully');
+            toastManager.success(app.getUsername(), 'Username updated successfully');
             console.log("the new username in profile", newUsername);
           
             // Update local state
@@ -2017,10 +2035,12 @@ async handleUsernameUpdate(): Promise<void> {
             // let newUsernameGame = game.init(newUsername, api.submitRegularMatch, api.submitTournamentMatch); 
             // console.log("the new username in game", app.getUsername());// Update username in game state
         } else {
-            components.showToast('error', 'Update Error', result.error || 'Failed to update username');
+            // components.showToast('error', 'Update Error', result.error || 'Failed to update username');
+            toastManager.error(app.getUsername(), result.error || 'Failed to update username');
         }
     } catch (error: any) {
-        components.showToast('error', 'Update Error', 'An error occurred while updating username');
+        // components.showToast('error', 'Update Error', 'An error occurred while updating username');
+        toastManager.error(app.getUsername(), 'An error occurred while updating username');
     }
 }
 
@@ -2030,13 +2050,15 @@ async handleEmailUpdate(): Promise<void> {
     const newEmail = this.profileForm.emailField.value.trim();
     
     if (!newEmail) {
-        components.showToast('error', 'Validation Error', 'Email cannot be empty');
+        // components.showToast('error', 'Validation Error', 'Email cannot be empty');
+        toastManager.error(app.getUsername(), 'Email cannot be empty');
         return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
-        components.showToast('error', 'Validation Error', 'Please enter a valid email address');
+        // components.showToast('error', 'Validation Error', 'Please enter a valid email address');
+        toastManager.error(app.getUsername(), 'Please enter a valid email address');
         return;
     }
 
@@ -2044,7 +2066,8 @@ async handleEmailUpdate(): Promise<void> {
         const result = await api.updateUserEmail(newEmail);
         
         if (result.success) {
-            components.showToast('success', 'Success', 'Email updated successfully');
+            // components.showToast('success', 'Success', 'Email updated successfully');
+            toastManager.success(app.getUsername(), 'Email updated successfully');
             
             // Update local state
             if (app.state.user) {
@@ -2055,10 +2078,12 @@ async handleEmailUpdate(): Promise<void> {
             // Refresh profile data
             this.loadProfileData();
         } else {
-            components.showToast('error', 'Update Error', result.error || 'Failed to update email');
+            // components.showToast('error', 'Update Error', result.error || 'Failed to update email');
+            toastManager.error(app.getUsername(), result.error || 'Failed to update email');
         }
     } catch (error: any) {
-        components.showToast('error', 'Update Error', 'An error occurred while updating email');
+    //     components.showToast('error', 'Update Error', 'An error occurred while updating email');
+        toastManager.error(app.getUsername(), 'An error occurred while updating email');
     }
 }
 
@@ -2069,17 +2094,20 @@ async handlePasswordUpdate(): Promise<void> {
     const currentPassword = this.profileForm.currentPasswordField?.value.trim() || '';
     
     if (!newPassword || !currentPassword) {
-        components.showToast('error', 'Validation Error', 'New Password and Current Passoword fields cannot be empty');
+        // components.showToast('error', 'Validation Error', 'New Password and Current Passoword fields cannot be empty');
+         toastManager.error(app.getUsername(), 'New Password and Current Passoword fields cannot be empty');
         return;
     }
 
     if (newPassword.length < 8 || newPassword.length > 25) {
-        components.showToast('error', 'Validation Error', 'Password must be between 8 and 25 characters');
+        // components.showToast('error', 'Validation Error', 'Password must be between 8 and 25 characters');
+        toastManager.error(app.getUsername(), 'Password must be between 8 and 25 characters');
         return;
     }
     if (newPassword ==  currentPassword) {
-        components.showToast('error', 'Validation Error', 'New Password and Current Password must not the same');
-        toastManager.showToast('error', 'New Password and Current Password must not the same');
+        // components.showToast('error', 'Validation Error', 'New Password and Current Password must not the same');
+        // toastManager.showToast('error', 'New Password and Current Password must not the same');
+        toastManager.error(app.getUsername(), 'New Password and Current Password must not the same');
         return;
     }
 
@@ -2087,7 +2115,8 @@ async handlePasswordUpdate(): Promise<void> {
         const result = await api.updateUserPassword(newPassword, currentPassword);
         
         if (result.success) {
-            components.showToast('success', 'Success', 'Password updated successfully');
+            // components.showToast('success', 'Success', 'Password updated successfully');
+            toastManager.success(app.getUsername(), 'Password updated successfully');
             
             // Clear the password field for security
             this.profileForm.passwordField.value = '';
@@ -2095,11 +2124,12 @@ async handlePasswordUpdate(): Promise<void> {
             // Optionally refresh profile data
             this.loadProfileData();
         } else {
-            components.showToast('error', 'Update Error', result.error || 'Failed to update password');
+            // components.showToast('error', 'Update Error', result.error || 'Failed to update password');
             toastManager.showToast('error', result.error || 'Failed to update password');
         }
     } catch (error: any) {
-        components.showToast('error', 'Update Error', 'An error occurred while updating password');
+        // components.showToast('error', 'Update Error', 'An error occurred while updating password');
+        toastManager.error(app.getUsername(), 'An error occurred while updating password');
     }
 }
 
