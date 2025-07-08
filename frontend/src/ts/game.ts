@@ -1464,7 +1464,19 @@ createMultiplayerMatchData(
                 });
                 console.log("Tournament Match1 Submitted:", response_submission);
                 }
-
+                if (this.currentTournamentMatch == 1){
+                    if (this.matchObj.player1_score > this.matchObj.player2_score) {
+                        this.tournamentWinners.push(this.tournamentPlayers[0]);
+                    }else{
+                        this.tournamentWinners.push(this.tournamentPlayers[1]);
+                    }
+                } else if (this.currentTournamentMatch == 2) {
+                    if (this.matchObj.player1_score > this.matchObj.player2_score) {
+                        this.tournamentWinners.push(this.tournamentPlayers[2]);
+                    }else{
+                        this.tournamentWinners.push(this.tournamentPlayers[3]);
+                    }
+                }
                 document.getElementById('nextMatchButton')!.style.display = 'inline-block';
                 this.isSettingUpNextMatch = false;
                 console.log("Next match button displayed for Tournament match:", this.isSettingUpNextMatch);
@@ -1938,8 +1950,8 @@ createMultiplayerMatchData(
 
         } else if (this.currentTournamentMatch == 3) {
             // Final match - announce based on stored tournamentArr winners
-            const winner1 = this.getWinnerName(this.tournamentArr[0]);
-            const winner2 = this.getWinnerName(this.tournamentArr[1]);
+            const winner1 = this.tournamentWinners[0] ;
+            const winner2 = this.tournamentWinners[1] ;
             document.getElementById('tournamentAnnouncement')!.textContent =
                 `Final: ${winner1} vs ${winner2}`;
             // Update bracket display

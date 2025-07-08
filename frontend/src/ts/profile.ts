@@ -145,41 +145,52 @@ class Profile {
       document.body.style.visibility = 'visible';
       document.body.style.opacity = '1';
 
-      // Get user ID from URL params or current user
-      const urlParams = new URLSearchParams(window.location.search);
-      const userId = urlParams.get('userId');
+      // // Get user ID from URL params or current user
+      // const urlParams = new URLSearchParams(window.location.search);
+      const userId  = await authRes.json().then((data: any) => {
+        console.log('User ID from auth response:', data.user.user.id);
+        return Number(data.user.user.id) || 0;
+       });
 
       //  let usertest =await api.getUserById('10');
       //   console.log('User test data:', usertest);
       let userData;
+      console.log('User ID from URL params:', userId);
       if (userId) {
         // Loading another user's profile
-        const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
-        if (!userRes.ok) throw new Error('Failed to fetch user data');
-        userData = await userRes.json();
-      } else {
-        // Loading current user's profile
-        userData = await authRes.json();
-        console.log('Current user data in the profile: ', userData.user.user);
-        userData = userData.user.user;
+        let userStringId =Number(userId) ;
+        const userRes = await api.getUserById(userId);
+        
+        //await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
+        
+        // if (!userRes.ok) throw new Error('Failed to fetch user data');
+        //  userData = await userRes.json();
+        this.user = userRes.data; // Store user data       for another user
+        console.log('User data in the profile right approach: ', this.user);
+      // } else {
+      //   // Loading current user's profile
+      //   userData = await authRes.json();
+      //   console.log('bad user data ', userData.user.user);
+      //   userData = userData.user.user;
+      //   // this.user = userData; // Store current user data
       }
 
 
 
-      // ✅ WITH this expanded version:
+      // // ✅ WITH this expanded version:
     
-      let userFullData = await api.getUserById(userData.id);
-      this.user = userFullData;
-      console.log('Full user data:in porfile', userFullData);
+      // let userFullData = await api.getUserById(use);
+      // this.user = userFullData;
+      // console.log('Full user data:in porfile', userFullData);
       // Fetch user's match history and tournaments
       const [matchHistory] = await Promise.all([
-        this.fetchUserMatchHistory(userFullData.data['id'] || userData.id),
+        this.fetchUserMatchHistory(this.user.id ),
         // this.fetchUserTournamentHistory(userFullData.data['id'] || userData.id)
       ]);
       localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
       console.log('Match history:', matchHistory);
       // console.log('Tournament history:', tournamentHistory);
-      this.populateProfileData(userFullData, matchHistory);
+      this.populateProfileData(this.user, matchHistory);
       
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -321,11 +332,24 @@ showGameSessionModal(matchId: string): void {
 
 
 analyzeGameSession(match: any): any {
-  const currentUser = app.getUsername();
-  const isPlayer1 = match.player1_name === currentUser;
-  const userScore = isPlayer1 ? match.player1_score : match.player2_score;
-  const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
-  
+  // const currentUser = app.getUsername();
+  // const isPlayer1 = match.player1_name === currentUser;
+  // const userScore = isPlayer1 ? match.player1_score : match.player2_score;
+  // const opponentScore = isPlayer1 ? match.player2_score : match.player1_score;
+  let userScore = 0;
+  let opponentScore = 0;  
+  let userWon = false;
+  if (match.match_type === 'multiplayer') {
+      const userTeam = match.teams[0]
+      const opponentTeam  =match.teams[1]
+      userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+      userScore = userTeam?.score || 0;
+      opponentScore = opponentTeam?.score || 0;
+  }else {
+    userScore = match.player1_score ;
+    opponentScore =  match.player2_score ;
+  }
+       
   return {
     duration: this.calculateMatchDuration(match),
     totalPoints: userScore + opponentScore,
@@ -349,6 +373,18 @@ generatePointProgressionChart(match: any): string {
   
   let html = '<div class="flex items-end space-x-2 h-32">';
   
+  /*
+        This code creates a visual point progression chart with vertical bars. For each point from 1 to the maximum score:
+
+    Tall bars (80px): Show points that were actually scored by each player
+    Short bars (20px): Show points that weren't reached yet
+    Blue bars: Represent the user's points (stacked on top)
+    Pink bars: Represent the opponent's points (stacked below)
+    Numbers: Show the point value at the bottom
+
+    So if the user scored 5 points and opponent scored 3, you'd see 5 tall blue bars, 3 tall pink bars, and 2 short pink bars - 
+    creating a side-by-side comparison of who scored each point in the match.RetryClaude can make mistakes. Please double-check responses.
+  */
   // Generate point progression bars
   for (let i = 1; i <= Math.max(userScore, opponentScore); i++) {
     const userHeight = i <= userScore ? 80 : 20;
@@ -974,7 +1010,7 @@ showDetailedGameSession(matchId: string): void {
   
   if (!modal || !tbody) return <Promise<void>>Promise.resolve();
   // let user =  app.getUser();
-  const HistoryMatches =  this.fetchUserMatchHistory(this.user.data['id'] || this.user!.id);
+  const HistoryMatches =  this.fetchUserMatchHistory(this.user.id);
   // JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
   const currentUser = app.getUsername();
   
@@ -1130,11 +1166,24 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     //     userWon = true;
     // }
 
-    if (userWon) {
-      stats.wins++;
-    } else {
-      stats.losses++;
-    }
+    // if (userWon) {
+    //   stats.wins++;
+    // } else {
+    //   stats.losses++;
+    // }
+    // console.log("Current user data in the profile: ", this.)
+    // let response = await api.getUserById(this.user.data['id'] || app.state.user!.id);
+    // console.log('User response:', response);
+    // if ((response).success ) {
+    //   const userData = response.data;
+    //   if (userData.username === match.player1_name) {
+    //     userWon ? stats.wins++ : stats.losses++;
+    //   } else if (userData.username === match.player2_name) {
+    //     userWon ? stats.wins++ : stats.losses++;
+    //   }
+    // }
+    stats.wins = this.user.stats?.wins || 0;
+    stats.losses = this.user.stats?.losses || 0;
   });
 
   // Calculate win rate
@@ -1144,7 +1193,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
 }
   populateProfileData(userData?: any, matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
     
-    const user = userData.data || app.state.user;
+    const user = userData || app.state.user;
         
     console.log('populate with userData:', userData.data, "app user data: ", app.state.user);
 
@@ -1190,7 +1239,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     }
     if (this.profileForm.profileAvatar) {
       // First check localStorage for cached profile picture
-      const cachedImage = this.getProfilePictureFromLocalStorage();
+      const cachedImage =  this.getProfilePictureFromLocalStorage();
       
       if (cachedImage) {
         this.profileForm.profileAvatar.src = cachedImage;

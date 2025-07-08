@@ -43,7 +43,7 @@ export const ENDPOINTS = {
         me:  `${baseURL}/users/me`,
         showUser:  `${baseURL}/users/showUser`,
         allUsers: `${baseURL}/users`,
-        singleUser: `${baseURL}/users/`,
+        singleUser: `${baseURL}/users/`, //userId will be appended
         updateUser: `${baseURL}/users/me/profile`, // PATCH /users/:userId
         // This will be used with userId appended
     },
