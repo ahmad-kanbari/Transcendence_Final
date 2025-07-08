@@ -5,6 +5,7 @@ import { CONFIG } from './constants';
 import toastManager from './toastManager';
 import chat from './chat';
 import pages from './pages';
+import app from './app';
 // import notificationManager from './NotificationManager';
 
 // Declare socket.io global
@@ -351,16 +352,19 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                 console.error('Error marking messages as read:', error);
             }
             
-            components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
+            // components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
+            toastManager.success(app.getUsername(), 'Opened chat from notification');
             
         } else {
             console.error('Chat not found for sender:', senderId);
-            components.showToast('error', 'Chat Error', 'Could not find chat with this user', 3000);
+            // components.showToast('error', 'Chat Error', 'Could not find chat with this user', 3000);
+            toastManager.error(app.getUsername(), 'Could not find chat with this user');
         }
         
     } catch (error) {
         console.error('Error handling message notification:', error);
-        components.showToast('error', 'Error', 'Failed to open chat', 3000);
+        // components.showToast('error', 'Error', 'Failed to open chat', 3000);
+        toastManager.error(app.getUsername(), 'Failed to open chat');
     }
 }
 

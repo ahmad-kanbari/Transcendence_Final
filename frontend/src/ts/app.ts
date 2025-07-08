@@ -19,6 +19,7 @@ import notificationManager from './NotificationManager';
 // import friends from './friend';
 import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
+import toastManager from './toastManager';
 
 // Define interfaces for state and user
 interface User {
@@ -60,6 +61,9 @@ class App {
   initialized: boolean;
   logoutInitialized: boolean;
   state: AppState;
+  userName: string | null = null;
+  userId: number | null = null;
+  userEmail: any;
 
   constructor() {
     this.appContainer = null;
@@ -122,12 +126,13 @@ class App {
       
       return true;
     } catch (error) {
-      components.showToast(
-        'error',
-        'Application Error',
-        'There was a problem loading the application. Please refresh the page.',
-        5000
-      );
+      // components.showToast(
+      //   'error',
+      //   'Application Error',
+      //   'There was a problem loading the application. Please refresh the page.',
+      //   5000
+      // );
+      toastManager.error(app.getUsername(), 'There was a problem loading the application. Please refresh the page.');
       return false;
     } finally {
       components.hideSpinner();
@@ -169,7 +174,8 @@ class App {
                   this.state.user = result.data.user;
                   this.state.isAuthenticated = result.data.isAuthenticated ?? true;
                   
-                  components.showToast('success', 'Welcome Back!', `Hello ${this.getUsername()}!`, 3000);
+
+                  toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
                   login.updateUIAuthState();
                   
                   // Check if 2FA is required
@@ -181,7 +187,8 @@ class App {
                   pages.showPage('home');
                   return;
                 }else{
-                  components.showToast('error', 'Login Error', 'Failed to complete Google login.', 5000);
+                  // components.showToast('error', 'Login Error', 'Failed to complete Google login.', 5000);
+                   toastManager.error(this.getUsername(), 'Failed to complete Google login.');
 
                 }
             
@@ -190,7 +197,8 @@ class App {
               
             } catch (error) {
               console.error('Error after OAuth success:', error);
-              components.showToast('error', 'Login Error', 'Failed to complete login process.', 5000);
+              // components.showToast('error', 'Login Error', 'Failed to complete login process.', 5000);
+              toastManager.error(this.getUsername(), `Failed to complete login process. with ${error}`);
             } finally {
               components.hideSpinner();
             }
@@ -199,7 +207,8 @@ class App {
             window.history.replaceState({}, document.title, window.location.pathname);
             
             const errorMessage = oauthMessage ? decodeURIComponent(oauthMessage) : 'Google login failed';
-            components.showToast('error', 'Login Failed', errorMessage, 5000);
+            // components.showToast('error', 'Login Failed', errorMessage, 5000);
+            toastManager.error(this.getUsername(), errorMessage);
           }
        
 
@@ -213,7 +222,7 @@ class App {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               
-              components.showToast('success', 'Welcome Back!', `Hello ${this.getUsername()}!`, 3000);
+              toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
               login.updateUIAuthState();
               
               // Check if 2FA is required
@@ -226,7 +235,8 @@ class App {
               return;
             }
           } catch (error) {
-            console.error('Error fetching user data after OAuth:', error);
+            // console.error('Error fetching user data after OAuth:', error);
+            toastManager.error(this.getUsername(), 'Failed to fetch user data after OAuth login.');
             // Clear invalid token
             utils.deleteCookie('accessToken');
             this.state.user = null;
@@ -266,7 +276,8 @@ class App {
             } else {
               // Token is invalid, clear it
               utils.deleteCookie('accessToken');
-              components.showToast('warning', 'Session Expired', 'Please log in again.', 5000);
+              // components.showToast('warning', 'Session Expired', 'Please log in again.', 5000);
+              toastManager.warning(this.getUsername(), 'Please log in again.');
             }
           } catch (error) {
             console.error('Error fetching user data:', error);
@@ -296,7 +307,8 @@ class App {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               
-              components.showToast('success', 'Login Successful!', `Welcome ${this.getUsername()}!`, 3000);
+              // components.showToast('success', 'Login Successful!', `Welcome ${this.getUsername()}!`, 3000);
+              toastManager.success(this.getUsername(), `Welcome ${this.getUsername()}!`);
               login.updateUIAuthState();
               
               // Check if 2FA is required
@@ -312,12 +324,14 @@ class App {
         
           
           // No token or failed to get user data
-          components.showToast('error', 'Login Failed', 'Authentication was unsuccessful.', 5000);
+          // components.showToast('error', 'Login Failed', 'Authentication was unsuccessful.', 5000);
+          toastManager.error(this.getUsername(), 'Authentication was unsuccessful.');
           router.navigate('/login');
           
         } catch (error) {
           console.error('OAuth callback error:', error);
-          components.showToast('error', 'Login Error', 'An error occurred during login.', 5000);
+          // components.showToast('error', 'Login Error', 'An error occurred during login.', 5000);
+          toastManager.error(this.getUsername(), 'An error occurred during login.');
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -336,7 +350,8 @@ class App {
         
         try {
           if (this.state.user) {
-            components.showToast('info', 'Already Logged In', 'You are already logged in.',5000);
+            // components.showToast('info', 'Already Logged In', 'You are already logged in.',5000);
+            toastManager.info(this.getUsername(), 'You are already logged in.');
             router.navigate('/profile');
             return;
           }
@@ -351,7 +366,8 @@ class App {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
             login.updateUIAuthState();
-            components.showToast('info', 'Session Restored', 'Your session has been restored.', 5000);
+            // components.showToast('info', 'Session Restored', 'Your session has been restored.', 5000);
+            toastManager.info(this.getUsername(), 'Your session has been restored.');
             router.navigate('/profile');
             return;
           }
@@ -417,12 +433,14 @@ class App {
               );
           }
           else {
-            components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
+            // components.showToast('warning', 'Authentication Required', 'Please log in to play the game.', 5000);
+            toastManager.warning(this.getUsername(), 'Please log in to play the game.');
             router.navigate('/login');
           }
       
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          // components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          toastManager.error(this.getUsername(), 'An error occurred while checking authentication.');
           router.navigate('/login');
             utils.deleteCookie('accessToken');
             this.state.user = null;
@@ -455,11 +473,13 @@ class App {
             pages.showPage('chat');
           }
            else {
-            components.showToast('warning', 'Authentication Required', 'Please log in to access chat.', 5000);
+            // components.showToast('warning', 'Authentication Required', 'Please log in to access chat.', 5000);
+            toastManager.warning(this.getUsername(), 'Please log in to access chat.');
             router.navigate('/login');
           }
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          // components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          toastManager.error(this.getUsername(), 'An error occurred while checking authentication.');
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -492,11 +512,13 @@ class App {
             pages.showPage('profile');
           }
           else {
-            components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.', 5000);
+            // components.showToast('warning', 'Authentication Required', 'Please log in to view your profile.', 5000);
+            toastManager.warning(this.getUsername(), 'Please log in to view your profile.');
             router.navigate('/login');
           }
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          // components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          toastManager.error(this.getUsername(), 'An error occurred while checking authentication.');
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -509,7 +531,8 @@ class App {
         
         try {
           if (this.state.isAuthenticated) {
-            components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
+            // components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
+            toastManager.info(this.getUsername(), 'You are already verified.');
             router.navigate('/');
             return;
           }
@@ -523,12 +546,14 @@ class App {
               login.updateUIAuthState();
               
               if (this.state.isAuthenticated) {
-                components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
+                // components.showToast('info', 'Already Authenticated', 'You are already verified.', 5000);
+                toastManager.info(this.getUsername(), 'You are already verified.');
                 router.navigate('/');
                 return;
               }
             } else {
-              components.showToast('warning', 'Authentication Required', 'Please log in to set up 2FA.', 5000);
+              // components.showToast('warning', 'Authentication Required', 'Please log in to set up 2FA.', 5000);
+              toastManager.warning(this.getUsername(), 'Please log in to set up 2FA.');
               router.navigate('/login');
               return;
             }
@@ -537,7 +562,8 @@ class App {
           pages.showPage('twoFA');
           login.updateUIAuthState();
         } catch (error) {
-          components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          // components.showToast('error', 'Authentication Error', 'An error occurred while checking authentication.', 5000);
+          toastManager.error(this.getUsername(), 'An error occurred while checking authentication.'); 
           router.navigate('/login');
         } finally {
           components.hideSpinner();
@@ -650,7 +676,8 @@ class App {
       utils.cleanUp();    
       login.updateUIAuthState();
       
-      components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
+      // components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
+      toastManager.success(this.getUsername(), 'You have been successfully logged out.');
       chat.cleanupSocketHandlers();
       setTimeout(() => {
         window.location.href = '/';
@@ -663,7 +690,8 @@ class App {
       this.state.user = null;
       login.updateUIAuthState();
       
-      components.showToast('warning', 'Logout Status', 'You have been logged out, but there was an issue with the server.', 5000);
+      // components.showToast('warning', 'Logout Status', 'You have been logged out, but there was an issue with the server.', 5000);
+      toastManager.warning(this.getUsername(), 'You have been logged out, but there was an issue with the server.');
  
       setTimeout(() => {
         window.location.href = '/';
@@ -689,11 +717,45 @@ class App {
   }
 
   getUsername(): string {
-    return this.state.user?.username || '';
+        let usernameFromLocalStorage = localStorage.getItem('user') || null ;
+        console.log('Username from localStorage:', usernameFromLocalStorage);
+        if (usernameFromLocalStorage != null) {
+            try {
+                const userObj = JSON.parse(usernameFromLocalStorage);
+                console.log('Parsed user object:', userObj);
+                this.userName = userObj['user']?.['username'] ;
+                console.log('User name set to:', this.userName);
+                // this.userName = app.getUsername();
+                this.userId = Number(userObj.user.id) ??  null;
+                console.log('User ID set to:', this.userId);
+                this.userEmail = userObj['user']?.['email'];
+            } catch (e) {
+                console.error('Failed to parse user from localStorage:', e);
+                this.userName = null;
+            }
+        }
+    return this.userName ||this.state.user?.username || '';
   }
 
   getEmail(): string {
-    return this.state.user?.email || '';
+     let usernameFromLocalStorage = localStorage.getItem('user') || null ;
+        console.log('Username from localStorage:', usernameFromLocalStorage);
+        if (usernameFromLocalStorage != null) {
+            try {
+                const userObj = JSON.parse(usernameFromLocalStorage);
+                console.log('Parsed user object:', userObj);
+                this.userName = userObj['user']?.['username'] ;
+                console.log('User name set to:', this.userName);
+                // this.userName = app.getUsername();
+                this.userId = Number(userObj.user.id) ??  null;
+                console.log('User ID set to:', this.userId);
+                this.userEmail = userObj['user']?.['email'];
+            } catch (e) {
+                console.error('Failed to parse user from localStorage:', e);
+                this.userName = null;
+            }
+        }
+    return  this.userEmail || this.state.user?.email || '';
   }
 
   getIs42User(): boolean {
@@ -745,7 +807,8 @@ async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
     // Validate required match data
     if (!matchObj.matchId) {
       console.error('Match submission failed: Missing matchId');
-      components.showToast('error', 'Match Submission Error', 'Invalid match data - missing match ID.', 5000);
+      // components.showToast('error', 'Match Submission Error', 'Invalid match data - missing match ID.', 5000);
+      toastManager.error(this.getUsername(), 'Invalid match data - missing match ID.');
       return;
     }
 
@@ -765,12 +828,13 @@ async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
 
     if (!result.success) {
       console.error('Match submission failed:', result.error);
-      components.showToast(
-        'error', 
-        'Match Submission Error', 
-        result.error || 'An error occurred while submitting the match.', 
-        5000
-      );
+      // components.showToast(
+      //   'error', 
+      //   'Match Submission Error', 
+      //   result.error || 'An error occurred while submitting the match.', 
+      //   5000
+      // );
+      toastManager.error(this.getUsername(), result.error || 'An error occurred while submitting the match.');
       return;
     }
 
@@ -794,21 +858,23 @@ async setSubmitMatchFunction(matchObj: MatchObject): Promise<void> {
       'tournament': 'Tournament'
     }[matchObj.match_type] || 'Match';
     
-    components.showToast(
-      'success', 
-      'Match Submitted', 
-      `${matchTypeDisplay} match result saved successfully!`, 
-      3000
-    );
+    // components.showToast(
+    //   'success', 
+    //   'Match Submitted', 
+    //   `${matchTypeDisplay} match result saved successfully!`, 
+    //   3000
+    // );
+    toastManager.success(this.getUsername(), `${matchTypeDisplay} match result saved successfully!`);
 
   } catch (error) {
     console.error('Unexpected error during match submission:', error);
-    components.showToast(
-      'error', 
-      'Submission Error', 
-      'An unexpected error occurred while submitting the match.', 
-      5000
-    );
+    // components.showToast(
+    //   'error', 
+    //   'Submission Error', 
+    //   'An unexpected error occurred while submitting the match.', 
+    //   5000
+    // );
+    toastManager.error(this.getUsername(), 'An unexpected error occurred while submitting the match.');
   }
 }
 
@@ -821,7 +887,8 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
     // Validate tournament data
     if (!Array.isArray(matchArray) || matchArray.length === 0) {
       console.error('Tournament submission failed: Invalid match array');
-      components.showToast('error', 'Tournament Submission Error', 'No tournament matches to submit.', 5000);
+      // components.showToast('error', 'Tournament Submission Error', 'No tournament matches to submit.', 5000);
+      toastManager.error(this.getUsername(), 'No tournament matches to submit.');
       return;
     }
 
@@ -829,7 +896,8 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
     const tournamentId = matchArray[0]?.tournamentId;
     if (!tournamentId) {
       console.error('Tournament submission failed: Missing tournament ID');
-      components.showToast('error', 'Tournament Submission Error', 'Invalid tournament data - missing tournament ID.', 5000);
+      // components.showToast('error', 'Tournament Submission Error', 'Invalid tournament data - missing tournament ID.', 5000);
+      toastManager.error(this.getUsername(), 'Invalid tournament data - missing tournament ID.');
       return;
     }
 
@@ -860,20 +928,25 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
 
     if (failures.length > 0) {
       console.error('Some tournament matches failed to submit:', failures);
-      components.showToast(
-        'warning', 
-        'Partial Tournament Submission', 
-        `${successes.length}/${matchArray.length} matches submitted successfully.`, 
-        5000
+      // components.showToast(
+      //   'warning', 
+      //   'Partial Tournament Submission', 
+      //   `${successes.length}/${matchArray.length} matches submitted successfully.`, 
+      //   5000
+      // );
+      toastManager.warning(
+        this.getUsername(), 
+        `${successes.length}/${matchArray.length} matches submitted successfully.`
       );
     } else {
       console.log('All tournament matches submitted successfully');
-      components.showToast(
-        'success', 
-        'Tournament Completed', 
-        'All tournament matches submitted successfully!', 
-        4000
-      );
+      // components.showToast(
+      //   'success', 
+      //   'Tournament Completed', 
+      //   'All tournament matches submitted successfully!', 
+      //   4000
+      // );
+      toastManager.success(this.getUsername(), 'All tournament matches submitted successfully!');
     }
 
     // Update local state regardless of partial failures
@@ -901,6 +974,8 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
         
         // You can add additional UI updates here based on tournament completion
         // For example, showing the final bracket or winner announcement
+      }else {
+        toastManager.error(this.getUsername(), `Failed to fetch tournament details.${tournamentDetails.data}`);
       }
     } catch (detailsError) {
       console.warn('Could not fetch tournament details:', detailsError);
@@ -908,12 +983,13 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
 
   } catch (error) {
     console.error('Unexpected error during tournament submission:', error);
-    components.showToast(
-      'error', 
-      'Tournament Submission Error', 
-      'An unexpected error occurred while submitting the tournament.', 
-      5000
-    );
+    toastManager.error(this.getUsername(), 'An unexpected error occurred while submitting the tournament.');
+    // components.showToast(
+    //   'error', 
+    //   'Tournament Submission Error', 
+    //   'An unexpected error occurred while submitting the tournament.', 
+    //   5000
+    // );
   }
 }
 
@@ -936,12 +1012,16 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
             
             window.chatSocket.on('connect', () => {
                 console.log('Socket connected');
-                components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+                // components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+                // toastManager.success(this.getUsername(), 'Real-time features active!');
+                console.log('Chat socket initialized successfully');
             });
             
             window.chatSocket.on('disconnect', () => {
                 console.log('Socket disconnected');
-                components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
+                // components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
+                // toastManager.warning(this.getUsername(), 'Real Time Chat Disconnected, Attempting to reconnect...');
+                console.log('Chat socket disconnected');
             });
         }
         

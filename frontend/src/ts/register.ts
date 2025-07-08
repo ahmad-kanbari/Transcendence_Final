@@ -4,6 +4,8 @@ import utils from './utils';
 import router from './router';
 import login from './login';
 import { VALIDATION_INPUTS } from './constants';
+import toastManager from './toastManager';
+import app from './app';
 // Define interface for register form elements
 interface RegisterForm {
   tab: HTMLElement | null;
@@ -121,7 +123,9 @@ showRegisterForm(): void {
     const confirmPasswordElement = document.getElementById('confirmPassword') as HTMLInputElement | null;
     
     if (!usernameElement || !emailElement || !passwordElement || !confirmPasswordElement) {
-      components.showToast('error', 'Registration Error', 'Form elements not found.');
+      // components.showToast('error', 'Registration Error', 'Form elements not found.');
+      toastManager.error(app.getUsername(), 'Form elements not found.');
+      console.error('Register: Form elements not found');
       return;
     }
     
@@ -131,29 +135,34 @@ showRegisterForm(): void {
     const confirmPassword = confirmPasswordElement.value;
     
     if (!username || !email || !password || !confirmPassword) {
-      components.showToast('error', 'Registration Error', 'Please fill out all fields.');
+      // components.showToast('error', 'Registration Error', 'Please fill out all fields.');
+      toastManager.error(app.getUsername(), 'Please fill out all fields.');
       return;
     }
     
     //validation input
     if (username.length < utils.VALIDATION_INPUTS.username.minLength!) {
-      components.showToast('error', 'Registration Error', `Username must be at least ${utils.VALIDATION_INPUTS.username.minLength} characters.`);
+      // components.showToast('error', 'Registration Error', `Username must be at least ${utils.VALIDATION_INPUTS.username.minLength} characters.`);
+      toastManager.error(app.getUsername(), `Username must be at least ${utils.VALIDATION_INPUTS.username.minLength} characters.`);
       return;
     }
     
     if (password.length < utils.VALIDATION_INPUTS.password.minLength!) {
-      components.showToast('error', 'Registration Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`);
+      // components.showToast('error', 'Registration Error', `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`);
+      toastManager.error(app.getUsername(), `Password must be at least ${utils.VALIDATION_INPUTS.password.minLength} characters.`);
       return;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      components.showToast('warning', 'Invalid Email', 'Please enter a valid email address.');
+      // components.showToast('warning', 'Invalid Email', 'Please enter a valid email address.');
+      toastManager.warning(app.getUsername(), 'Please enter a valid email address.');
       return;
     }
     
     if (password !== confirmPassword) {
-      components.showToast('warning', 'Password Mismatch', 'Passwords do not match. Please try again.');
+      // components.showToast('warning', 'Password Mismatch', 'Passwords do not match. Please try again.');
+      toastManager.warning(app.getUsername(), 'Passwords do not match. Please try again.');
       return;
     }
     
@@ -169,7 +178,8 @@ showRegisterForm(): void {
       const result = await api.register(registerData);
       console.log('Registration result:', result);
       if (result.success) {
-        components.showToast('success', 'Registration Successful', 'Your account has been created. Please log in.');
+        // components.showToast('success', 'Registration Successful', 'Your account has been created. Please log in.');
+        toastManager.success(app.getUsername(), 'Your account has been created. Please log in.');
         
         if (this.registerForm.form) {
           this.registerForm.form.reset();
@@ -184,12 +194,14 @@ showRegisterForm(): void {
         
         utils.setFormLoading(this.registerForm.submitBtn, false);
       } else {
-        components.showToast('error', 'Registration Failed', result.error || 'Please try again with a different username or email.');
+        // components.showToast('error', 'Registration Failed', result.error || 'Please try again with a different username or email.');
+        toastManager.error(app.getUsername(), result.error || 'Please try again with a different username or email.');
         utils.setFormLoading(this.registerForm.submitBtn, false);
       }
     } catch (error: any) {
       console.error('Registration submission error:', error);
-      components.showToast('error', 'System Error', 'An unexpected error occurred. Please try again later.');
+      // components.showToast('error', 'System Error', 'An unexpected error occurred. Please try again later.');
+      toastManager.error(app.getUsername(), 'An unexpected error occurred. Please try again later.');
       utils.setFormLoading(this.registerForm.submitBtn, false);
     }
   }

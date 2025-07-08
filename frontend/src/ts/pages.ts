@@ -4,6 +4,8 @@ import components from './components';
 import { AVAILABLE_PAGES } from './constants';
 import localization, { t } from './localization';
 import accessibility from './accessibility';
+import toastManager from './toastManager';
+import app from './app';
 
 // Define interfaces for pages data structure
 interface PagesCollection {
@@ -48,12 +50,16 @@ class Pages {
       console.log('All pages loaded successfully:', this.pages);
       
     } catch (error) {
-      components.showToast(
-        'error',
-        'Content Load Error',
-        'Failed to load page content. Please try refreshing the page.',
-        6000
-      );
+      // components.showToast(
+      //   'error',
+      //   'Content Load Error',
+      //   'Failed to load page content. Please try refreshing the page.',
+      //   6000
+      // );
+      toastManager.error(
+        app.getUsername(),
+        'Failed to load page content. Please try refreshing the page.'
+      );  
     } finally {
       components.hideSpinner();
     }
@@ -63,11 +69,15 @@ class Pages {
     const content = this.pages[pageName];
     
     if (!content) {
-      components.showToast(
-        'error',
-        'Page Not Found',
-        `The requested page "${pageName}" could not be found.`,
-        5000
+      // components.showToast(
+      //   'error',
+      //   'Page Not Found',
+      //   `The requested page "${pageName}" could not be found.`,
+      //   5000
+      // );
+      toastManager.error(
+        app.getUsername(),
+        `The requested page "${pageName}" could not be found.`
       );
 
       if (this.pages.notFound) {
@@ -103,11 +113,15 @@ class Pages {
         detail: { page: pageName } 
       }));
     } catch (error) {
-      components.showToast(
-        'error',
-        'Page Display Error',
-        `There was a problem displaying the ${pageName} page.`,
-        5000
+      // components.showToast(
+      //   'error',
+      //   'Page Display Error',
+      //   `There was a problem displaying the ${pageName} page.`,
+      //   5000
+      // );
+      toastManager.error(
+        app.getUsername(),
+        `There was a problem displaying the ${pageName} page.`
       );
     } finally {
       components.hideSpinner();
