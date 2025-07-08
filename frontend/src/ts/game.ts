@@ -303,7 +303,7 @@ class PongGame {
         if (this.gameArea && 'ResizeObserver' in window) {
             const resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
-                    console.log('Game area resized');
+                    // console.log('Game area resized');
                     this.updateGameDimensions();
                     if (!this.gameRunning) {
                         this.initializePositions();
@@ -504,8 +504,8 @@ class PongGame {
         }
           this.gameWidth = width;
         this.gameHeight = height;
-         console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
-        console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
+        //  console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
+        // console.log('Game dimensions updated:', { width: this.gameWidth, height: this.gameHeight });
         // Update paddle dimensions
         this.paddleHeight = this.gameHeight * 0.15; // 15% of game height
         this.paddleWidth = this.gameWidth * 0.01;   // 1% of game width
@@ -757,7 +757,7 @@ async startGame(): Promise<void> {
         player1_id: Number(userData.user?.id) || 0,
         player2_id: null,
         player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER_1',
-        player2_name: this.player2NameInput!.value || 'PLAYER_2',
+        player2_name: this.player2Name!.textContent || 'PLAYER_2',
         player1_score: 0,
         player2_score: 0,
         winner: '',
@@ -767,7 +767,7 @@ async startGame(): Promise<void> {
 
     // Submit single match if not in tournament
     if (!this.isTournamentMode && !this.isMultiplayerMode) {
-        if (this.matchObj && this.submitMatch) {
+        if (this.matchObj ) {
             console.log("Submitting match data to backend:", this.matchObj);
             const response = await api.createMatch(this.matchObj);
             console.log("Match created successfully:", response);
