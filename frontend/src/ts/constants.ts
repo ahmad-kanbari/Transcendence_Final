@@ -1,4 +1,6 @@
-export const AVAILABLE_PAGES = ['home', 'game', 'login', 'profile', 'notFound', 'twoFA', 'chat'];
+import profile from "./profile";
+
+export const AVAILABLE_PAGES = ['home', 'game', 'login','friendProfile', 'profile', 'notFound', 'twoFA', 'chat'];
 
 
 export const PAGES = {
@@ -9,6 +11,7 @@ export const PAGES = {
     chat:'src/pages/chat.html',
     profile: 'src/pages/profile.html',
     twoFA: 'src/pages/twoFA.html',
+    friendProfile: 'src/pages/friendProfile.html',
 };
 
 export const TOAST_TYPES = ['error', 'warning', 'success', 'info'];

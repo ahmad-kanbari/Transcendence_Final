@@ -6,6 +6,8 @@ import toastManager from './toastManager';
 import notificationManager from './NotificationManager';
 import localization from './localization';
 import app from './app';
+import ChatNavigationHelper from './chatNavigationHelper';
+import router from './router';
 
 // Declare socket.io global
 declare const io: any;
@@ -145,6 +147,7 @@ class Chat {
             this.createBlockedUsersSection(); // Create section first
             this.setupSocketHandlers();
             this.setupPopupEventListeners(); // FIXED: Setup popup listeners
+             this.setupMessageContextMenu();
             this.initializeParticles();
             this.loadChats();
             this.loadFriendData();
@@ -586,6 +589,63 @@ class Chat {
             
             console.log('Chat deactivated');
     }
+    private updatePopupWithProfileLink(user: any): void {
+    // Add this to your existing showPopup method
+    const existingPopup = this.elements.friendSearchPopup;
+    if (existingPopup) {
+        // Add profile button if it doesn't exist
+        let profileBtn = existingPopup.querySelector('#friendSearchPopupProfileBtn');
+        if (!profileBtn) {
+            profileBtn = document.createElement('button');
+            profileBtn.id = 'friendSearchPopupProfileBtn';
+            profileBtn.className = 'friend-action-btn';
+            (profileBtn as HTMLElement).style.cssText = `
+                background: linear-gradient(45deg, var(--cyber-purple), #8a2be2);
+                color: white;
+                border: 2px solid var(--cyber-purple);
+                padding: 12px 24px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-weight: bold;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                margin-top: 10px;
+                width: 100%;
+            `;
+            profileBtn.innerHTML = '<i class="bi bi-person-circle mr-2"></i>View Profile';
+            
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (this.currentPopupUser) {
+                    ChatNavigationHelper.navigateToFriendProfile(this.currentPopupUser.id);
+                    this.closePopup();
+                }
+            });
+
+            profileBtn.addEventListener('mouseenter', () => {
+                if (profileBtn) {
+                    (profileBtn as HTMLElement).style.transform = 'translateY(-2px)';
+                    (profileBtn as HTMLElement).style.boxShadow = '0 5px 15px rgba(138, 43, 226, 0.4)';
+                }
+            });
+
+            profileBtn.addEventListener('mouseleave', () => {
+                if (profileBtn) {
+                    (profileBtn as HTMLElement).style.transform = 'translateY(0)';
+                    (profileBtn as HTMLElement).style.boxShadow = 'none';
+                }
+            });
+
+            // Add to popup content
+            const buttonContainer = existingPopup.querySelector('.friend-action-buttons') || 
+                                  existingPopup.querySelector('div[style*="flex"]');
+            if (buttonContainer) {
+                buttonContainer.appendChild(profileBtn);
+            }
+        }
+    }
+}
      async sendMessage(): Promise<void> {
         if (!this.elements.messageInput || !this.currentChatId) return;
 
@@ -622,22 +682,38 @@ class Chat {
         }
     }
 
-     appendMessage(message: any): void {
-        if (!this.elements.messageBox) return;
+appendMessage(message: any): void {
+    if (!this.elements.messageBox) return;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
+    messageDiv.setAttribute('data-sender-id', message.sender_id);
+    messageDiv.setAttribute('data-sender-name', message.sender_name || 'Unknown');
     
-        // console.log(`Appending message: ${message.content} from ${message.sender_id}`);
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
-        
-        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        messageDiv.innerHTML = `
-            <div>${message.content}</div>
-            <div style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
-        `;
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
-        this.elements.messageBox.appendChild(messageDiv);
-        this.elements.messageBox.scrollTop = this.elements.messageBox.scrollHeight;
-    }
+    // Enhanced message with clickable username (only for received messages)
+    const senderName = message.sender_name || 'Unknown';
+    const isOwnMessage = message.sender_id === this.currentUserId;
+    
+    messageDiv.innerHTML = `
+        ${!isOwnMessage ? `
+            <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
+                <span class="clickable-username" 
+                      data-user-id="${message.sender_id}" 
+                      style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
+                      onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
+                    ${senderName}
+                </span>
+            </div>
+        ` : ''}
+        <div class="message-content">${message.content}</div>
+        <div class="message-time" style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
+    `;
+
+    this.elements.messageBox.appendChild(messageDiv);
+    this.elements.messageBox.scrollTop = this.elements.messageBox.scrollHeight;
+}
 
     clearMessages(): void {
         if (this.elements.messageBox) {
@@ -659,7 +735,7 @@ class Chat {
 
         try {
             const users = await api.searchUsers(query);
-            this.renderFriendSearchResults(users);
+            await this.renderFriendSearchResults(users);
         } catch (error) {
             console.error('Error searching users:', error);
 
@@ -678,37 +754,81 @@ class Chat {
 
         try {
             const users = await api.searchUsers(query);
-            this.renderChatSearchResults(users);
+            await this.renderChatSearchResults(users);
         } catch (error) {
             console.error('Error searching users:', error);
         }
     }
 
-     renderFriendSearchResults(users: any[]): void {
-        if (!this.elements.userSearchResults) return;
+     async renderFriendSearchResults(users: any[]): Promise<void> {
+    if (!this.elements.userSearchResults) return;
 
-        this.elements.userSearchResults.innerHTML = '';
+    this.elements.userSearchResults.innerHTML = '';
 
-        if (users.length === 0) {
-            this.elements.userSearchResults.style.display = 'none';
-            return;
-        }
+    if (users.length === 0) {
+        this.elements.userSearchResults.style.display = 'none';
+        return;
+    }
 
-        users.forEach(user => {
-            const li = document.createElement('li');
-            li.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
-            li.textContent = user.username;
-            // Add hover effect
-            li.addEventListener('mouseenter', () => {
-                li.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            });
-            li.addEventListener('mouseleave', () => {
-                li.style.backgroundColor = 'transparent';
-            });
+    // Load online status for each user
+    const usersWithStatus = await Promise.all(
+        users.map(async (user: any) => {
+            try {
+                const userResult = await api.getUserById(user.id);
+                return {
+                    ...user,
+                    isOnline: userResult.success ? userResult.data.isOnline : false
+                };
+            } catch (error) {
+                console.error(`Error loading status for user ${user.id}:`, error);
+                return { ...user, isOnline: false };
+            }
+        })
+    );
 
-            // li.addEventListener('click', () => this.sendFriendRequest(user.id));
-                       // FIXED: Use showPopup instead of showFriendActionPopup
-            li.addEventListener('click', (e) => {
+    usersWithStatus.forEach(user => {
+        const li = document.createElement('li');
+        li.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
+        
+        // Online status classes and colors
+        const statusColor = user.isOnline ? '#4CAF50' : '#757575';
+        const statusText = user.isOnline ? 'Online' : 'Offline';
+        
+        li.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="online-status" style="
+                    width: 8px; 
+                    height: 8px; 
+                    border-radius: 50%; 
+                    background-color: ${statusColor};
+                    ${user.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
+                " title="${statusText}"></div>
+                <span>${user.username}</span>
+                ${user.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
+            </div>
+            <div class="user-actions" style="display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s ease;">
+                <button class="mini-btn profile-btn" onclick="ChatNavigationHelper.navigateToFriendProfile('${user.id}')" style="background: var(--cyber-green); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Profile</button>
+                <button class="mini-btn action-btn" style="background: var(--cyber-blue); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Actions</button>
+            </div>
+        `;
+
+        // Add hover effect
+        li.addEventListener('mouseenter', () => {
+            li.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            const actions = li.querySelector('.user-actions') as HTMLElement;
+            if (actions) actions.style.opacity = '1';
+        });
+        
+        li.addEventListener('mouseleave', () => {
+            li.style.backgroundColor = 'transparent';
+            const actions = li.querySelector('.user-actions') as HTMLElement;
+            if (actions) actions.style.opacity = '0';
+        });
+
+        // Add click handler for actions button
+        const actionBtn = li.querySelector('.action-btn');
+        if (actionBtn) {
+            actionBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 this.showPopup(user);
@@ -718,11 +838,13 @@ class Chat {
                     this.elements.userSearch.value = '';
                 }
             });
-            this.elements.userSearchResults!.appendChild(li);
-        });
+        }
 
-        this.elements.userSearchResults.style.display = 'block';
-    }
+        this.elements.userSearchResults!.appendChild(li);
+    });
+
+    this.elements.userSearchResults.style.display = 'block';
+}
 
 
 
@@ -733,7 +855,7 @@ class Chat {
             if (result.ok) {
                 // components.showToast('success', 'Friend Request Sent', 'Friend request sent successfully!', 3000);
                 toastManager.success(app.getUsername(), 'Friend request sent successfully!');
-                this.loadFriendData();
+                await this.loadFriendData();
                 
                 // Clear search
                 if (this.elements.userSearch && this.elements.userSearchResults) {
@@ -752,9 +874,8 @@ class Chat {
         }
     }
 
-    renderChatSearchResults(users: any[]): void {
+    async renderChatSearchResults(users: any[]): Promise<void> {
     if (!this.elements.userSearchResultsChat) {
-        // console.error('userSearchResultsChat element not found!');
         toastManager.error(app.getUsername(), 'Chat search results element not found');
         return;
     } 
@@ -767,105 +888,150 @@ class Chat {
     }
     
     this.elements.userSearchResultsChat.style.display = 'block';
-    users.forEach(user => {
-        const div = document.createElement('div');
-        div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333;';
-        div.textContent = user.username || 'Unknown User';
-        
-        // MODIFIED: Create chat when clicking on user
-        div.addEventListener('click', async () => {
+    
+    // Load online status for each user
+    const usersWithStatus = await Promise.all(
+        users.map(async (user: any) => {
             try {
-                // Hide search results immediately
-                this.elements.userSearchResultsChat!.style.display = 'none';
-                if (this.elements.userSearchInput) {
-                    this.elements.userSearchInput.value = '';
-                }
+                const userResult = await api.getUserById(user.id);
+                return {
+                    ...user,
+                    isOnline: userResult.success ? userResult.data.isOnline : false
+                };
+            } catch (error) {
+                console.error(`Error loading status for user ${user.id}:`, error);
+                return { ...user, isOnline: false };
+            }
+        })
+    );
+    
+    usersWithStatus.forEach(user => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
+        
+        // Online status classes and colors
+        const statusColor = user.isOnline ? '#4CAF50' : '#757575';
+        const statusText = user.isOnline ? 'Online' : 'Offline';
+        
+        div.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div class="online-status" style="
+                    width: 8px; 
+                    height: 8px; 
+                    border-radius: 50%; 
+                    background-color: ${statusColor};
+                    ${user.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
+                " title="${statusText}"></div>
+                <span>${user.username || 'Unknown User'}</span>
+                ${user.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
+            </div>
+            <div class="user-actions" style="display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s ease;">
+                <button class="mini-btn profile-btn" onclick="ChatNavigationHelper.navigateToFriendProfile('${user.id}')" style="background: var(--cyber-green); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Profile</button>
+                <button class="mini-btn chat-btn" style="background: var(--cyber-blue); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Chat</button>
+            </div>
+        `;
+        
+        // Add hover effect
+        div.addEventListener('mouseenter', () => {
+            div.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            const actions = div.querySelector('.user-actions') as HTMLElement;
+            if (actions) actions.style.opacity = '1';
+        });
+        
+        div.addEventListener('mouseleave', () => {
+            div.style.backgroundColor = 'transparent';
+            const actions = div.querySelector('.user-actions') as HTMLElement;
+            if (actions) actions.style.opacity = '0';
+        });
+
+        // Add click handler for chat button
+        const chatBtn = div.querySelector('.chat-btn');
+        if (chatBtn) {
+            chatBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 
-                // components.showToast('info', 'Creating Chat', `Creating chat with ${user.username}...`, 2000);
-                toastManager.info(app.getUsername(), `Creating chat with ${user.username}...`);
-                
-                // Check if chat already exists
-                let chatId;
-                const existingChatRes = await api.fetchWithAutoRefresh(
-                    `${this.baseURL}/chats/between/${user.id}`,
-                    { credentials: 'include' }
-                );
-                
-                if (existingChatRes.ok) {
-                    // Chat exists, get the chat ID
-                    const existingChat = await existingChatRes.json();
-                    chatId = existingChat.chat_id;
-                    // components.showToast('success', 'Chat Found', `Opening existing chat with ${user.username}`, 2000);
-                    toastManager.success(app.getUsername(), `Opening existing chat with ${user.username}`);
-                } else if (existingChatRes.status === 404) {
-                    // Chat doesn't exist, create new one
-                    const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({ 
-                            user2Id: user.id,
-                            // Try alternative field names if the above doesn't work
-                            otherUserId: user.id,
-                            participantId: user.id
-                        })
-                    });
-                    
-                    if (!createChatRes.ok) {
-                        // toastManager.showToast('Error', `Failed to create chat : ${createChatRes.statusText}`);
-                        toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
-                        throw new Error(`Failed to create chat: ${createChatRes.status}`);
+                // Your existing chat creation logic
+                try {
+                    // Hide search results immediately
+                    this.elements.userSearchResultsChat!.style.display = 'none';
+                    if (this.elements.userSearchInput) {
+                        this.elements.userSearchInput.value = '';
                     }
                     
-                    const newChat = await createChatRes.json();
-                    chatId = newChat.chat_id || newChat.id;
+                    toastManager.info(app.getUsername(), `Creating chat with ${user.username}...`);
                     
-                    // components.showToast('success', 'Chat Created', `New chat created with ${user.username}`, 2000);
-                    toastManager.success(app.getUsername(), `New chat created with ${user.username}`);
+                    // Check if chat already exists
+                    let chatId;
+                    const existingChatRes = await api.fetchWithAutoRefresh(
+                        `${this.baseURL}/chats/between/${user.id}`,
+                        { credentials: 'include' }
+                    );
                     
-                    // Reload chats to show the new chat in the list
-                    await this.loadChats();
-                } else {
-                    throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
-                    toastManager.error(app.getUsername(), `Failed to check existing chat: ${existingChatRes.status}`);
-                }
-                
-                // Join the chat room
-                if (chatId) {
-                    await this.joinRoom(chatId);
-                } else {
-                    throw new Error('No chat ID received');
-                }
-
-                                // CRITICAL: Always reload chats to ensure the chat row appears
-                console.log('Reloading chats to show new/existing chat row...');
-                await this.loadChats();
-                this.currentChatWithUsername = user.username;
-                // Wait a moment for the DOM to update, then join the chat
-                setTimeout(async () => {
-
-                    if (chatId) {
-                          // Store current username for later use
-                        console.log(`Joining chat room ${chatId} after creating chat row`);
-                        await this.joinRoom(chatId);
+                    if (existingChatRes.ok) {
+                        const existingChat = await existingChatRes.json();
+                        chatId = existingChat.chat_id;
+                        toastManager.success(app.getUsername(), `Opening existing chat with ${user.username}`);
+                    } else if (existingChatRes.status === 404) {
+                        const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ 
+                                user2Id: user.id,
+                                otherUserId: user.id,
+                                participantId: user.id
+                            })
+                        });
                         
-                        // Scroll to the active chat row if needed
-                        const activeRow = document.querySelector(`[data-chat-id="${chatId}"]`);
-                        if (activeRow) {
-                            activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        if (!createChatRes.ok) {
+                            toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
+                            throw new Error(`Failed to create chat: ${createChatRes.status}`);
                         }
                         
-                        // components.showToast('success', 'Chat Ready', `Chat with ${user.username} is now active!`, 2000);
-                        toastManager.success(app.getUsername(), `Chat with ${user.username} is now active!`);
+                        const newChat = await createChatRes.json();
+                        chatId = newChat.chat_id || newChat.id;
+                        
+                        toastManager.success(app.getUsername(), `New chat created with ${user.username}`);
+                        await this.loadChats();
+                    } else {
+                        throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
                     }
-                }, 200);
-                
-            } catch (error) {
-                console.error('Error creating/opening chat:', error);
-                // components.showToast('error', 'Chat Error', `Failed to create chat with ${user.username}`, 3000);
-                toastManager.error(app.getUsername(), `Failed to create chat with ${user.username}`);
-            }
-        });
+                    
+                    // Join the chat room
+                    if (chatId) {
+                        await this.joinRoom(chatId);
+                    } else {
+                        throw new Error('No chat ID received');
+                    }
+
+                    // Always reload chats to ensure the chat row appears
+                    console.log('Reloading chats to show new/existing chat row...');
+                    await this.loadChats();
+                    this.currentChatWithUsername = user.username;
+                    
+                    // Wait a moment for the DOM to update, then join the chat
+                    setTimeout(async () => {
+                        if (chatId) {
+                            console.log(`Joining chat room ${chatId} after creating chat row`);
+                            await this.joinRoom(chatId);
+                            
+                            // Scroll to the active chat row if needed
+                            const activeRow = document.querySelector(`[data-chat-id="${chatId}"]`);
+                            if (activeRow) {
+                                activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                            
+                            toastManager.success(app.getUsername(), `Chat with ${user.username} is now active!`);
+                        }
+                    }, 200);
+                    
+                } catch (error) {
+                    console.error('Error creating/opening chat:', error);
+                    toastManager.error(app.getUsername(), `Failed to create chat with ${user.username}`);
+                }
+            });
+        }
         
         this.elements.userSearchResultsChat!.appendChild(div);
     });
@@ -873,12 +1039,12 @@ class Chat {
 
      async loadFriendData(): Promise<void> {
         try {
-            await Promise.all([
-                this.loadIncomingRequests(),
-                this.loadOutgoingRequests(),
-                this.loadFriendsList(),
+            
+                await this.loadIncomingRequests(),
+                await this.loadOutgoingRequests(),
+                await this.loadFriendsList(),
                 
-            ]);
+      
             localization.updatePageContent()
             this.updateDashboardStats();
         } catch (error) {
@@ -900,7 +1066,7 @@ class Chat {
                 return;
             }
 
-            requests.forEach((request: any) => {
+            await requests.forEach((request: any) => {
                 const li = document.createElement('li');
                 li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
                 
@@ -932,7 +1098,7 @@ class Chat {
                 return;
             }
 
-            requests.forEach((request: any) => {
+            await requests.forEach((request: any) => {
                 const li = document.createElement('li');
                 li.innerHTML = `<span>${request.senderUsername}</span>`;
 
@@ -963,31 +1129,66 @@ class Chat {
                 this.elements.friendsList.innerHTML = `<li style="color: #999;" data-i18n="chat.noFriends">No friends yet</li>`;
                 return;
             }
+                  // Load online status for each friend
+        const friendsWithStatus = await Promise.all(
+            friends.map(async (friend: any) => {
+                try {
+                    const userResult = await api.getUserById(friend.userId);
+                    return {
+                        ...friend,
+                        isOnline: userResult.success ? userResult.data.isOnline : false
+                    };
+                } catch (error) {
+                    console.error(`Error loading status for friend ${friend.userId}:`, error);
+                    return { ...friend, isOnline: false };
+                }
+            }));
 
-            friends.forEach((friend: any) => {
-                const li = document.createElement('li');
-                li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
-                console.log(`Rendering friend: ${friend.username} with object: ${JSON.stringify(friend)}`);
-                li.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="online-status"></span>
-                        <span>${friend.username}</span>
-                    </div>
-                    <div>
-                        <button data-i18n="chat.chatBtn" onclick="window.chat.startChatWithFriend('${friend.userId}')" 
-                            style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer;">
-                                Chat
-                        </button>
-                        <button data-i18n="chat.remove" onclick="window.chat.removeFriend('${friend.friendshipId}')" style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer;">Remove</button>
-                    </div>
-                `;
-                
-                this.elements.friendsList!.appendChild(li);
-            });
-        } catch (error) {
-            console.error('Error loading friends list:', error);
-        }
+            friendsWithStatus.forEach((friend: any) => {
+            const li = document.createElement('li');
+            li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
+            console.log(`Rendering friend: ${friend.username} with object: ${JSON.stringify(friend)}`);
+            
+            // Online status classes and colors
+            const statusClass = friend.isOnline ? 'online' : 'offline';
+            const statusColor = friend.isOnline ? '#4CAF50' : '#757575';
+            const statusText = friend.isOnline ? 'Online' : 'Offline';
+            
+            li.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="online-status ${statusClass}" style="
+                        width: 8px; 
+                        height: 8px; 
+                        border-radius: 50%; 
+                        background-color: ${statusColor};
+                        ${friend.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
+                    " title="${statusText}"></div>
+                    <span>${friend.username}</span>
+                    ${friend.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
+                </div>
+                <div class="friend-actions" style="display: flex; gap: 5px;">
+                    <button onclick="ChatNavigationHelper.navigateToFriendProfile('${friend.userId}')" 
+                        style="padding: 2px 8px; background: var(--cyber-green); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        Profile
+                    </button>
+                    <button data-i18n="chat.chatBtn" onclick="window.chat.startChatWithFriend('${friend.userId}')" 
+                        style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        Chat
+                    </button>
+                    <button data-i18n="chat.remove" onclick="window.chat.removeFriend('${friend.friendshipId}')" 
+                        style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        Remove
+                    </button>
+                </div>
+            `;
+            
+            this.elements.friendsList!.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error loading friends list:', error);
     }
+}
+
     public async refreshAllFriendData(): Promise<void> {
     try {
         // Load all friend data
@@ -1039,7 +1240,7 @@ class Chat {
             if (result.ok) {
                 // components.showToast('success', 'Request Cancelled', 'Friend request cancelled successfully!', 3000);
                 toastManager.success(app.getUsername(), 'Friend request cancelled successfully!');
-                this.loadFriendData();
+                await this.loadFriendData();
             } else {
                 const errorText = await result.text();
                 // components.showToast('error', 'Cancel Failed', errorText || 'Failed to cancel friend request', 3000);
@@ -1071,6 +1272,115 @@ class Chat {
             console.error('Error removing friend:', error);
         }
     }
+    setupMessageContextMenu(): void {
+    document.addEventListener('contextmenu', (e) => {
+        const target = e.target as HTMLElement;
+        
+        // Check if right-clicked on a message
+        const messageElement = target.closest('.message');
+        if (!messageElement) return;
+
+        // Only show context menu for received messages (not own messages)
+        if (messageElement.classList.contains('sent')) return;
+
+        e.preventDefault();
+
+        // Get sender info from message element
+        const senderId = messageElement.getAttribute('data-sender-id');
+        const senderName = messageElement.getAttribute('data-sender-name');
+
+        if (!senderId || !senderName) return;
+
+        // Remove existing context menu if any
+        const existingMenu = document.querySelector('.message-context-menu');
+        if (existingMenu) {
+            existingMenu.remove();
+        }
+
+        // Create context menu
+        const contextMenu = document.createElement('div');
+        contextMenu.className = 'message-context-menu';
+        contextMenu.style.cssText = `
+            position: fixed;
+            top: ${e.clientY}px;
+            left: ${e.clientX}px;
+            background: var(--cyber-darker);
+            border: 1px solid var(--cyber-blue);
+            border-radius: 5px;
+            padding: 5px 0;
+            z-index: 1000;
+            min-width: 150px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        `;
+
+        // Profile option
+        const profileOption = document.createElement('div');
+        profileOption.className = 'context-menu-item';
+        profileOption.style.cssText = `
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--cyber-blue);
+            transition: background-color 0.2s ease;
+        `;
+        profileOption.innerHTML = `<i class="bi bi-person-circle mr-2"></i>View ${senderName}'s Profile`;
+        profileOption.onclick = () => {
+            ChatNavigationHelper.navigateToFriendProfile(senderId);
+            document.body.removeChild(contextMenu);
+        };
+
+        // Send message option
+        const messageOption = document.createElement('div');
+        messageOption.className = 'context-menu-item';
+        messageOption.style.cssText = `
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--cyber-green);
+            transition: background-color 0.2s ease;
+        `;
+        messageOption.innerHTML = `<i class="bi bi-chat-dots mr-2"></i>Send Direct Message`;
+        messageOption.onclick = () => {
+            // You can implement direct message functionality here
+            toastManager.info(app.getUsername(), `Starting direct chat with ${senderName}...`);
+            document.body.removeChild(contextMenu);
+        };
+
+        contextMenu.appendChild(profileOption);
+        contextMenu.appendChild(messageOption);
+
+        // Add hover effects
+        contextMenu.addEventListener('mouseover', (e) => {
+            const item = e.target as HTMLElement;
+            if (item.classList.contains('context-menu-item')) {
+                item.style.backgroundColor = 'var(--cyber-blue)';
+                item.style.color = 'white';
+            }
+        });
+
+        contextMenu.addEventListener('mouseout', (e) => {
+            const item = e.target as HTMLElement;
+            if (item.classList.contains('context-menu-item')) {
+                item.style.backgroundColor = 'transparent';
+                item.style.color = item.innerHTML.includes('Profile') ? 'var(--cyber-blue)' : 'var(--cyber-green)';
+            }
+        });
+
+        document.body.appendChild(contextMenu);
+
+        // Remove context menu when clicking elsewhere
+        const removeContextMenu = () => {
+            if (document.body.contains(contextMenu)) {
+                document.body.removeChild(contextMenu);
+            }
+            document.removeEventListener('click', removeContextMenu);
+        };
+
+        setTimeout(() => {
+            document.addEventListener('click', removeContextMenu);
+        }, 100);
+    });
+}
 
 
 
@@ -1742,53 +2052,68 @@ class Chat {
     }
 
     //
-    private showPopup(user: any): void {
-        // Ensure popup exists
-        if (!this.elements.friendSearchPopupOverlay) {
-            this.createFriendActionPopup();
-        }
+private showPopup(user: any): void {
+    // Ensure popup exists
+    if (!this.elements.friendSearchPopupOverlay) {
+        this.createFriendActionPopup();
+    }
 
-        this.currentPopupUser = user; // FIXED: Set current user
-        
-        // Update username
-        if (this.elements.friendSearchPopupUsername) {
-            this.elements.friendSearchPopupUsername.textContent = user.username;
-        }
+    this.currentPopupUser = user;
+    
+    // Update username
+    if (this.elements.friendSearchPopupUsername) {
+        this.elements.friendSearchPopupUsername.textContent = user.username;
+    }
 
-        // Update buttons based on block status
-        const isBlocked = this.isUserBlocked(user.id);
-        
-        // Update Add Friend button
-        if (this.elements.friendSearchPopupAddBtn) {
-            if (isBlocked) {
-                (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = true;
-                this.elements.friendSearchPopupAddBtn.style.opacity = '0.5';
-                this.elements.friendSearchPopupAddBtn.style.cursor = 'not-allowed';
-                this.elements.friendSearchPopupAddBtn.textContent = 'User Blocked';
-            } else {
-                (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = false;
-                this.elements.friendSearchPopupAddBtn.style.opacity = '1';
-                this.elements.friendSearchPopupAddBtn.style.cursor = 'pointer';
-                this.elements.friendSearchPopupAddBtn.textContent = 'Add Friend';
+     // Add profile button click handler
+    const profileBtn = this.elements.friendSearchPopup?.querySelector('#friendSearchPopupProfileBtn');
+    if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (this.currentPopupUser) {
+                router.navigate(`/friendProfile?userId=${this.currentPopupUser.id}`);
+                this.closePopup();
             }
-        }
-
-        // Update Block/Unblock button
-        if (this.elements.friendSearchPopupBlockBtn) {
-            if (isBlocked) {
-                this.elements.friendSearchPopupBlockBtn.textContent = 'Unblock User';
-                this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
-            } else {
-                this.elements.friendSearchPopupBlockBtn.textContent = 'Block User';
-                this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #ff0040, #ff4444)';
-            }
-        }
-        
-        // Show popup
-        if (this.elements.friendSearchPopupOverlay) {
-            this.elements.friendSearchPopupOverlay.style.display = 'flex';
+        });
+    }
+    // Update buttons based on block status
+    const isBlocked = this.isUserBlocked(user.id);
+    
+    // Update Add Friend button
+    if (this.elements.friendSearchPopupAddBtn) {
+        if (isBlocked) {
+            (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = true;
+            this.elements.friendSearchPopupAddBtn.style.opacity = '0.5';
+            this.elements.friendSearchPopupAddBtn.style.cursor = 'not-allowed';
+            this.elements.friendSearchPopupAddBtn.textContent = 'User Blocked';
+        } else {
+            (this.elements.friendSearchPopupAddBtn as HTMLButtonElement).disabled = false;
+            this.elements.friendSearchPopupAddBtn.style.opacity = '1';
+            this.elements.friendSearchPopupAddBtn.style.cursor = 'pointer';
+            this.elements.friendSearchPopupAddBtn.textContent = 'Add Friend';
         }
     }
+
+    // Update Block/Unblock button
+    if (this.elements.friendSearchPopupBlockBtn) {
+        if (isBlocked) {
+            this.elements.friendSearchPopupBlockBtn.textContent = 'Unblock User';
+            this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+        } else {
+            this.elements.friendSearchPopupBlockBtn.textContent = 'Block User';
+            this.elements.friendSearchPopupBlockBtn.style.background = 'linear-gradient(45deg, #ff0040, #ff4444)';
+        }
+    }
+
+    // Update popup with profile link
+    this.updatePopupWithProfileLink(user);
+    
+    // Show popup
+    if (this.elements.friendSearchPopupOverlay) {
+        this.elements.friendSearchPopupOverlay.style.display = 'flex';
+    }
+}
 
     private closePopup(): void {
         if (this.elements.friendSearchPopupOverlay) {
@@ -1906,7 +2231,7 @@ class Chat {
                 // components.showToast('success', 'User Blocked', `${user.username} has been blocked successfully!`, 3000);
                 toastManager.success(app.getUsername(), `${user.username} has been blocked successfully!`);
                 await this.loadBlockedUsers();
-                this.loadFriendData();
+                await this.loadFriendData();
             } else {
                 const errorText = await result.text();
                 // components.showToast('error', 'Block Failed', errorText || 'Failed to block user', 3000);
@@ -1970,7 +2295,7 @@ const chat = new Chat();
 // Make chat available globally for button onclick handlers and external access
 declare global {
     interface Window {
-        chat: Chat;
+        chat: any;
         // Backwards compatibility for your existing code
         chatUI?: {
             loadChats: () => void;
@@ -2003,6 +2328,72 @@ window.chatMessages = {
 //     // chat.cleanupSocketHandlers();
 //     // chat.socketService.emit("leaveRoom", chat.currentChatId);
 // });
+// 10. Add CSS for enhanced elements (add this to your existing CSS or create a new style tag)
+const enhancedChatCSS = `
+    .clickable-username:hover {
+        color: var(--cyber-green) !important;
+        text-shadow: 0 0 5px var(--cyber-green);
+    }
+    
+    .context-menu-item:hover {
+        background: var(--cyber-blue) !important;
+        color: white !important;
+    }
+    
+    .mini-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .user-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .user-actions button {
+        transition: all 0.2s ease;
+    }
+    
+    .user-actions button:hover {
+        transform: scale(1.05);
+    }
+    
+    li:hover .user-actions,
+    div:hover .user-actions {
+        opacity: 1;
+    }
+    
+    .message-header {
+        user-select: none;
+    }
+    
+    .message.received {
+        position: relative;
+    }
+    
+    .message.received:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .friend-actions {
+        gap: 5px;
+    }
+    
+    .friend-actions button {
+        transition: all 0.2s ease;
+    }
+    
+    .friend-actions button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+`;
 
+// Add the enhanced CSS to the document
+const enhancedStyle = document.createElement('style');
+enhancedStyle.textContent = enhancedChatCSS;
+document.head.appendChild(enhancedStyle);
 
+// Make ChatNavigationHelper available globally
+(window as any).ChatNavigationHelper = ChatNavigationHelper;
 export default chat;

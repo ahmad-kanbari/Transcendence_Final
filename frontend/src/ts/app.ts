@@ -20,6 +20,7 @@ import notificationManager from './NotificationManager';
 import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
+import friendProfile from './friendProfileData';
 
 // Define interfaces for state and user
 interface User {
@@ -106,6 +107,7 @@ class App {
       profile.init();
       chat.init();
       // friends.init();
+      friendProfile.init(); 
       this.registerRoutes();
       
       await router.init();
@@ -570,6 +572,42 @@ class App {
           components.hideSpinner();
         }
       },
+
+      '/friendProfile': async () => {
+            components.showSpinner();
+            
+            try {
+                // Check authentication first
+                if (!this.state.user) {
+                    const result = await api.getCurrentUser();
+                    
+                    if (result.success && result.data) {
+                        this.state.user = result.data.user;
+                        this.state.isAuthenticated = result.data.isAuthenticated ?? false;
+                        login.updateUIAuthState();
+                    } else {
+                        toastManager.warning(this.getUsername(), 'Please log in to view profiles.');
+                        router.navigate('/login');
+                        return;
+                    }
+                }
+
+                // Show friend profile page
+                pages.showPage('friendProfile');
+                login.updateUIAuthState();
+                
+                // Trigger friend profile initialization
+                document.dispatchEvent(new CustomEvent('pageShown', {
+                    detail: { page: 'friend-profile' }
+                }));
+                
+            } catch (error) {
+                toastManager.error(this.getUsername(), 'An error occurred while loading the profile.');
+                router.navigate('/chat');
+            } finally {
+                components.hideSpinner();
+            }
+        },
       
       '*': () => {
         pages.showPage('notFound');
