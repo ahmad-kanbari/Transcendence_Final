@@ -381,7 +381,7 @@ class API {
               const refreshResult = await this.refreshToken();
               
               if (refreshResult.success) {
-                  return await this.getAllUsers(retryCount + 1);
+                  return await this.getUserById(userId, retryCount + 1);
               } else {
                   console.error('Token refresh failed:', refreshResult.error);
                   utils.cleanUp(); 
@@ -1069,7 +1069,7 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
   let res = await fetch(url, finalOptions);
 
 	if (res.status === 401) {
-		const refreshRes = await this.fetchWithAutoRefresh(`${baseURL}/auth/refresh`, {
+		const refreshRes = await fetch(`${baseURL}/auth/refresh`, {
 			method: "POST",
 			credentials: "include",
 			headers: { "Content-Type": "application/json" },

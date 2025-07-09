@@ -1014,14 +1014,14 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
             window.chatSocket.on('connect', () => {
                 console.log('Socket connected');
                 // components.showToast('success', 'Connected', 'Real-time features active!', 2000);
-                // toastManager.success(this.getUsername(), 'Real-time features active!');
+                toastManager.success(this.getUsername(), 'Real-time features active!');
                 console.log('Chat socket initialized successfully');
             });
             
             window.chatSocket.on('disconnect', () => {
                 console.log('Socket disconnected');
                 // components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
-                // toastManager.warning(this.getUsername(), 'Real Time Chat Disconnected, Attempting to reconnect...');
+                toastManager.warning(this.getUsername(), 'Real Time Chat Disconnected, Attempting to reconnect...');
                 console.log('Chat socket disconnected');
             });
         }
