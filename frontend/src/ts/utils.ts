@@ -280,8 +280,9 @@ class Utils {
       const logoutBtn = target.closest('#logoutBtn');
       if (logoutBtn) {
         event.preventDefault();
-        app.logout(); 
-      }
+        console.log('Utils: Logout button clicked');
+        app.logout();        
+      }  
     });
     
     app.logoutInitialized = true;

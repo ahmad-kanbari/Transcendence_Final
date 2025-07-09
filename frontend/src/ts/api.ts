@@ -166,6 +166,7 @@ class API {
         headers: {
           'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ deviceId: localStorage.getItem("deviceId") })
       });
 
       utils.cleanUp();
