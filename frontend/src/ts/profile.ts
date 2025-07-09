@@ -145,7 +145,7 @@ class Profile {
       document.body.style.visibility = 'visible';
       document.body.style.opacity = '1';
       
-
+    
       //  let usertest =await api.getUserById('10');
       //   console.log('User test data:', usertest);
       let smalluserData;
@@ -167,7 +167,7 @@ class Profile {
     
       let userFullData = await api.getUserById(smalluserData.id);
       if (!userFullData.success) {
-        toastManager.showToast( app.getUsername() ,userFullData.error || 'Failed to fetch user data');
+        toastManager.error( app.getUsername() ,userFullData.error || 'Failed to fetch user data');
         return;
       }
       this.user = userFullData.data;

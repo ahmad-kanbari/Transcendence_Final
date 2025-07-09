@@ -160,7 +160,7 @@ class API {
   async logout(): Promise<ApiResponse> {
     try {
       console.log('Logging out from API');
-      await this.fetchWithAutoRefresh(ENDPOINTS.auth.logout, {
+      await fetch(ENDPOINTS.auth.logout, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -368,7 +368,7 @@ class API {
   /**
    * Fetch a specific user by ID
    */
-  async getUserById(userId: string): Promise<ApiResponse> {
+  async getUserById(userId: string, retryCount: number = 0): Promise<ApiResponse> {
       try {
           const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.user.singleUser}${Number(userId)}`, {
               method: 'GET',
@@ -377,7 +377,21 @@ class API {
                   'Content-Type': 'application/json'
               }
           });
-
+          if (response.status === 401 && retryCount < 1) {
+              const refreshResult = await this.refreshToken();
+              
+              if (refreshResult.success) {
+                  return await this.getAllUsers(retryCount + 1);
+              } else {
+                  console.error('Token refresh failed:', refreshResult.error);
+                  utils.cleanUp(); 
+                  return { 
+                      success: false, 
+                      error: 'Authentication expired. Please log in again.',
+                      authExpired: true 
+                  };
+              }
+          }
 
           
           if (!response.ok) {
@@ -1034,6 +1048,7 @@ class API {
   
 
 async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
+  console.log('Fetching URL:', url, 'with options:', options);
 	const deviceId = localStorage.getItem("deviceId");
 	if (!deviceId) {
 		throw new Error("Missing deviceId in localStorage. Ensure it's set during login.");
