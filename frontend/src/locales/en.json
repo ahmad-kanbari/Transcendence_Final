@@ -126,6 +126,7 @@
     "winRate": "Win Rate",
     "wins": "Wins",
     "losses": "Losses",
+    "player": "Player",
     "accountInformation": "Account Information",
     "displayName": "Display Name",
     "updateDisplayName": "Update your display name",

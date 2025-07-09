@@ -160,12 +160,13 @@ class API {
   async logout(): Promise<ApiResponse> {
     try {
       console.log('Logging out from API');
-      await this.fetchWithAutoRefresh(ENDPOINTS.auth.logout, {
+      await fetch(ENDPOINTS.auth.logout, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
+        body: JSON.stringify({ deviceId: localStorage.getItem("deviceId") })
       });
 
       utils.cleanUp();
@@ -370,14 +371,13 @@ class API {
    */
   async getUserById(userId: string, retryCount: number = 0): Promise<ApiResponse> {
       try {
-          const response = await fetch(`${ENDPOINTS.user.singleUser}${userId}`, {
+          const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.user.singleUser}${Number(userId)}`, {
               method: 'GET',
               credentials: 'include',
               headers: {
                   'Content-Type': 'application/json'
               }
           });
-
           if (response.status === 401 && retryCount < 1) {
               const refreshResult = await this.refreshToken();
               
@@ -393,6 +393,7 @@ class API {
                   };
               }
           }
+
           
           if (!response.ok) {
               const errorData = await response.json();
@@ -409,7 +410,6 @@ class API {
               data: userData 
           };
       } catch (error: any) {
-          console.error(`Error in getUserById (attempt ${retryCount + 1}):`, error);
           return { success: false, error: error.message };
       }
   }
@@ -576,7 +576,7 @@ class API {
 
   async createMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(ENDPOINTS.game.create_match, {
+      const response = await this.fetchWithAutoRefresh(ENDPOINTS.game.create_match, {
         method: 'POST',
         credentials: 'include',
         headers: { 
@@ -663,7 +663,7 @@ class API {
       is_multiplayer: boolean;
     }, retryCount: number = 0): Promise<ApiResponse> {
       try {
-        const response = await fetch(`${ENDPOINTS.game.adjust_match}/${matchData.matchId}`, {
+        const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.game.adjust_match}/${matchData.matchId}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: {
@@ -672,7 +672,7 @@ class API {
           body: JSON.stringify({
             team1_score: matchData.team1_score,
             team2_score: matchData.team2_score,
-            is_multiplayer: matchData.is_multiplayer
+            is_multiplayer: true
           })
         });
 
@@ -708,7 +708,7 @@ class API {
    */
   async createTournament(playerCapacity: number = 4, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(ENDPOINTS.game.create_tournament, {
+      const response = await this.fetchWithAutoRefresh(ENDPOINTS.game.create_tournament, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -756,7 +756,7 @@ class API {
     player2_name: string;
   }, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${baseURL}/tournaments/${tournamentId}/matches`, {
+      const response = await this.fetchWithAutoRefresh(`${baseURL}/tournaments/${tournamentId}/matches`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -808,7 +808,7 @@ class API {
       player2_score: number;
     }, retryCount: number = 0): Promise<ApiResponse> {
       try {
-        const response = await fetch(`${baseURL}/tournaments/${tournamentId}/matches/${matchId}`, {
+        const response = await this.fetchWithAutoRefresh(`${baseURL}/tournaments/${tournamentId}/matches/${matchId}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: {
@@ -855,7 +855,7 @@ class API {
    */
   async getAllTournaments(page: number = 1, limit: number = 10, retryCount: number = 0): Promise<ApiResponse> {
     try {
-      const response = await fetch(`${baseURL}/tournaments?page=${page}&limit=${limit}`, {
+      const response = await this.fetchWithAutoRefresh(`${baseURL}/tournaments?page=${page}&limit=${limit}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -903,7 +903,7 @@ class API {
         };
       }
 
-      const response = await fetch(`${ENDPOINTS.game.get_tournament}/${tournamentId}`, {
+      const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.game.get_tournament}/${tournamentId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -1049,6 +1049,7 @@ class API {
   
 
 async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
+  console.log('Fetching URL:', url, 'with options:', options);
 	const deviceId = localStorage.getItem("deviceId");
 	if (!deviceId) {
 		throw new Error("Missing deviceId in localStorage. Ensure it's set during login.");
@@ -1237,7 +1238,7 @@ async createMultiplayerMatch(matchData: {
     //   };
     // }
     console.log('Creating multiplayer match with data:', matchData);
-    const response = await fetch(ENDPOINTS.game.create_match, {
+    const response = await this.fetchWithAutoRefresh(ENDPOINTS.game.create_match, {
       method: 'POST',
       credentials: 'include',
       headers: {
