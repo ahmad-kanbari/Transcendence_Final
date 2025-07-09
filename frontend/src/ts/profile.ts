@@ -68,6 +68,7 @@ class Profile {
   initialized: boolean;
   socket: any;
   baseURL: string;
+  user: any;
  
   
   constructor() {
@@ -143,40 +144,43 @@ class Profile {
       // Make body visible
       document.body.style.visibility = 'visible';
       document.body.style.opacity = '1';
-
-      // Get user ID from URL params or current user
-      const urlParams = new URLSearchParams(window.location.search);
-      const userId = urlParams.get('userId');
+      
 
       //  let usertest =await api.getUserById('10');
       //   console.log('User test data:', usertest);
-      let userData;
-      if (userId) {
-        // Loading another user's profile
-        const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
-        if (!userRes.ok) throw new Error('Failed to fetch user data');
-        userData = await userRes.json();
-      } else {
-        // Loading current user's profile
-        userData = await authRes.json();
-        console.log('Current user data in the profile: ', userData.user.user);
-        userData = userData.user.user;
-      }
+      let smalluserData;
+      // if (userId) {
+      //   // Loading another user's profile
+      //   const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
+      //   if (!userRes.ok) throw new Error('Failed to fetch user data');
+      //   userData = await userRes.json();
+      // } else {
+      //   // Loading current user's profile
+        smalluserData = await authRes.json();
+        console.log('Current user data in the profile: ', smalluserData.user.user);
+        smalluserData = smalluserData.user.user;
+      // }
 
 
 
       // ✅ WITH this expanded version:
-      let userFullData = await api.getUserById(userData.id);
+    
+      let userFullData = await api.getUserById(smalluserData.id);
+      if (!userFullData.success) {
+        toastManager.showToast( app.getUsername() ,userFullData.error || 'Failed to fetch user data');
+        return;
+      }
+      this.user = userFullData.data;
       console.log('Full user data:in porfile', userFullData);
       // Fetch user's match history and tournaments
       const [matchHistory] = await Promise.all([
-        this.fetchUserMatchHistory(userFullData.data['id'] || userData.id),
+        this.fetchUserMatchHistory(this.user.id),
         // this.fetchUserTournamentHistory(userFullData.data['id'] || userData.id)
       ]);
-       localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
+      localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
       console.log('Match history:', matchHistory);
       // console.log('Tournament history:', tournamentHistory);
-      this.populateProfileData(userFullData);
+      this.populateProfileData(userFullData, matchHistory);
       
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -281,8 +285,8 @@ showGameSessionModal(matchId: string): void {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-3">
             <div class="flex justify-between">
-              <span>Scoring Efficiency:</span>
-              <span class="text-cyber-green">${sessionStats.scoringEfficiency}%</span>
+              <span>Scoring Efficiency: </span>
+              <span class="text-cyber-green">${Number.isNaN(sessionStats.scoringEfficiency) ? `0` : sessionStats.scoringEfficiency}%</span>
             </div>
             <div class="flex justify-between">
               <span>Defensive Rating:</span>
@@ -879,11 +883,11 @@ showGameSessionPopup(matchId: string, buttonElement: HTMLElement): void {
       <!-- Performance Bars -->
       <div class="space-y-2">
         <div class="flex justify-between text-xs">
-          <span>Scoring Efficiency</span>
-          <span class="text-cyber-green">${sessionStats.scoringEfficiency}%</span>
+          <span>Scoring Efficiency: </span>
+          <span class="text-cyber-green">${Number.isNaN(sessionStats.scoringEfficiency) ? `${0}` : sessionStats.scoringEfficiency}%</span>
         </div>
         <div class="w-full bg-cyber-dark h-2 rounded">
-          <div class="bg-cyber-green h-2 rounded transition-all duration-500" style="width: ${sessionStats.scoringEfficiency}%"></div>
+          <div class="bg-cyber-green h-2 rounded transition-all duration-500" style="width: ${Number.isNaN(sessionStats.scoringEfficiency) ? `${0}` : sessionStats.scoringEfficiency}%"></div>
         </div>
         
         <div class="flex justify-between text-xs">
@@ -966,38 +970,41 @@ showDetailedGameSession(matchId: string): void {
   // Show full modal with detailed analysis
   this.showGameSessionModal(matchId );
 }
-showMatchHistoryModal(): void {
+  async showMatchHistoryModal():  Promise<void>{
   const modal = document.getElementById('matchHistoryModal');
   const tbody = document.getElementById('fullMatchHistoryTable');
   
-  if (!modal || !tbody) return;
-  
-  const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
+  if (!modal || !tbody) return <Promise<void>>Promise.resolve();
+  // let user =  app.getUser();
+  const HistoryMatches =  this.fetchUserMatchHistory(this.user.id);
+  // JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
   const currentUser = app.getUsername();
   
   tbody.innerHTML = '';
   
-  storedMatches.forEach((match: any) => {
+   (await HistoryMatches).forEach((match: any) => {
     const tr = document.createElement('tr');
     
     let userWon = false;
     let opponent = '';
     let score = '';
+    let player1_name = '';
     
     if (match.match_type === 'multiplayer') {
-      const userTeam = match.teams?.find((team: any) => 
-        team.players.some((player: any) => player.player_name === currentUser)
-      );
-      const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
-      
-      userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
-      opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
-      score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+    const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        player1_name = userTeam.name || 'team1';
+        opponent = opponentTeam?.name || 'team2';
+        score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
     } else {
       // const isPlayer1 = match.player1_name == currentUser;
       const isPlayer1 = true; // Assuming current user is always player 1 for simplicity
       userWon = isPlayer1 ? match.player1_score > match.player2_score : match.player2_score > match.player1_score;
-      opponent = isPlayer1 ? match.player2_name : match.player1_name;
+      // opponent = isPlayer1 ? match.player2_name : match.player1_name;
+      opponent = match.player2_name;
+      player1_name = match.player1_name;
       score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
     }
     
@@ -1012,6 +1019,7 @@ showMatchHistoryModal(): void {
     tr.innerHTML = `
     <td class="px-4 py-3 text-sm">${new Date(match.created_at).toLocaleDateString()}</td>
     <td class="px-4 py-3">${matchType}</td>
+     <td class="px-4 py-3">${player1_name}</td>
     <td class="px-4 py-3">${opponent}</td>
     <td class="px-4 py-3">${score}</td>
     <td class="px-4 py-3">${userWon ? '🏆 Win' : '❌ Loss'}</td>
@@ -1027,14 +1035,15 @@ showMatchHistoryModal(): void {
   });
   
   modal.classList.remove('hidden');
+  return Promise.resolve();
 }
   
   // ✅ ADD these new methods:
-async fetchUserMatchHistory(userId: string, page: number = 1, limit: number = 50): Promise<any[]> {
+async fetchUserMatchHistory(userId: string, page: number = 1, limit: number = 100): Promise<any[]> {
   try {
     // API endpoint with pagination parameters
     const response = await this.fetchWithAutoRefresh(
-      `${this.baseURL}/users/${userId}/matches?page=${page}&limit=${limit}`
+      `${this.baseURL}/users/${Number(userId)}/matches?page=${page}&limit=${limit}`
     );
     if (!response.ok) return [];
     
@@ -1043,6 +1052,8 @@ async fetchUserMatchHistory(userId: string, page: number = 1, limit: number = 50
     // The API returns an array directly, not wrapped in a matches property
     return Array.isArray(data) ? data : [];
   } catch (error) {
+    // toastManager.error( app.getUsername(),`Error fetching match history, ${error}`);
+    
     console.error('Error fetching match history:', error);
     return [];
   }
@@ -1077,14 +1088,14 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
   };
 
   const currentUser = app.getUsername();
-
+  console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
   // Process matches based on your API structure
   matchHistory.forEach(match => {
     // Skip cancelled matches
     if (match.status === 'cancelled') return;
     
     stats.totalMatches++;
-    
+    console.log('Processing match:');
     switch(match.match_type) {
       case 'tournament':
         stats.tournamentMatches++;
@@ -1104,13 +1115,11 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     
     if (match.match_type === 'multiplayer') {
       // For multiplayer, check if user's team won
-      const userTeam = match.teams?.find((team: any) => 
-        team.players.some((player: any) => player.user_id === parseInt(userId))
-      );
-      if (userTeam) {
-        const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam.id);
-        userWon = userTeam.score > (opponentTeam?.score || 0);
-      }
+         const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        
     } else {
       // For regular/tournament matches
       if (match.player1_name === currentUser) {
@@ -1119,17 +1128,22 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         userWon = match.player2_score > match.player1_score;
       }
     }
+    // if (match.player1_score > match.player2_score) {  
+    //     userWon = true;
+    // }
 
-    if (userWon) {
-      stats.wins++;
-    } else {
-      stats.losses++;
-    }
+    // if (userWon) {
+    //   stats.wins++;
+    // } else {
+    //   stats.losses++;
+    // }
+    stats.wins = this.user.stats?.wins || 0;
+    stats.losses = this.user.stats?.losses || 0;
   });
 
   // Calculate win rate
   stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
-
+  console.log('Calculated user stats:', stats);
   return stats;
 }
   populateProfileData(userData?: any, matchHistory: any[] = [], tournamentHistory: TournamentHistory[] = []): void {
@@ -1218,8 +1232,10 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     // ✅ WITH this enhanced version:
   const userStats = this.calculateUserStats(matchHistory, tournamentHistory, userData?.id?.toString() || app.state.user?.id?.toString() || '');
 
-  if (this.profileForm.statsTotalGames)
+  if (this.profileForm.statsTotalGames){
+    console.log('Setting total games:', userStats.totalMatches);
     this.profileForm.statsTotalGames.textContent = userStats.totalMatches.toString();
+  }
 
   if (this.profileForm.statsWins)
     this.profileForm.statsWins.textContent = userStats.wins.toString();
@@ -1866,28 +1882,28 @@ init2FA(): void {
         let userWon = false;
         let opponent = '';
         let score = '';
+        let player1_name = '';
         
         if (match.match_type === 'multiplayer') {
-          // Handle multiplayer matches
-          const userTeam = match.teams?.find((team: any) => 
-            team.players.some((player: any) => player.user_id === parseInt(userID.toString()))
-          );
-          const opponentTeam = match.teams?.find((team: any) => team.id !== userTeam?.id);
-          
-          userWon = userTeam && opponentTeam ? userTeam.score > opponentTeam.score : false;
-          opponent = `${userTeam?.name || 'Team 1'} vs ${opponentTeam?.name || 'Team 2'}`;
-          score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+        // Handle multiplayer matches
+        const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        player1_name = userTeam.name || 'team1';
+        opponent = opponentTeam?.name || 'team2';
+        score = `${userTeam?.score || 0} - ${opponentTeam?.score || 0}`;
+      } else {
+        // Handle regular/tournament matches
+        if (match.player1_name === currentUser) {
+          userWon = match.player1_score > match.player2_score;
+          opponent = match.player2_name;
         } else {
-          // Handle regular/tournament matches
-          if (match.player1_name === currentUser) {
-            userWon = match.player1_score > match.player2_score;
-            opponent = match.player2_name;
-          } else {
-            userWon = match.player2_score > match.player1_score;
-            opponent = match.player1_name;
-          }
-          score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+          userWon = match.player2_score > match.player1_score;
+          opponent = match.player1_name;
         }
+        score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
+      }
         
         // Style based on result
         if (userWon) {
@@ -1906,6 +1922,7 @@ init2FA(): void {
         tr.innerHTML = `
           <td class="px-4 py-3 text-sm">${date}</td>
           <td class="px-4 py-3">${matchType}</td>
+           <td class="px-4 py-3">${player1_name}</td>
           <td class="px-4 py-3">${opponent}</td>
           <td class="px-4 py-3">${score}</td>
           <td class="px-4 py-3">${result}</td>
