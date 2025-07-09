@@ -493,6 +493,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
+            console.log('Friend request accepted:', data);
             toastManager.addToQueue('Friend Request', data.message);
             this.addNotification(data.message);
             chat.loadFriendData();
