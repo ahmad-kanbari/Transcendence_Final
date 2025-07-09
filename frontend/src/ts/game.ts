@@ -183,6 +183,7 @@ class PongGame {
     currentMode: string = 'menu';
     tournamentId: number | null | undefined;
     isSettingUpNextMatch: boolean = false; // Flag to prevent multiple setups
+    isCreatingTournament: boolean = false; // Flag to prevent multiple tournament creation
 
     /**
      * Initialize the game when the document is ready
@@ -407,7 +408,10 @@ class PongGame {
         document.getElementById('backFromTournamentButton')!.addEventListener('click', () => this.backToMenu());
         
         // Tournament buttons
-        document.getElementById('startTournamentButton')!.addEventListener('click', () => this.startTournament());
+        document.getElementById('startTournamentButton')!.addEventListener('click', (e) => {
+            if (this.isCreatingTournament) return; // Prevent multiple clicks
+            this.startTournament();
+        });
         
         // Game over buttons
         document.getElementById('menuButton')!.addEventListener('click', () => {
@@ -611,6 +615,10 @@ class PongGame {
         // Reset game state if needed
         this.gameRunning = false;
         this.gameOver = false;
+        
+        // Reset tournament flags
+        this.isCreatingTournament = false;
+        this.isSettingUpNextMatch = false;
     }
 
 
@@ -1816,51 +1824,67 @@ createMultiplayerMatchData(
      * Start a tournament with 4 players
      */
     async startTournament(): Promise<void> {
-         // Get player names from inputs
-         this.tournamentPlayers = [
-            (document.getElementById('tournament-p1')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p1')! as HTMLInputElement).value : this.userName || 'Player_1',
-            (document.getElementById('tournament-p2')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_2',
-            (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p3')! as HTMLInputElement).value  : 'Player_3',
-            (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value : 'Player_4'
-        ];
-        
-        // Reset tournament state
-        this.currentTournamentMatch = 0;
-        this.tournamentWinners = [];
-        
-        // Update bracket display
-        document.getElementById('semi1Player1')!.textContent = this.tournamentPlayers[0];
-        document.getElementById('semi1Player2')!.textContent = this.tournamentPlayers[1];
-        document.getElementById('semi2Player1')!.textContent = this.tournamentPlayers[2];
-        document.getElementById('semi2Player2')!.textContent = this.tournamentPlayers[3];
-        document.getElementById('finalPlayer1')!.textContent = 'TBD';
-        document.getElementById('finalPlayer2')!.textContent = 'TBD';
+        // Prevent multiple tournament creation
+        if (this.isCreatingTournament) {
+            console.log("Tournament creation already in progress");
+            return;
+        }
 
-        //api to create the tournament in the backend
-        
-            //create the tournament
-        if (this.isTournamentMode) {
-            // Prepare tournament match data
-            this.matchObj.tournamentId = this.tournamentId || null;
-            this.matchObj.match_type = 'tournament';
+        this.isCreatingTournament = true;
+
+        try {
+            // Get player names from inputs
+            this.tournamentPlayers = [
+                (document.getElementById('tournament-p1')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p1')! as HTMLInputElement).value : this.userName || 'Player_1',
+                (document.getElementById('tournament-p2')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p2')! as HTMLInputElement).value  : 'Player_2',
+                (document.getElementById('tournament-p3')! as HTMLInputElement).value  != '' ? (document.getElementById('tournament-p3')! as HTMLInputElement).value  : 'Player_3',
+                (document.getElementById('tournament-p4')! as HTMLInputElement).value != '' ? (document.getElementById('tournament-p4')! as HTMLInputElement).value : 'Player_4'
+            ];
             
-            // Submit tournament match data
-            const response = await api.createTournament(4);
-            console.log("Tournament created from the response:", response);
-            if (response.success) {
-                this.tournamentId = response.data.tournament.id;
-                this.matchObj.tournamentId = response.data.tournament.id;
-                 // Store the match ID
-                console.log("Tournament match created successfully with ID:", response.data.tournament.id);
-                this.currentTournamentMatch = 0; // Reset match counter
-            } else {
-                console.error("Error creating tournament match:", response.message);
-                toastManager.showToast("Error creating tournament match: " + response.message, "error");
+            // Reset tournament state
+            this.currentTournamentMatch = 0;
+            this.tournamentWinners = [];
+            
+            // Update bracket display
+            document.getElementById('semi1Player1')!.textContent = this.tournamentPlayers[0];
+            document.getElementById('semi1Player2')!.textContent = this.tournamentPlayers[1];
+            document.getElementById('semi2Player1')!.textContent = this.tournamentPlayers[2];
+            document.getElementById('semi2Player2')!.textContent = this.tournamentPlayers[3];
+            document.getElementById('finalPlayer1')!.textContent = 'TBD';
+            document.getElementById('finalPlayer2')!.textContent = 'TBD';
+
+            //api to create the tournament in the backend
+            
+            //create the tournament
+            if (this.isTournamentMode) {
+                // Prepare tournament match data
+                this.matchObj.tournamentId = this.tournamentId || null;
+                this.matchObj.match_type = 'tournament';
+                
+                // Submit tournament match data
+                console.log("Creating tournament...");
+                const response = await api.createTournament(4);
+                console.log("Tournament created from the response:", response);
+                if (response.success) {
+                    this.tournamentId = response.data.tournament.id;
+                    this.matchObj.tournamentId = response.data.tournament.id;
+                    // Store the match ID
+                    console.log("Tournament match created successfully with ID:", response.data.tournament.id);
+                    this.currentTournamentMatch = 0; // Reset match counter
+                    // Start the first match
+                    await this.setupNextTournamentMatch();
+                } else {
+                    console.error("Error creating tournament match:", response.message);
+                    toastManager.showToast("Error creating tournament match: " + response.message, "error");
+                }
             }
-        } 
-        // Start first match
-        
-        this.setupNextTournamentMatch();
+        } catch (error) {
+            console.error("Error in startTournament:", error);
+            toastManager.showToast("Error starting tournament: " + error, "error");
+        } finally {
+            // Reset the flag after tournament creation is complete
+            this.isCreatingTournament = false;
+        }
     }
 
     /**

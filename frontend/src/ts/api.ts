@@ -719,20 +719,20 @@ class API {
         })
       });
 
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
-        if (refreshResult.success) {
-          return await this.createTournament(playerCapacity, retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp();
-          return { 
-            success: false, 
-            error: 'Authentication expired. Please log in again.',
-            authExpired: true 
-          };
-        }
-      }
+      // if (response.status === 401 && retryCount < 1) {
+      //   const refreshResult = await this.refreshToken();
+      //   if (refreshResult.success) {
+      //     return await this.createTournament(playerCapacity, retryCount + 1);
+      //   } else {
+      //     console.error('Token refresh failed:', refreshResult.error);
+      //     utils.cleanUp();
+      //     return { 
+      //       success: false, 
+      //       error: 'Authentication expired. Please log in again.',
+      //       authExpired: true 
+      //     };
+      //   }
+      // }
 
       const data = await response.json();
       if (!response.ok) {
@@ -754,7 +754,7 @@ class API {
     player2_id?: number | null;
     player1_name: string;
     player2_name: string;
-  }, retryCount: number = 0): Promise<ApiResponse> {
+  }): Promise<ApiResponse> {
     try {
       const response = await this.fetchWithAutoRefresh(`${baseURL}/tournaments/${tournamentId}/matches`, {
         method: 'POST',
@@ -772,21 +772,6 @@ class API {
       });
       console.log('Creating tournament and response is', response);
 
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
-        if (refreshResult.success) {
-          return await this.createTournamentMatch(tournamentId, matchData, retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp();
-          return { 
-            success: false, 
-            error: 'Authentication expired. Please log in again.',
-            authExpired: true 
-          };
-        }
-      }
-
       const data = await response.json();
       if (!response.ok) {
         return { success: false, error: data.error || 'Failed to create tournament match' };
@@ -794,7 +779,7 @@ class API {
 
       return { success: true, data };
     } catch (error: any) {
-      console.error(`createTournamentMatch error (attempt ${retryCount + 1}):`, error);
+      // console.error(`createTournamentMatch error (attempt ${retryCount + 1}):`, error);
       return { success: false, error: error.message };
     }
   }
