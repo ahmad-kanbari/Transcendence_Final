@@ -367,9 +367,9 @@ class API {
   /**
    * Fetch a specific user by ID
    */
-  async getUserById(userId: string, retryCount: number = 0): Promise<ApiResponse> {
+  async getUserById(userId: string): Promise<ApiResponse> {
       try {
-          const response = await fetch(`${ENDPOINTS.user.singleUser}${userId}`, {
+          const response = await this.fetchWithAutoRefresh(`${ENDPOINTS.user.singleUser}${Number(userId)}`, {
               method: 'GET',
               credentials: 'include',
               headers: {
@@ -377,21 +377,7 @@ class API {
               }
           });
 
-          if (response.status === 401 && retryCount < 1) {
-              const refreshResult = await this.refreshToken();
-              
-              if (refreshResult.success) {
-                  return await this.getUserById(userId, retryCount + 1);
-              } else {
-                  console.error('Token refresh failed:', refreshResult.error);
-                  utils.cleanUp(); 
-                  return { 
-                      success: false, 
-                      error: 'Authentication expired. Please log in again.',
-                      authExpired: true 
-                  };
-              }
-          }
+
           
           if (!response.ok) {
               const errorData = await response.json();
@@ -408,7 +394,6 @@ class API {
               data: userData 
           };
       } catch (error: any) {
-          console.error(`Error in getUserById (attempt ${retryCount + 1}):`, error);
           return { success: false, error: error.message };
       }
   }

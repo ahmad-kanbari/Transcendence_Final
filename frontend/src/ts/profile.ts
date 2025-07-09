@@ -144,36 +144,37 @@ class Profile {
       // Make body visible
       document.body.style.visibility = 'visible';
       document.body.style.opacity = '1';
-
-      // Get user ID from URL params or current user
-      const urlParams = new URLSearchParams(window.location.search);
-      const userId = urlParams.get('userId');
+      
 
       //  let usertest =await api.getUserById('10');
       //   console.log('User test data:', usertest);
-      let userData;
-      if (userId) {
-        // Loading another user's profile
-        const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
-        if (!userRes.ok) throw new Error('Failed to fetch user data');
-        userData = await userRes.json();
-      } else {
-        // Loading current user's profile
-        userData = await authRes.json();
-        console.log('Current user data in the profile: ', userData.user.user);
-        userData = userData.user.user;
-      }
+      let smalluserData;
+      // if (userId) {
+      //   // Loading another user's profile
+      //   const userRes = await this.fetchWithAutoRefresh(`${this.baseURL}/users/${userId}`);
+      //   if (!userRes.ok) throw new Error('Failed to fetch user data');
+      //   userData = await userRes.json();
+      // } else {
+      //   // Loading current user's profile
+        smalluserData = await authRes.json();
+        console.log('Current user data in the profile: ', smalluserData.user.user);
+        smalluserData = smalluserData.user.user;
+      // }
 
 
 
       // ✅ WITH this expanded version:
     
-      let userFullData = await api.getUserById(userData.id);
-      this.user = userFullData;
+      let userFullData = await api.getUserById(smalluserData.id);
+      if (!userFullData.success) {
+        toastManager.showToast( app.getUsername() ,userFullData.error || 'Failed to fetch user data');
+        return;
+      }
+      this.user = userFullData.data;
       console.log('Full user data:in porfile', userFullData);
       // Fetch user's match history and tournaments
       const [matchHistory] = await Promise.all([
-        this.fetchUserMatchHistory(userFullData.data['id'] || userData.id),
+        this.fetchUserMatchHistory(this.user.id),
         // this.fetchUserTournamentHistory(userFullData.data['id'] || userData.id)
       ]);
       localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
@@ -974,7 +975,7 @@ showDetailedGameSession(matchId: string): void {
   
   if (!modal || !tbody) return <Promise<void>>Promise.resolve();
   // let user =  app.getUser();
-  const HistoryMatches =  this.fetchUserMatchHistory(this.user.data['id'] || this.user!.id);
+  const HistoryMatches =  this.fetchUserMatchHistory(this.user.id);
   // JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
   const currentUser = app.getUsername();
   
@@ -1041,7 +1042,7 @@ async fetchUserMatchHistory(userId: string, page: number = 1, limit: number = 10
   try {
     // API endpoint with pagination parameters
     const response = await this.fetchWithAutoRefresh(
-      `${this.baseURL}/users/${userId}/matches?page=${page}&limit=${limit}`
+      `${this.baseURL}/users/${Number(userId)}/matches?page=${page}&limit=${limit}`
     );
     if (!response.ok) return [];
     
@@ -1130,11 +1131,13 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     //     userWon = true;
     // }
 
-    if (userWon) {
-      stats.wins++;
-    } else {
-      stats.losses++;
-    }
+    // if (userWon) {
+    //   stats.wins++;
+    // } else {
+    //   stats.losses++;
+    // }
+    stats.wins = this.user.stats?.wins || 0;
+    stats.losses = this.user.stats?.losses || 0;
   });
 
   // Calculate win rate
