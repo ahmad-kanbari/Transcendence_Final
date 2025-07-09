@@ -1075,59 +1075,161 @@ class Chat {
 
 
     public async startChatWithFriend(friendId: string): Promise<void> {
-        try {
+
             // components.showToast('info', 'Chat Feature', 'Opening chat with friend...', 2000);
-            toastManager.info(app.getUsername(), 'Opening chat with friend...');
+        //     toastManager.info(app.getUsername(), 'Opening chat with friend...');
             
-            // First, check if a chat already exists between users using your backend route
-            const existingChat = await this.checkExistingChatWithFriend(friendId);
-                 let user;
+        //     // First, check if a chat already exists between users using your backend route
+        //     const existingChat = await this.checkExistingChatWithFriend(friendId);
+        //          let user;
+        //     try {
+        //         const userRes = await api.fetchWithAutoRefresh(`${this.baseURL}/users/${friendId}`);
+        //         if (userRes.ok) {
+        //             user = await userRes.json();
+        //         } else {
+        //             toastManager.error(app.getUsername(), `Failed to get user info: ${userRes.status} : ${userRes.statusText}`);
+        //             throw new Error(`Failed to get user info: ${userRes.status}`);
+        //         }
+        //     } catch (error) {
+        //         console.error('Error getting user info:', error);
+        //         // Fallback user object if API call fails
+        //         user = { id: friendId, username: 'Unknown User' };
+        //     }
+        //     if (existingChat && existingChat.chat_id) {
+        //         // If chat exists, join it directly
+                
+        //         await this.selectChatFromList(existingChat.chat_id, user);
+        //         // components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
+        //         toastManager.success(app.getUsername(), 'Existing chat opened successfully!');
+        //         return;
+        //     }
+            
+        //     // If no existing chat, create a new one
+        //     const newChat = await this.createChatWithFriend(friendId);
+            
+        //     if (newChat && (newChat.chat_id || newChat.id)) {
+        //         const chatId = newChat.chat_id || newChat.id;
+                
+        //         // Reload chat list to show the new chat
+        //         await this.loadChats();
+                
+        //         // Join the new chat
+        //         await this.selectChatFromList(chatId , user);
+                
+        //         // components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
+        //         toastManager.success(app.getUsername(), 'New chat created successfully!');
+        //     } else {
+        //         toastManager.error(app.getUsername(), 'Failed to create chat - no chat ID returned');
+        //         throw new Error('Failed to create chat - no chat ID returned');
+        //     }
+            
+        // } catch (error) {
+        //     console.error('Error starting chat with friend:', error);
+        //     // components.showToast('error', 'Chat Failed', 'Failed to start chat with friend', 3000);
+        //     toastManager.error(app.getUsername(), 'Failed to start chat with friend');
+        // }
+             
+        // MODIFIED: Create chat when clicking on user
+        // div.addEventListener('click', async () => {
+            let friendUser = await api.getUserById(friendId);
+            if (!friendUser.success){
+                toastManager.error(app.getUsername(), `Failed to get user info: ${friendUser.message}`);
+                return ;
+            }
+            let user = friendUser.data;
             try {
-                const userRes = await api.fetchWithAutoRefresh(`${this.baseURL}/users/${friendId}`);
-                if (userRes.ok) {
-                    user = await userRes.json();
-                } else {
-                    toastManager.error(app.getUsername(), `Failed to get user info: ${userRes.status} : ${userRes.statusText}`);
-                    throw new Error(`Failed to get user info: ${userRes.status}`);
+          
+                // Hide search results immediately
+                this.elements.userSearchResultsChat!.style.display = 'none';
+                if (this.elements.userSearchInput) {
+                    this.elements.userSearchInput.value = '';
                 }
-            } catch (error) {
-                console.error('Error getting user info:', error);
-                // Fallback user object if API call fails
-                user = { id: friendId, username: 'Unknown User' };
-            }
-            if (existingChat && existingChat.chat_id) {
-                // If chat exists, join it directly
                 
-                await this.selectChatFromList(existingChat.chat_id, user);
-                // components.showToast('success', 'Chat Opened', 'Existing chat opened successfully!', 2000);
-                toastManager.success(app.getUsername(), 'Existing chat opened successfully!');
-                return;
-            }
-            
-            // If no existing chat, create a new one
-            const newChat = await this.createChatWithFriend(friendId);
-            
-            if (newChat && (newChat.chat_id || newChat.id)) {
-                const chatId = newChat.chat_id || newChat.id;
+                // components.showToast('info', 'Creating Chat', `Creating chat with ${user.username}...`, 2000);
+                // toastManager.info(app.getUsername(), `Creating chat with ${user.username}...`);
                 
-                // Reload chat list to show the new chat
+                // Check if chat already exists
+                let chatId;
+                const existingChatRes = await api.fetchWithAutoRefresh(
+                    `${this.baseURL}/chats/between/${user.id}`,
+                    { credentials: 'include' }
+                );
+                
+                if (existingChatRes.ok) {
+                    // Chat exists, get the chat ID
+                    const existingChat = await existingChatRes.json();
+                    chatId = existingChat.chat_id;
+                    // components.showToast('success', 'Chat Found', `Opening existing chat with ${user.username}`, 2000);
+                    toastManager.success(app.getUsername(), `Opening existing chat with ${user.username}`);
+                } else if (existingChatRes.status === 404) {
+                    // Chat doesn't exist, create new one
+                    const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ 
+                            user2Id: user.id,
+                            // Try alternative field names if the above doesn't work
+                            otherUserId: user.id,
+                            participantId: user.id
+                        })
+                    });
+                    
+                    if (!createChatRes.ok) {
+                        // toastManager.showToast('Error', `Failed to create chat : ${createChatRes.statusText}`);
+                        toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
+                        throw new Error(`Failed to create chat: ${createChatRes.status}`);
+                    }
+                    
+                    const newChat = await createChatRes.json();
+                    chatId = newChat.chat_id || newChat.id;
+                    
+                    // components.showToast('success', 'Chat Created', `New chat created with ${user.username}`, 2000);
+                    toastManager.success(app.getUsername(), `New chat created with ${user.username}`);
+                    
+                    // Reload chats to show the new chat in the list
+                    await this.loadChats();
+                } else {
+                    throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
+                    toastManager.error(app.getUsername(), `Failed to check existing chat: ${existingChatRes.status}`);
+                }
+                
+                // Join the chat room
+                if (chatId) {
+                    await this.joinRoom(chatId);
+                } else {
+                    throw new Error('No chat ID received');
+                }
+
+                                // CRITICAL: Always reload chats to ensure the chat row appears
+                console.log('Reloading chats to show new/existing chat row...');
                 await this.loadChats();
+                this.currentChatWithUsername = user.username;
+                // Wait a moment for the DOM to update, then join the chat
+                setTimeout(async () => {
+
+                    if (chatId) {
+                          // Store current username for later use
+                        console.log(`Joining chat room ${chatId} after creating chat row`);
+                        await this.joinRoom(chatId);
+                        
+                        // Scroll to the active chat row if needed
+                        const activeRow = document.querySelector(`[data-chat-id="${chatId}"]`);
+                        if (activeRow) {
+                            activeRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                        
+                        // components.showToast('success', 'Chat Ready', `Chat with ${user.username} is now active!`, 2000);
+                        toastManager.success(app.getUsername(), `Chat with ${user.username} is now active!`);
+                    }
+                }, 200);
                 
-                // Join the new chat
-                await this.selectChatFromList(chatId , user);
-                
-                // components.showToast('success', 'Chat Created', 'New chat created successfully!', 3000);
-                toastManager.success(app.getUsername(), 'New chat created successfully!');
-            } else {
-                toastManager.error(app.getUsername(), 'Failed to create chat - no chat ID returned');
-                throw new Error('Failed to create chat - no chat ID returned');
+            } catch (error) {
+                console.error('Error creating/opening chat:', error);
+                // components.showToast('error', 'Chat Error', `Failed to create chat with ${user.username}`, 3000);
+                toastManager.error(app.getUsername(), `Failed to create chat with ${user.username}`);
             }
-            
-        } catch (error) {
-            console.error('Error starting chat with friend:', error);
-            // components.showToast('error', 'Chat Failed', 'Failed to start chat with friend', 3000);
-            toastManager.error(app.getUsername(), 'Failed to start chat with friend');
-        }
+        // });
     }
 
     /**
