@@ -1882,7 +1882,7 @@ init2FA(): void {
         let userWon = false;
         let opponent = '';
         let score = '';
-        let player1_name = '';
+        let player1_name = match.player1_name || 'Player 1';
         
         if (match.match_type === 'multiplayer') {
         // Handle multiplayer matches
@@ -1899,6 +1899,7 @@ init2FA(): void {
           userWon = match.player1_score > match.player2_score;
           opponent = match.player2_name;
         } else {
+          // player1_name = match.player1_name;
           userWon = match.player2_score > match.player1_score;
           opponent = match.player1_name;
         }
