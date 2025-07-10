@@ -384,8 +384,8 @@ calculateComebackFactor(userScore: number, opponentScore: number): string {
   return userScore > opponentScore ? "Dominant" : "Challenging";
 }
 
-calculateDetailedStats(matchHistory: any[]): any {
-  const currentUser = app.getUsername();
+calculateDetailedStats(matchHistory: any[], username:string | null): any {
+  const currentUser = username || app.getUsername();
   const stats = {
     // Basic stats
     totalMatches: 0,
@@ -555,19 +555,19 @@ calculateDetailedStats(matchHistory: any[]): any {
   return stats;
 }
 
-generatePerformanceBars(recentMatches: any[]): string {
-  if (!recentMatches || recentMatches.length === 0) {
-    return '<div class="text-gray-400 text-xs flex items-center justify-center h-full">No recent matches</div>';
-  }
+// generatePerformanceBars(recentMatches: any[]): string {
+//   if (!recentMatches || recentMatches.length === 0) {
+//     return '<div class="text-gray-400 text-xs flex items-center justify-center h-full">No recent matches</div>';
+//   }
   
-  return recentMatches.map(match => {
-    const height = Math.random() * 60 + 20;
-    const color = match.result === 1 ? 'bg-cyber-green' : 'bg-cyber-pink';
-    const opponent = match.opponent || 'Unknown';
-    const score = match.score || '0-0';
-    return `<div class="${color} w-6 rounded-t opacity-80 hover:opacity-100 transition-opacity" style="height: ${height}px" title="${opponent}: ${score}"></div>`;
-  }).join('');
-}
+//   return recentMatches.map(match => {
+//     const height = Math.random() * 60 + 20;
+//     const color = match.result === 1 ? 'bg-cyber-green' : 'bg-cyber-pink';
+//     const opponent = match.opponent || 'Unknown';
+//     const score = match.score || '0-0';
+//     return `<div class="${color} w-6 rounded-t opacity-80 hover:opacity-100 transition-opacity" style="height: ${height}px" title="${opponent}: ${score}"></div>`;
+//   }).join('');
+// }
 
 showDetailedStatsModal(): void {
   const modal = document.getElementById('detailedStatsModal');
@@ -577,7 +577,7 @@ showDetailedStatsModal(): void {
   
   // Get current match history (you'll need to store this from loadProfileData)
   const storedMatches = JSON.parse(localStorage.getItem('userMatchHistory') || '[]');
-  const stats = this.calculateDetailedStats(storedMatches);
+  const stats = this.calculateDetailedStats(storedMatches, this.user.username || null);
   
   content.innerHTML = `
    <!-- CSS Charts Section -->
@@ -640,16 +640,7 @@ showDetailedStatsModal(): void {
           </div>
         </div>
         
-        <!-- Performance Trend -->
-        <div class="cyber-card">
-          <h6 class="font-cyber text-cyber-pink text-center mb-4">Recent Performance</h6>
-          <div class="flex items-end justify-center space-x-1 h-24">
-            ${this.generatePerformanceBars(stats.performanceOverTime ? stats.performanceOverTime.slice(-10) : [])}
-          </div>
-          <div class="text-center mt-2">
-            <span class="text-xs text-gray-400">Last 10 matches</span>
-          </div>
-        </div>
+       
         
         <!-- Top Opponents -->
         <div class="cyber-card md:col-span-2">
