@@ -1,5 +1,5 @@
 // Tailwind CSS is now loaded via CDN
-import socketService from './socketService';
+// import socketService from './socketService';
 
 import api from './api';
 import utils from './utils';
@@ -65,6 +65,7 @@ class App {
   userName: string | null = null;
   userId: number | null = null;
   userEmail: any;
+  socketService: any = null;
 
   constructor() {
     this.appContainer = null;
@@ -1033,7 +1034,7 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
 }
 
   destroy(): void {
-        socketService.destroy();
+        this.socketService.destroy();
         chat.destroy();
         utils.cleanUp();
         console.log('App destroyed');
@@ -1043,34 +1044,37 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
     private initializeSocket(): void {
         if (typeof io !== 'undefined') {
            console.log('Initializing chat socket connection from app class');
-            window.chatSocket = io(CONFIG.socketURL, {
+            this.socketService = io(CONFIG.socketURL, {
                 withCredentials: true,
                 autoConnect: true,
                 reconnection: true,
             });
-            
-            window.chatSocket.on('connect', () => {
+
+          }else {
+            console.error('Socket.io is not available. Please ensure it is loaded before initializing the app.');
+            return ;
+          }
+            this.socketService.on('connect', () => {
                 console.log('Socket connected');
                 // components.showToast('success', 'Connected', 'Real-time features active!', 2000);
                 toastManager.success(this.getUsername(), 'Real-time features active!');
-                console.log('Chat socket initialized successfully');
+        
             });
             
-            window.chatSocket.on('disconnect', () => {
+            this.socketService.on('disconnect', () => {
                 console.log('Socket disconnected');
                 // components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
                 toastManager.warning(this.getUsername(), 'Real Time Chat Disconnected, Attempting to reconnect...');
                 console.log('Chat socket disconnected');
             });
-        }
+        
         
         // Initialize notification manager after a short delay to ensure DOM is ready
         setTimeout(() => {
             notificationManager.init();
         }, 500);
     }
-
-}
+  }
 
 const app = new App();
 
@@ -1090,10 +1094,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }));
 
-           // Add cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-            app.destroy();
-        });
+    //        // Add cleanup on page unload
+    // window.addEventListener('beforeunload', () => {
+    //         app.destroy();
+    //     });
   } catch (error) {
     if (components && components.hideSpinner) {
       components.hideSpinner();
