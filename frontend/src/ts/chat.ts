@@ -218,13 +218,14 @@ class Chat {
 
                 if (this.currentChatId !== null) {
                     // toastManager.info(app.getUsername(), `Sending message in chat with ${this.currentChatWithUsername}`);
-                    await this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
+                    // this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
+                     this.sendMessage();
+                     this.debouncedReloadChats();
                 } else {
                     console.log('No active chat to select.');
                 }
 
-                this.sendMessage();
-                chat.debouncedReloadChats();
+         
             });
         }
 
@@ -364,10 +365,10 @@ class Chat {
         if (this.chatReloadTimeout) {
             clearTimeout(this.chatReloadTimeout);
         }
-        this.chatReloadTimeout = setTimeout(() => {
-            this.loadChats();
+        this.chatReloadTimeout = setTimeout(() => async () => {
+            await this.loadChats();
             this.chatReloadTimeout = null;
-        }, 500);
+        }, 100);
     }
 
     /**
@@ -517,7 +518,7 @@ class Chat {
         //    return;
         // }
         // Leave current room
-        if (this.currentChatId !== null && this.socketService) {
+        if (this.currentChatId !== null && app.socketService) {
             console.log(`Leaving current chat room: ${this.currentChatId}`);
             this.socketService.emit('leaveRoom', this.currentChatId);
         }
@@ -586,7 +587,7 @@ class Chat {
                 } else {
                     console.log('No mailbox notifications to mark as read');
                 }
-            }, 0);
+            }, 50);
             } catch (error) {
                 console.error('Error loading messages:', error);
             }
@@ -686,18 +687,18 @@ class Chat {
         if (!content) return;
 
         // Check if trying to send message to blocked user
-        if (this.currentChatWithUsername) {
-            const blockedUser = this.blockedUsersList.find(user => 
-                user.username === this.currentChatWithUsername
-            );
+        // if (this.currentChatWithUsername) {
+        //     const blockedUser = this.blockedUsersList.find(user => 
+        //         user.username === this.currentChatWithUsername
+        //     );
             
-            if (blockedUser) {
-                // components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
-                // toastManager.error(app.getUsername(), 'Cannot send messages to blocked users');
+        //     if (blockedUser) {
+        //         // components.showToast('error', 'Message Blocked', 'Cannot send messages to blocked users', 3000);
+        //         // toastManager.error(app.getUsername(), 'Cannot send messages to blocked users');
         
-                return;
-            }
-        }
+        //         return;
+        //     }
+        // }
         try {
             const result = await api.sendMessage(this.currentChatId.toString(), content);
             

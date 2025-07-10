@@ -421,7 +421,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             //if you are outside the chat room you will not get notified by this event but you will get notified by messageReceivedInform
             toastManager.info(app.getUsername(), `New message socket from ${message.from_user.username}: ${message.content}`);
             console.log('New message received:', message);
-            if ((message.chat_id == chat.currentChatId)) {
+            console.log('Current chat ID:', chat.currentChatId, 'Received chat ID:', message.chat_id);
+            console.log(typeof chat.currentChatId, typeof message.chat_id);
+            if ((message.chat_id === chat.currentChatId)) {
                 console.log(`New emmiting message in current chat ${chat.currentChatId}:`, message);
                 chat.appendMessage(message);
                 // return; // Ignore messages not in current chat
