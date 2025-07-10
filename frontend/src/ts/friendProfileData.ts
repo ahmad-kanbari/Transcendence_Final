@@ -4,6 +4,7 @@ import utils from './utils';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
 import router from './router';
+import chat from './chat';
 
 interface FriendProfileData {
     id: number;
@@ -160,7 +161,7 @@ class FriendProfile {
         const closeMatchHistoryBtn = document.getElementById('closeFriendMatchHistoryBtn');
         if (closeMatchHistoryBtn) {
             closeMatchHistoryBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                  e.stopPropagation();
                 e.preventDefault();
                 const modal = document.getElementById('friendMatchHistoryModal');
                 if (modal) modal.classList.add('hidden');
@@ -371,6 +372,8 @@ class FriendProfile {
                 stats.losses++;
                 currentStreak = 0;
             }
+            stats.wins = this.friendData?.stats?.wins || 0;
+            stats.losses = this.friendData?.stats?.losses || 0;
         });
 
         stats.win_rate = stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 100) : 0;
@@ -693,6 +696,7 @@ class FriendProfile {
             if (existingChatRes.ok) {
                 const existingChat = await existingChatRes.json();
                 chatId = existingChat.chat_id;
+                toastManager.success(app.getUsername(), `Opening existing chat with ${this.friendData.username}...`);
             } else if (existingChatRes.status === 404) {
                 // Create new chat
                 const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
@@ -703,20 +707,26 @@ class FriendProfile {
                 });
 
                 if (!createChatRes.ok) {
+                    toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
                     throw new Error('Failed to create chat');
                 }
 
                 const newChat = await createChatRes.json();
-                chatId = newChat.chat_id;
+                chatId = newChat.chat_id || newChat.id;;
 
             } else {
+                toastManager.error(app.getUsername(), 'Failed to get chat information');
                 throw new Error('Failed to get chat information');
             }
 
             // Redirect to chat with the specific chat ID
             // window.location.href = `chat.html?chatId=${chatId}`;
             if (chatId) {
+                toastManager.success(app.getUsername(), `New chat created with ${this.friendData.username}`);
+                chat.currentChatWithUsername = this.friendData.username;
+                // await chat.loadChats();
                 router.navigate(`/chat?chatId=${chatId}`);
+                // await chat.joinRoom(chatId);
             }
             
         } catch (error) {

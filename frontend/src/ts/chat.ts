@@ -147,12 +147,15 @@ class Chat {
             this.createBlockedUsersSection(); // Create section first
             this.setupSocketHandlers();
             this.setupPopupEventListeners(); // FIXED: Setup popup listeners
-             this.setupMessageContextMenu();
+            this.setupMessageContextMenu();
             this.initializeParticles();
             this.loadChats();
             this.loadFriendData();
              this.loadBlockedUsers(); 
             this.updateDashboardStats();
+
+            // Handle URL-based chat room joining
+            this.handleURLChatId();
         }, 100);
     }
 
@@ -208,19 +211,37 @@ class Chat {
      setupEventListeners(): void {
         // Send message
         if (this.elements.sendBtn) {     
-            this.elements.sendBtn.addEventListener('click', (e) => {
+            this.elements.sendBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                this.sendMessage()
-                chat.debouncedReloadChats(); // Reload chats after sending message
+
+                if (this.currentChatId !== null) {
+                    toastManager.info(app.getUsername(), `Sending message in chat with ${this.currentChatWithUsername}`);
+                    await this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
+                } else {
+                    console.log('No active chat to select.');
+                }
+
+                this.sendMessage();
+                chat.debouncedReloadChats();
             });
         }
 
         if (this.elements.messageInput) {
-            this.elements.messageInput.addEventListener('keypress', (e) => {
+            this.elements.messageInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.sendMessage();
+             e.stopPropagation();
+                e.preventDefault();
+
+                if (this.currentChatId !== null) {
+                    toastManager.info(app.getUsername(), `Sending message in chat with ${this.currentChatWithUsername}`);
+                    await this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
+                } else {
+                    console.log('No active chat to select.');
+                }
+
+                this.sendMessage();
+                chat.debouncedReloadChats();
                 
                    // Reload chats after sending message
                 }
@@ -440,7 +461,7 @@ class Chat {
         try {
             // Join the room
             console.log(`Joining chat room from selectChatFromList: ${chatId}`);
-            this.currentChatWithUsername = user.username || null; // Store current username for later use
+            this.currentChatWithUsername = user.username || user || null; // Store current username for later use
             console.log(`Current chat with username: ${this.currentChatWithUsername}`);
             await this.joinRoom(chatId);
             // Mark notifications as read for the current chat
@@ -514,7 +535,9 @@ class Chat {
             activeRow.classList.add('active');
         }
         if (this.elements.chatHeader) {
-            this.elements.chatHeader.textContent = `Chat Active with ${this.currentChatWithUsername || 'Unknown User'}`;
+            const username = this.currentChatWithUsername || 'Unknown User';
+            console.log(`Updating chat header: Chat Active with ${username}`);
+            this.elements.chatHeader.textContent = `Chat Active with ${username}`;
             }
         // Clear and load messages
         // this.clearMessages();
@@ -523,6 +546,7 @@ class Chat {
         
             if (this.socketService) {
                 this.socketService.emit('joinRoom', chatId);
+                toastManager.info(app.getUsername(), `Joined chat room ${chatId}`);
             }
         }else {
             console.error('Invalid chatId:', chatId);
@@ -533,27 +557,35 @@ class Chat {
 
         try {
             console.log(`Loading messages from join room function`);
-            const messages = await api.getChatMessages(chatId.toString());
-           
-            messages.forEach((message: any) => this.appendMessage(message));
-            // Update header
-                if (this.elements.chatHeader) {
-                    this.elements.chatHeader.textContent =`Chat Active with ${this.currentChatWithUsername  || 'Unknown User'}`;
-                }
-            if ( notificationManager.getMailboxCount() > 0){
-                // Mark messages as read
-                await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
-                    method: 'PATCH',
-                    credentials: "include",
+            this.clearMessages(); // Clear messages before loading new ones
+            toastManager.info(app.getUsername(), 'Loading messages...');
+            setTimeout(async () => {
+                const messages = await api.getChatMessages(chatId.toString());
+
+                messages.forEach((message: any) => {
+                    toastManager.info(app.getUsername(), `Loading message from chat ${message}`);
+                    this.appendMessage(message);
                 });
-                
-                notificationManager.updateMailboxCount(0); // Reset mailbox count
-                if (this.elements.mailboxBtn) {
-                    this.elements.mailboxBtn.setAttribute('data-count', '0');
+                toastManager.info(app.getUsername(), `Loaded ${messages.length} messages from chat ${chatId}`);
+                // Update header
+                if (this.elements.chatHeader) {
+                    this.elements.chatHeader.textContent = `Chat Active with ${this.currentChatWithUsername || 'Unknown User'}`;
                 }
-            } else {
-                console.log('No mailbox notifications to mark as read');
-            }
+                if (notificationManager.getMailboxCount() > 0) {
+                    // Mark messages as read
+                    await api.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
+                        method: 'PATCH',
+                        credentials: "include",
+                    });
+
+                    notificationManager.updateMailboxCount(0); // Reset mailbox count
+                    if (this.elements.mailboxBtn) {
+                        this.elements.mailboxBtn.setAttribute('data-count', '0');
+                    }
+                } else {
+                    console.log('No mailbox notifications to mark as read');
+                }
+            }, 0);
             } catch (error) {
                 console.error('Error loading messages:', error);
             }
@@ -670,6 +702,7 @@ class Chat {
             
             if (result.ok) {
                 // this.appendMessage({ sender_id: this.currentUserId ,content: content});
+                toastManager.success(app.getUsername(), `Message sent to ${this.currentChatWithUsername} User AND THE MESSAGE IS ${this.elements.messageInput.value}'}`);
                 this.elements.messageInput.value = '';
             } else {
                 // components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
@@ -1748,14 +1781,31 @@ appendMessage(message: any): void {
     }
 
      handleURLChatId(): void {
-        const params = new URLSearchParams(window.location.search);
-        const chatIdString = params.get('chatId');
-        
-        if (chatIdString) {
-            const chatId = parseInt(chatIdString);
-            setTimeout(() => {
-                this.joinRoom(chatId);
-            }, 500);
+        console.log('Checking URL for chatId parameter...');
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('chatId');
+
+        if (chatId) {
+            const chatIdNumber = parseInt(chatId, 10);
+            if (!isNaN(chatIdNumber)) {
+                // this.forceJoinRoom(chatIdNumber);
+                console.log(`Joining chat room from URL: ${chatIdNumber}`);
+                this.selectChatFromList(chatIdNumber, this.currentChatWithUsername);
+                // clickToOpenChat(chatIdNumber, this.currentChatWithUsername);
+            if (this.elements.chatHeader) {
+                const username = this.currentChatWithUsername || 'Unknown User';
+                console.log(`Updating chat header: Chat Active with ${username}`);
+                console.log('chat header element' , this.elements.chatHeader);
+                this.elements.chatHeader.classList.add('active');
+                // this.elements.chatHeader.style.display = 'block';
+                this.elements.chatHeader.textContent = `Chat Active with ${username}`;
+                console.log("this.elements.chatHeader", this.elements.chatHeader);
+                // this.loadChats();
+            }
+            
+            } else {
+                console.error('Invalid chatId in URL:', chatId);
+            }
         }
     }
 
@@ -1951,6 +2001,9 @@ appendMessage(message: any): void {
                         transform: scale(0.7) translateY(-50px);
                         opacity: 0;
                     }
+
+
+
                     to {
                         transform: scale(1) translateY(0);
                         opacity: 1;
