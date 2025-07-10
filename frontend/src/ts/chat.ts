@@ -715,28 +715,31 @@ class Chat {
         }
     }
 
-appendMessage(message: any): void {
+ async appendMessage(message: any): Promise<void> {
     if (!this.elements.messageBox) return;
-
+    console.log(`Appending message: ${JSON.stringify(message)}`);
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
     messageDiv.setAttribute('data-sender-id', message.sender_id);
-    messageDiv.setAttribute('data-sender-name', message.sender_name || 'Unknown');
+    setTimeout(async () => {
+        
+   
+    let sender =  await api.getUserById(message.sender_id);
+    messageDiv.setAttribute('data-sender-name', sender.username || 'Unknown User');
     
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     // Enhanced message with clickable username (only for received messages)
-    const senderName = message.sender_name || 'Unknown';
+    const senderName = sender.username || 'Unknown';
     const isOwnMessage = message.sender_id === this.currentUserId;
     
     messageDiv.innerHTML = `
         ${!isOwnMessage ? `
             <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
                 <span class="clickable-username" 
-                      data-user-id="${message.sender_id}" 
+                
                       style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
                       onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
-                    ${senderName}
                 </span>
             </div>
         ` : ''}
@@ -744,8 +747,9 @@ appendMessage(message: any): void {
         <div class="message-time" style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
     `;
 
-    this.elements.messageBox.appendChild(messageDiv);
-    this.elements.messageBox.scrollTop = this.elements.messageBox.scrollHeight;
+    this.elements.messageBox!.appendChild(messageDiv);
+    this.elements.messageBox!.scrollTop = this.elements.messageBox!.scrollHeight;
+     }, 500);
 }
 
     clearMessages(): void {
@@ -1363,24 +1367,24 @@ appendMessage(message: any): void {
         };
 
         // Send message option
-        const messageOption = document.createElement('div');
-        messageOption.className = 'context-menu-item';
-        messageOption.style.cssText = `
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 12px;
-            color: var(--cyber-green);
-            transition: background-color 0.2s ease;
-        `;
-        messageOption.innerHTML = `<i class="bi bi-chat-dots mr-2"></i>Send Direct Message`;
-        messageOption.onclick = () => {
-            // You can implement direct message functionality here
-            toastManager.info(app.getUsername(), `Starting direct chat with ${senderName}...`);
-            document.body.removeChild(contextMenu);
-        };
+        // const messageOption = document.createElement('div');
+        // messageOption.className = 'context-menu-item';
+        // messageOption.style.cssText = `
+        //     padding: 8px 12px;
+        //     cursor: pointer;
+        //     font-size: 12px;
+        //     color: var(--cyber-green);
+        //     transition: background-color 0.2s ease;
+        // `;
+        // messageOption.innerHTML = `<i class="bi bi-chat-dots mr-2"></i>Send Direct Message`;
+        // messageOption.onclick = () => {
+        //     // You can implement direct message functionality here
+        //     toastManager.info(app.getUsername(), `Starting direct chat with ${senderName}...`);
+        //     document.body.removeChild(contextMenu);
+        // };
 
         contextMenu.appendChild(profileOption);
-        contextMenu.appendChild(messageOption);
+        // contextMenu.appendChild(messageOption);
 
         // Add hover effects
         contextMenu.addEventListener('mouseover', (e) => {

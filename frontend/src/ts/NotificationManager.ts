@@ -417,6 +417,8 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             return;
         }
         this.socketService.on('newMessage', (message: any) => {
+
+            toastManager.info(app.getUsername(), `New message socket from ${message.from_user.username}: ${message.content}`);
             console.log('New message received:', message);
             if ((message.chat_id == chat.currentChatId)) {
                 console.log(`New emmiting message in current chat ${chat.currentChatId}:`, message);
@@ -437,6 +439,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         
         // Handle message notifications
         this.socketService.on('messageReceivedInform', async (data: any) => {
+            toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message} on mesageReceivedInform`);
         //     // Only show toast if not in the current chat
             console.log(' new Message received:', data);
             if (!chat.currentChatId || chat.currentChatId.toString() != data.chatId) {
@@ -487,12 +490,15 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 
         // Handle friend requests
         this.socketService.on('friendRequestInform', (data: any) => {
+            toastManager.info(app.getUsername(), `Friend request from ${data.username}: ${data.message} on fre  findRequestInform`);
             toastManager.addToQueue('Friend Request', data.message);
             this.addNotification(data.message);
             chat.loadFriendData();
         });
 
         this.socketService.on('friendRequestAccept', (data: any) => {
+     
+            toastManager.info(app.getUsername(), `Friend request accepted by ${data.username}: ${data.message} on friendRequestAccept`);
             console.log('Friend request accepted:', data);
             toastManager.addToQueue('Friend Request', data.message);
             this.addNotification(data.message);
