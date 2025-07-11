@@ -483,13 +483,20 @@ show2FAModal(): void {
     if (app.state) {
       console.log('Updating app state with user data:', userData);
       app.state.user = userData;
+      app.state.isAuthenticated = true;
     }
     localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('isAuthenticated', 'true');
 
     // Clear temporary data
     this.tempToken = null;
     
     this.updateUIAuthState();
+    
+    // Dispatch event to notify components about authentication state change
+    document.dispatchEvent(new CustomEvent('appStateChanged', {
+      detail: { isAuthenticated: true, user: userData }
+    }));
     
     // Force socket reconnection after successful login to ensure cookies are sent
     if (app.socketService) {

@@ -34,12 +34,50 @@ class NotificationManager {
         // Don't auto-initialize here, let the app call init when ready
     }
     
+    // Check socket connection status periodically
+    private startSocketHealthCheck(): void {
+        setInterval(() => {
+            if (!app.socketService) {
+                console.warn('NotificationManager: Socket service not available during health check');
+                return;
+            }
+            
+            if (!app.socketService.connected && app.state && app.state.isAuthenticated) {
+                console.log('NotificationManager: Socket disconnected but user authenticated, attempting to reconnect');
+                app.socketService.connect();
+            }
+            
+            // If connected but event handlers might be missing, reinitialize them
+            if (app.socketService.connected && this.initialized) {
+                console.log('NotificationManager: Socket health check - ensuring event handlers are attached');
+                this.reinitializeSocketHandlers();
+            }
+        }, 30000); // Check every 30 seconds
+    }
 
     init(): void {
         if (this.initialized) return;
         
         console.log('NotificationManager: Starting initialization...');
         this.retryInitialization();
+        
+        // Setup global event listener to handle app state changes
+        document.addEventListener('appStateChanged', () => {
+            console.log('NotificationManager: App state changed, reinitializing socket handlers');
+            this.reinitializeSocketHandlers();
+        });
+        
+        // Listen for socket connection events
+        document.addEventListener('socketConnected', (event: any) => {
+            console.log(`NotificationManager: Socket connected event received, socket ID: ${event.detail.socketId}`);
+            if (this.initialized) {
+                console.log('NotificationManager: Reinitializing socket handlers after socket connection');
+                this.reinitializeSocketHandlers();
+            }
+        });
+        
+        // Start socket health check to ensure connection and handlers are maintained
+        this.startSocketHealthCheck();
     }
 
     private retryInitialization(attempts: number = 0): void {
@@ -66,18 +104,18 @@ class NotificationManager {
         }, delay);
     }
 
-        private getElements(): void {
-            this.elements = {
-        
-                // Notification elements
-                notificationBell: document.getElementById('notificationBell') as HTMLElement | null,
-                notificationBadge: document.getElementById('notificationBadge') as HTMLElement | null,
-                generalNotifications: document.getElementById('generalNotifications') as HTMLElement | null,
-                messageNotifications: document.getElementById('messageNotifications') as HTMLElement | null,
-                bellBtn: document.getElementById('bellBtn') as HTMLElement | null,
-                mailboxBtn: document.getElementById('mailboxBtn') as HTMLElement | null,
-                
-            };
+    private getElements(): void {
+        this.elements = {
+    
+            // Notification elements
+            notificationBell: document.getElementById('notificationBell') as HTMLElement | null,
+            notificationBadge: document.getElementById('notificationBadge') as HTMLElement | null,
+            generalNotifications: document.getElementById('generalNotifications') as HTMLElement | null,
+            messageNotifications: document.getElementById('messageNotifications') as HTMLElement | null,
+            bellBtn: document.getElementById('bellBtn') as HTMLElement | null,
+            mailboxBtn: document.getElementById('mailboxBtn') as HTMLElement | null,
+            
+        };
     }
 
     private async setupNotificationEventListeners(): Promise<void> {
@@ -155,60 +193,60 @@ class NotificationManager {
     }
 
     // HELPER METHODS for the enhanced version
-        private closeGeneralNotifications(): void {
-            if (this.elements.generalNotifications) {
-                this.elements.generalNotifications.style.display = 'none';
-            }
+    private closeGeneralNotifications(): void {
+        if (this.elements.generalNotifications) {
+            this.elements.generalNotifications.style.display = 'none';
         }
+    }
 
-        private closeMessageNotifications(): void {
-            if (this.elements.messageNotifications) {
-                this.elements.messageNotifications.style.display = 'none';
-            }
+    private closeMessageNotifications(): void {
+        if (this.elements.messageNotifications) {
+            this.elements.messageNotifications.style.display = 'none';
         }
+    }
 
-        private async openGeneralNotifications(): Promise<void> {
-            if (!this.elements.generalNotifications) return;
+    private async openGeneralNotifications(): Promise<void> {
+        if (!this.elements.generalNotifications) return;
+        
+        try {
+            // Show dropdown with loading state
+            this.elements.generalNotifications.style.display = 'block';
+            this.elements.generalNotifications.innerHTML = 
+                '<div style="padding: 10px; color: #999; text-align: center;">Loading notifications...</div>';
             
-            try {
-                // Show dropdown with loading state
-                this.elements.generalNotifications.style.display = 'block';
+            // Load notifications
+            const notifications = await api.getNotifications('others', 1, 5);
+            
+            // Render notifications
+            this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
+            
+            // Mark as opened and reset count
+            await api.markNotificationsAsOpened('others');
+            this.notificationCount = 0;
+            
+            if (this.elements.bellBtn) {
+                this.elements.bellBtn.setAttribute('data-count', '0');
+            }
+            
+        } catch (error) {
+            console.error('Error opening general notifications:', error);
+            
+            if (this.elements.generalNotifications) {
                 this.elements.generalNotifications.innerHTML = 
-                    '<div style="padding: 10px; color: #999; text-align: center;">Loading notifications...</div>';
-                
-                // Load notifications
-                const notifications = await api.getNotifications('others', 1, 5);
-                
-                // Render notifications
-                this.renderNotificationList(this.elements.generalNotifications, notifications, 'others');
-                
-                // Mark as opened and reset count
-                await api.markNotificationsAsOpened('others');
-                this.notificationCount = 0;
-                
-                if (this.elements.bellBtn) {
-                    this.elements.bellBtn.setAttribute('data-count', '0');
-                }
-                
-            } catch (error) {
-                console.error('Error opening general notifications:', error);
-                
-                if (this.elements.generalNotifications) {
-                    this.elements.generalNotifications.innerHTML = 
-                        '<div style="color: #f44336; padding: 10px; text-align: center;">' +
-                        'Error loading notifications<br>' +
-                        '<button onclick="window.notificationManager.openGeneralNotifications()" ' +
-                        'style="margin-top: 5px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 3px; cursor: pointer;">' +
-                        'Retry</button>' +
-                        '</div>';
-                }
+                    '<div style="color: #f44336; padding: 10px; text-align: center;">' +
+                    'Error loading notifications<br>' +
+                    '<button onclick="window.notificationManager.openGeneralNotificationsPublic()" ' +
+                    'style="margin-top: 5px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 3px; cursor: pointer;">' +
+                    'Retry</button>' +
+                    '</div>';
             }
         }
+    }
 
-        // Make openGeneralNotifications public so it can be called from the retry button
-        public async openGeneralNotificationsPublic(): Promise<void> {
-            return this.openGeneralNotifications();
-        }
+    // Make openGeneralNotifications public so it can be called from the retry button
+    public async openGeneralNotificationsPublic(): Promise<void> {
+        return this.openGeneralNotifications();
+    }
 
     private renderNotificationList(container: HTMLElement, notifications: any[], type: "messages" | "others"): void {
     container.innerHTML = '';
@@ -403,13 +441,58 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     }
 }
 
+    // Remove existing socket handlers to prevent duplicate event handlers
+    public removeSocketHandlers(): void {
+        if (!app.socketService) return;
+        
+        console.log('NotificationManager: Removing socket event handlers');
+        app.socketService.off('newMessage');
+        app.socketService.off('messageReceivedInform');
+        app.socketService.off('friendRequestInform');
+        app.socketService.off('friendRequestAccept');
+    }
+    
+    // Public method to reinitialize socket handlers after reconnection
+    public reinitializeSocketHandlers(): void {
+        console.log('NotificationManager: Reinitializing socket handlers');
+        
+        if (!app.socketService) {
+            console.log('NotificationManager: Socket service not available, cannot reinitialize handlers');
+            return;
+        }
+        
+        if (!app.socketService.connected) {
+            console.log('NotificationManager: Socket not connected, will reinitialize when connected');
+            // Set up a one-time listener for connection
+            app.socketService.once('connect', () => {
+                console.log('NotificationManager: Socket reconnected, now setting up handlers');
+                if (this.initialized) {
+                    this.setupSocketHandlers();
+                }
+            });
+            return;
+        }
+        
+        if (this.initialized) {
+            console.log(`NotificationManager: Setting up socket handlers for socket ${app.socketService.id}`);
+            this.setupSocketHandlers();
+        } else {
+            console.log('NotificationManager: Not initialized, skipping handler reinitialization');
+        }
+    }
+
     private setupSocketHandlers(): void {
     
         if (!app.socketService) {
             console.log('NotificationManager: Socket service not available, skipping setup');
             return;
         }
-        console.log("Here's the socket: ", app.socketService);
+        console.log("NotificationManager: Setting up socket handlers with socket:", app.socketService.id);
+        
+        // Remove any existing event listeners before adding new ones to prevent duplicates
+        this.removeSocketHandlers();
+        
+        console.log('NotificationManager: Attaching newMessage handler');
         app.socketService.on('newMessage', (message: any) => {
             console.log("Sorry!");
             //when you send new message it will emit into two sockets to sender and reciver
@@ -480,46 +563,110 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         });
 
 
-        // Handle friend requests
+        // Handle friend requests - Add more robust error handling and debugging
+        console.log('NotificationManager: Attaching friendRequestInform handler');
         app.socketService.on('friendRequestInform', (data: any) => {
-            // toastManager.info(app.getUsername(), `Friend request from ${data.username}: ${data.message} on fre  findRequestInform`);
-            toastManager.info('Friend Request', data.message);
-            this.addNotification(data.message);
-            chat.loadFriendData();
+            try {
+                console.log('NotificationManager: Received friendRequestInform event:', data);
+                
+                // Show detailed debug info
+                if (data) {
+                    console.log(`Friend request from user ID: ${data.fromUserId || 'unknown'}`);
+                    console.log(`Message content: "${data.message || 'No message'}""`);
+                }
+                
+                // Display notification to user
+                toastManager.info('Friend Request', data.message || 'You received a friend request');
+                
+                // Add to notifications panel
+                if (data.message) {
+                    this.addNotification(data.message);
+                }
+                
+                // Refresh friend data in chat
+                chat.loadFriendData();
+            } catch (error) {
+                console.error('Error handling friendRequestInform event:', error);
+            }
         });
 
+        console.log('NotificationManager: Attaching friendRequestAccept handler');
         app.socketService.on('friendRequestAccept', (data: any) => {
-     
-            // toastManager.info(app.getUsername(), `Friend request accepted by ${data.username}: ${data.message} on friendRequestAccept`);
-            console.log('Friend request accepted:', data);
-            toastManager.info('Friend Request', data.message);
-            this.addNotification(data.message);
-            chat.loadFriendData();
+            try {
+                console.log('NotificationManager: Received friendRequestAccept event:', data);
+                
+                // Show detailed debug info
+                if (data) {
+                    console.log(`Friend request accepted by user ID: ${data.fromUserId || 'unknown'}`);
+                    console.log(`Message content: "${data.message || 'No message'}""`);
+                }
+                
+                // Display notification to user
+                toastManager.info('Friend Request', data.message || 'Your friend request was accepted');
+                
+                // Add to notifications panel
+                if (data.message) {
+                    this.addNotification(data.message);
+                }
+                
+                // Refresh friend data in chat
+                chat.loadFriendData();
+            } catch (error) {
+                console.error('Error handling friendRequestAccept event:', error);
+            }
         });
     }
     // ===== NOTIFICATION SYSTEM =====
     private addNotification(message: string): void {
-        if (!this.elements.generalNotifications) return;
-
-        const placeholder = this.elements.generalNotifications.querySelector("em");
-        if (placeholder) placeholder.remove();
-
-        const div = document.createElement("div");
-        div.classList.add("notification");
-        div.textContent = message;
+        console.log(`NotificationManager: Adding notification with message: "${message}"`);
         
-        if (this.elements.generalNotifications.firstChild) {
-            this.elements.generalNotifications.insertBefore(
-                div,
-                this.elements.generalNotifications.firstChild
-            );
-        } else {
-            this.elements.generalNotifications.appendChild(div);
+        if (!this.elements.generalNotifications) {
+            console.warn('NotificationManager: Cannot add notification - generalNotifications element not found');
+            return;
         }
 
-        this.notificationCount++;
-        if (this.elements.bellBtn) {
-            this.elements.bellBtn.setAttribute("data-count", this.notificationCount.toString());
+        try {
+            // Remove placeholder if it exists
+            const placeholder = this.elements.generalNotifications.querySelector("em");
+            if (placeholder) placeholder.remove();
+
+            // Create notification element
+            const div = document.createElement("div");
+            div.classList.add("notification");
+            
+            // Add some basic styling
+            div.style.padding = "10px";
+            div.style.margin = "5px 0";
+            div.style.borderBottom = "1px solid #333";
+            
+            // Set message content
+            div.textContent = message;
+            
+            // Add timestamp
+            const timestamp = document.createElement("div");
+            timestamp.style.fontSize = "11px";
+            timestamp.style.color = "#999";
+            timestamp.style.marginTop = "5px";
+            timestamp.textContent = new Date().toLocaleTimeString();
+            div.appendChild(timestamp);
+            
+            // Add to notification panel at the top
+            if (this.elements.generalNotifications.firstChild) {
+                this.elements.generalNotifications.insertBefore(
+                    div,
+                    this.elements.generalNotifications.firstChild
+                );
+            } else {
+                this.elements.generalNotifications.appendChild(div);
+            }
+
+            // Increment notification count and update badge
+            this.notificationCount++;
+            this.updateBellBadge();
+            
+            console.log(`NotificationManager: Notification added successfully, count: ${this.notificationCount}`);
+        } catch (error) {
+            console.error('NotificationManager: Error adding notification:', error);
         }
     }
 
@@ -631,16 +778,71 @@ public getMailboxCount(): number {
     return this.mailboxNotificationCount;
 }
 
+// ===== NOTIFICATION SYSTEM =====
+    // ...existing code...
+
+    // Public method to test if socket handlers are working correctly
+    public testSocketHandlers(): void {
+        console.log('NotificationManager: Testing socket handlers');
+        
+        if (!app.socketService) {
+            console.error('NotificationManager: Socket service not available, cannot test handlers');
+            toastManager.error('Socket Test', 'Socket service not available');
+            return;
+        }
+        
+        if (!app.socketService.connected) {
+            console.error('NotificationManager: Socket not connected, cannot test handlers');
+            toastManager.error('Socket Test', 'Socket not connected');
+            return;
+        }
+        
+        // Check if handlers are attached by looking at the internal listeners
+        const hasNewMessageHandler = app.socketService.hasListeners('newMessage');
+        const hasFriendRequestInformHandler = app.socketService.hasListeners('friendRequestInform');
+        const hasFriendRequestAcceptHandler = app.socketService.hasListeners('friendRequestAccept');
+        
+        console.log(`Socket handler test:
+            - newMessage handlers: ${hasNewMessageHandler ? 'YES' : 'NO'}
+            - friendRequestInform handlers: ${hasFriendRequestInformHandler ? 'YES' : 'NO'}
+            - friendRequestAccept handlers: ${hasFriendRequestAcceptHandler ? 'YES' : 'NO'}
+        `);
+        
+        // If any handlers are missing, reinitialize
+        if (!hasNewMessageHandler || !hasFriendRequestInformHandler || !hasFriendRequestAcceptHandler) {
+            console.log('NotificationManager: Some handlers missing, reinitializing');
+            this.reinitializeSocketHandlers();
+            toastManager.warning('Socket Test', 'Some handlers were missing, reinitialized');
+        } else {
+            toastManager.success('Socket Test', 'All socket handlers are properly attached');
+        }
+        
+        // Test socket with local echo
+        console.log('NotificationManager: Emitting local test event');
+        app.socketService.emit('testSocketConnection', { timestamp: new Date().toISOString() });
+    }
 }
 
 const notificationManager = new NotificationManager();
 
-// Make chat available globally for button onclick handlers
+// Make notificationManager available globally for debugging and button onclick handlers
 declare global {
     interface Window {
         notificationManager: NotificationManager;
+        testSocketConnection: () => void; // Easy access to socket connection test
     }
 }
 window.notificationManager = notificationManager;
+
+// Add test socket connection function to global scope for easier debugging
+window.testSocketConnection = () => {
+    console.log('Manual socket connection test triggered');
+    if (notificationManager.initialized) {
+        notificationManager.testSocketHandlers();
+    } else {
+        console.error('NotificationManager not initialized yet');
+        alert('NotificationManager not initialized yet');
+    }
+};
 
 export default notificationManager;

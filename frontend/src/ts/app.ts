@@ -21,6 +21,7 @@ import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
 import friendProfile from './friendProfileData';
+import { setupSocketDebugging } from './socketDebugging';
 
 // Define interfaces for state and user
 interface User {
@@ -659,6 +660,11 @@ class App {
           this.state.user = JSON.parse(storedUser);
           this.state.isAuthenticated = storedAuth === 'true';
           
+          // Notify components about authentication state change
+          document.dispatchEvent(new CustomEvent('appStateChanged', {
+            detail: { isAuthenticated: this.state.isAuthenticated }
+          }));
+          
           // Verify the stored auth state with the server
           const result = await api.getCurrentUser();
           
@@ -1109,17 +1115,44 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
            console.log('Initializing chat socket connection from app class');
             this.socketService = io(CONFIG.socketURL, {
                 withCredentials: true,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000
             });
+            
+            // Initialize socket debugging
+            setupSocketDebugging();
 
           }else {
             console.error('Socket.io is not available. Please ensure it is loaded before initializing the app.');
             return ;
           }
             this.socketService.on('connect', () => {
-                console.log('Socket connected');
-                // components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+                const socketId = this.socketService.id;
+                console.log(`Socket connected with ID: ${socketId}`);
                 toastManager.success(this.getUsername(), 'Real-time features active!');
-        
+                
+                // Reinitialize socket event handlers when socket reconnects
+                if (notificationManager.initialized) {
+                    console.log('Reinitializing notification socket handlers after connection');
+                    notificationManager.reinitializeSocketHandlers();
+                } else {
+                    // If notificationManager isn't initialized yet, initialize it on next tick
+                    console.log('NotificationManager not initialized yet, will be initialized soon');
+                    setTimeout(() => {
+                        if (notificationManager.initialized) {
+                            console.log('Reinitializing notification socket handlers after delay');
+                            notificationManager.reinitializeSocketHandlers();
+                        }
+                    }, 500);
+                }
+                
+                // Dispatch an event to notify components about socket connection
+                document.dispatchEvent(new CustomEvent('socketConnected', {
+                    detail: { socketId: socketId }
+                }));
             });
             
             this.socketService.on('disconnect', () => {
@@ -1131,7 +1164,7 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
         
         
         // Initialize notification manager after a short delay to ensure DOM is ready
-        setTimeout(() => () => {
+        setTimeout(() => {
              notificationManager.init();
         }, 100);
     }
