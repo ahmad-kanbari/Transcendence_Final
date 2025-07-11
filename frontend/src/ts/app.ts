@@ -21,6 +21,7 @@ import { io } from 'socket.io-client';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
 import friendProfile from './friendProfileData';
+import { setupSocketDebugging } from './socketDebugging';
 
 // Define interfaces for state and user
 interface User {
@@ -96,8 +97,9 @@ class App {
       components.showSpinner();
       components.init(this.appContainer);
 
+      // Initialize socket before restoring auth state
+      // This ensures the socket is ready when authentication is verified
       this.initializeSocket();
-    
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
@@ -118,6 +120,7 @@ class App {
       this.initialized = true;
       
       // Restore authentication state from localStorage
+      // This will now properly wait for socket connection if authenticated
       await this.restoreAuthState();
       
       utils.initLogoutButton(this);
@@ -179,6 +182,33 @@ class App {
                   this.state.user = result.data.user;
                   this.state.isAuthenticated = result.data.isAuthenticated ?? true;
                   
+                  // Force socket reconnection after OAuth login to ensure cookies are sent
+                  if (this.socketService) {
+                    console.log('Forcing socket reconnection after OAuth login...');
+                    this.socketService.disconnect();
+                    this.socketService.connect();
+                    
+                    // Wait for the socket to connect before continuing
+                    if (!this.socketService.connected) {
+                      console.log('Waiting for socket connection after OAuth login...');
+                      await new Promise<void>((resolve) => {
+                        const connectHandler = () => {
+                          console.log('Socket connected after OAuth login');
+                          this.socketService!.off('connect', connectHandler);
+                          resolve();
+                        };
+                        
+                        // Set timeout to avoid hanging if connection fails
+                        const timeout = setTimeout(() => {
+                          console.log('Socket connection timeout after OAuth login');
+                          this.socketService!.off('connect', connectHandler);
+                          resolve();
+                        }, 3000);
+                        
+                        this.socketService!.once('connect', connectHandler);
+                      });
+                    }
+                  }
 
                   toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
                   login.updateUIAuthState();
@@ -630,6 +660,11 @@ class App {
           this.state.user = JSON.parse(storedUser);
           this.state.isAuthenticated = storedAuth === 'true';
           
+          // Notify components about authentication state change
+          document.dispatchEvent(new CustomEvent('appStateChanged', {
+            detail: { isAuthenticated: this.state.isAuthenticated }
+          }));
+          
           // Verify the stored auth state with the server
           const result = await api.getCurrentUser();
           
@@ -641,6 +676,38 @@ class App {
             // Update localStorage with fresh data
             localStorage.setItem('user', JSON.stringify(result.data.user));
             localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+            
+            // Ensure socket connection is established when authenticated
+            // This helps the socket connect immediately when login state is restored
+            if (this.state.isAuthenticated) {
+              // Force socket reconnection after authentication to ensure cookies are sent
+              if (this.socketService) {
+                console.log('Forcing socket reconnection after auth state restoration...');
+                this.socketService.disconnect();
+                this.socketService.connect();
+                
+                // Wait for the socket to connect before continuing
+                if (!this.socketService.connected) {
+                  console.log('Waiting for socket connection after auth state restoration...');
+                  await new Promise<void>((resolve) => {
+                    const connectHandler = () => {
+                      console.log('Socket connected after auth state restoration');
+                      this.socketService!.off('connect', connectHandler);
+                      resolve();
+                    };
+                    
+                    // Set timeout to avoid hanging if connection fails
+                    const timeout = setTimeout(() => {
+                      console.log('Socket connection timeout after auth state restoration');
+                      this.socketService!.off('connect', connectHandler);
+                      resolve();
+                    }, 5000);
+                    
+                    this.socketService!.once('connect', connectHandler);
+                  });
+                }
+              }
+            }
           } else {
             // Server says user is not authenticated, clear local storage
             this.clearAuthState();
@@ -1048,17 +1115,44 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
            console.log('Initializing chat socket connection from app class');
             this.socketService = io(CONFIG.socketURL, {
                 withCredentials: true,
+                reconnection: true,
+                reconnectionAttempts: 10,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                timeout: 20000
             });
+            
+            // Initialize socket debugging
+            setupSocketDebugging();
 
           }else {
             console.error('Socket.io is not available. Please ensure it is loaded before initializing the app.');
             return ;
           }
             this.socketService.on('connect', () => {
-                console.log('Socket connected');
-                // components.showToast('success', 'Connected', 'Real-time features active!', 2000);
+                const socketId = this.socketService.id;
+                console.log(`Socket connected with ID: ${socketId}`);
                 toastManager.success(this.getUsername(), 'Real-time features active!');
-        
+                
+                // Reinitialize socket event handlers when socket reconnects
+                if (notificationManager.initialized) {
+                    console.log('Reinitializing notification socket handlers after connection');
+                    notificationManager.reinitializeSocketHandlers();
+                } else {
+                    // If notificationManager isn't initialized yet, initialize it on next tick
+                    console.log('NotificationManager not initialized yet, will be initialized soon');
+                    setTimeout(() => {
+                        if (notificationManager.initialized) {
+                            console.log('Reinitializing notification socket handlers after delay');
+                            notificationManager.reinitializeSocketHandlers();
+                        }
+                    }, 500);
+                }
+                
+                // Dispatch an event to notify components about socket connection
+                document.dispatchEvent(new CustomEvent('socketConnected', {
+                    detail: { socketId: socketId }
+                }));
             });
             
             this.socketService.on('disconnect', () => {
@@ -1070,7 +1164,7 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
         
         
         // Initialize notification manager after a short delay to ensure DOM is ready
-        setTimeout(() => () => {
+        setTimeout(() => {
              notificationManager.init();
         }, 100);
     }
