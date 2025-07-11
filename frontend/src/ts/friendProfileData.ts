@@ -4,6 +4,8 @@ import utils from './utils';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
 import router from './router';
+import chat from './chat';
+import profile from './profile';
 
 interface FriendProfileData {
     id: number;
@@ -15,32 +17,53 @@ interface FriendProfileData {
     isOnline?: boolean; // Add online status field
     last_seen?: string; // Add last seen field
     stats?: {
-        total_games: number;
+        totalGames: number;
         wins: number;
         losses: number;
-        win_rate: number;
-        regular_matches: number;
-        ai_matches: number;
-        tournament_matches: number;
-        multiplayer_matches: number;
-        total_points: number;
-        avg_points: number;
-        tournaments_won: number;
-        longest_streak: number;
+        cancelledGames: number;
     };
+    any: any; // Placeholder for any additional fields  
 }
+
+
 
 interface RelationshipStatus {
     type: 'friend' | 'blocked' | 'pending_sent' | 'pending_received' | 'none';
     friendshipId?: string;
 }
 
+interface UserGameplayStats {
+    totalMatches: number;
+    tournamentMatches: number;
+    regularMatches: number;
+    multiplayerMatches: number;
+    aiMatches: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    tournamentsPlayed: number;
+    tournamentsWon: number;
+}
+
 class FriendProfile {
     private friendId: string | null = null;
-    private friendData: FriendProfileData | null = null;
+    private friendData:FriendProfileData | any | null = null;
     private relationshipStatus: RelationshipStatus | null = null;
     private initialized: boolean = false;
     private baseURL: string = baseURL;
+    stats: UserGameplayStats = {
+    totalMatches: 0,
+    tournamentMatches: 0,
+    regularMatches: 0,
+    multiplayerMatches: 0,
+    aiMatches: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    tournamentsPlayed: 0,
+    tournamentsWon: 0
+  };
+  matchHistory: any[] = [];
 
     constructor() {
         this.init();
@@ -65,10 +88,11 @@ class FriendProfile {
             this.getFriendIdFromURL();
             this.setupEventListeners();
             
+            
             if (this.friendId) {
                 this.loadFriendProfile();
             } else {
-                this.showError('No user ID provided');
+                console.log('No user ID provided');
             }
         }, 100);
     }
@@ -160,7 +184,7 @@ class FriendProfile {
         const closeMatchHistoryBtn = document.getElementById('closeFriendMatchHistoryBtn');
         if (closeMatchHistoryBtn) {
             closeMatchHistoryBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
+                  e.stopPropagation();
                 e.preventDefault();
                 const modal = document.getElementById('friendMatchHistoryModal');
                 if (modal) modal.classList.add('hidden');
@@ -185,10 +209,11 @@ class FriendProfile {
             await this.loadRelationshipStatus();
 
             // Load friend's match history for stats calculation
-            const matchHistory = await this.fetchFriendMatchHistory();
-            
+            const HistoryMatches =  await profile.fetchUserMatchHistory(this.friendId);
+            this.matchHistory = HistoryMatches;
             // Calculate enhanced stats
-            this.calculateFriendStats(matchHistory);
+
+            this.stats = this.calculateUserStats(HistoryMatches ,[], this.friendId );
 
             // Populate the UI
             this.populateProfile();
@@ -201,6 +226,81 @@ class FriendProfile {
             this.showError('Failed to load friend profile');
         }
     }
+
+    calculateUserStats(matchHistory: any[], tournamentHistory:any[], userId: string): UserGameplayStats {
+  const stats: UserGameplayStats = {
+    totalMatches: 0,
+    tournamentMatches: 0,
+    regularMatches: 0,
+    multiplayerMatches: 0,
+    aiMatches: 0,
+    wins: 0,
+    losses: 0,
+    winRate: 0,
+    tournamentsPlayed: tournamentHistory.length,
+    tournamentsWon: 0
+  };
+
+  const currentUser = app.getUsername();
+  console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
+  // Process matches based on your API structure
+  matchHistory.forEach(match => {
+    // Skip cancelled matches
+    if (match.status === 'cancelled') return;
+    
+    stats.totalMatches++;
+    console.log('Processing match:');
+    switch(match.match_type) {
+      case 'tournament':
+        stats.tournamentMatches++;
+        break;
+      case 'multiplayer':
+        stats.multiplayerMatches++;
+        break;
+      case '1vAi':
+        stats.aiMatches++;
+        break;
+      default:
+        stats.regularMatches++;
+    }
+
+    // Determine winner based on match type
+    let userWon = false;
+    
+    if (match.match_type === 'multiplayer') {
+      // For multiplayer, check if user's team won
+         const userTeam = match.teams[0]
+        const opponentTeam =match.teams[1]
+        
+        userWon = (userTeam?.score || 0) > (opponentTeam?.score || 0);
+        
+    } else {
+      // For regular/tournament matches
+      if (match.player1_name === currentUser) {
+        userWon = match.player1_score > match.player2_score;
+      } else if (match.player2_name === currentUser) {
+        userWon = match.player2_score > match.player1_score;
+      }
+    }
+    // if (match.player1_score > match.player2_score) {  
+    //     userWon = true;
+    // }
+
+    // if (userWon) {
+    //   stats.wins++;
+    // } else {
+    //   stats.losses++;
+    // }
+});
+    stats.wins = this.friendData.stats?.wins || 0;
+    stats.losses = this.friendData.stats?.losses || 0;
+    stats.totalMatches = this.friendData.stats?.totalGames || 0;
+
+  // Calculate win rate
+    stats.winRate = stats.totalMatches > 0 ? Math.round((stats.wins / stats.totalMatches) * 100) : 0;
+    console.log('Calculated user stats:', stats);
+  return stats;
+}
 
     private async loadRelationshipStatus(): Promise<void> {
         if (!this.friendId) return;
@@ -264,122 +364,123 @@ class FriendProfile {
             this.relationshipStatus = { type: 'none' };
         }
     }
-
-    private async fetchFriendMatchHistory(): Promise<any[]> {
-        if (!this.friendId) return [];
-
+    async fetchFriendMatchHistory(userId: string, page: number = 1, limit: number = 100): Promise<any[]> {
         try {
+            // API endpoint with pagination parameters
             const response = await api.fetchWithAutoRefresh(
-                `${this.baseURL}/users/${this.friendId}/matches`,
-                { credentials: 'include' }
+            `${this.baseURL}/users/${Number(userId)}/matches?page=${page}&limit=${limit}`
             );
-
             if (!response.ok) return [];
-
-            const matches = await response.json();
-            return Array.isArray(matches) ? matches : [];
-
+            
+            const data = await response.json();
+            
+            // The API returns an array directly, not wrapped in a matches property
+            return Array.isArray(data) ? data : [];
         } catch (error) {
-            console.error('Error fetching friend match history:', error);
+            // toastManager.error( app.getUsername(),`Error fetching match history, ${error}`);
+            
+            console.error('Error fetching match history:', error);
             return [];
         }
     }
 
-    private calculateFriendStats(matchHistory: any[]): void {
-        if (!this.friendData || !this.friendData.stats) {
-            this.friendData!.stats = {
-                total_games: 0,
-                wins: 0,
-                losses: 0,
-                win_rate: 0,
-                regular_matches: 0,
-                ai_matches: 0,
-                tournament_matches: 0,
-                multiplayer_matches: 0,
-                total_points: 0,
-                avg_points: 0,
-                tournaments_won: 0,
-                longest_streak: 0
-            };
-        }
+    // private calculateFriendStats(matchHistory: any[]): void {
+    //     if (!this.friendData || !this.friendData.stats) {
+    //         this.friendData!.stats = {
+    //             total_games: 0,
+    //             wins: 0,
+    //             losses: 0,
+    //             win_rate: 0,
+    //             regular_matches: 0,
+    //             ai_matches: 0,
+    //             tournament_matches: 0,
+    //             multiplayer_matches: 0,
+    //             total_points: 0,
+    //             avg_points: 0,
+    //             tournaments_won: 0,
+    //             longest_streak: 0
+    //         };
+    //     }
 
-        const stats = this.friendData!.stats;
-        const friendUsername = this.friendData!.username;
+    //     const stats = this.friendData!.stats;
+    //     const friendUsername = this.friendData!.username;
 
-        // Reset calculated stats
-        stats.total_games = 0;
-        stats.wins = 0;
-        stats.losses = 0;
-        stats.regular_matches = 0;
-        stats.ai_matches = 0;
-        stats.tournament_matches = 0;
-        stats.multiplayer_matches = 0;
-        stats.total_points = 0;
+    //     // Reset calculated stats
+    //     stats.total_games = 0;
+    //     stats.wins = 0;
+    //     stats.losses = 0;
+    //     stats.regular_matches = 0;
+    //     stats.ai_matches = 0;
+    //     stats.tournament_matches = 0;
+    //     stats.multiplayer_matches = 0;
+    //     stats.total_points = 0;
 
-        let currentStreak = 0;
-        let longestStreak = 0;
+    //     let currentStreak = 0;
+    //     let longestStreak = 0;
 
-        matchHistory.forEach(match => {
-            if (match.status === 'cancelled') return;
+    //     matchHistory.forEach(match => {
+    //         if (match.status === 'cancelled') return;
 
-            stats.total_games++;
+    //         stats.total_games++;
 
-            // Determine match type
-            switch (match.match_type) {
-                case 'tournament':
-                    stats.tournament_matches++;
-                    break;
-                case '1vAi':
-                    stats.ai_matches++;
-                    break;
-                case 'multiplayer':
-                    stats.multiplayer_matches++;
-                    break;
-                default:
-                    stats.regular_matches++;
-                    break;
-            }
+    //         // Determine match type
+    //         switch (match.match_type) {
+    //             case 'tournament':
+    //                 stats.tournament_matches++;
+    //                 break;
+    //             case '1vAi':
+    //                 stats.ai_matches++;
+    //                 break;
+    //             case 'multiplayer':
+    //                 stats.multiplayer_matches++;
+    //                 break;
+    //             default:
+    //                 stats.regular_matches++;
+    //                 break;
+    //         }
 
-            // Determine if friend won
-            let friendWon = false;
-            let friendScore = 0;
+    //         // Determine if friend won
+    //         let friendWon = false;
+    //         let friendScore = 0;
 
-            if (match.match_type === 'multiplayer') {
-                const friendTeam = match.teams?.find((team: any) => 
-                    team.players?.some((player: any) => player.player_name === friendUsername)
-                );
-                const opponentTeam = match.teams?.find((team: any) => team.id !== friendTeam?.id);
+    //         if (match.match_type === 'multiplayer') {
+    //             const friendTeam = match.teams?.find((team: any) => 
+    //                 team.players?.some((player: any) => player.player_name === friendUsername)
+    //             );
+    //             const opponentTeam = match.teams?.find((team: any) => team.id !== friendTeam?.id);
                 
-                if (friendTeam && opponentTeam) {
-                    friendWon = friendTeam.score > opponentTeam.score;
-                    friendScore = friendTeam.score;
-                }
-            } else {
-                const isFriendPlayer1 = match.player1_name === friendUsername;
-                friendScore = isFriendPlayer1 ? match.player1_score : match.player2_score;
-                const opponentScore = isFriendPlayer1 ? match.player2_score : match.player1_score;
-                friendWon = friendScore > opponentScore;
-            }
+    //             if (friendTeam && opponentTeam) {
+    //                 friendWon = friendTeam.score > opponentTeam.score;
+    //                 friendScore = friendTeam.score;
+    //             }
+    //         } else {
+    //             const isFriendPlayer1 = match.player1_name === friendUsername;
+    //             friendScore = isFriendPlayer1 ? match.player1_score : match.player2_score;
+    //             const opponentScore = isFriendPlayer1 ? match.player2_score : match.player1_score;
+    //             friendWon = friendScore > opponentScore;
+    //         }
 
-            stats.total_points += friendScore;
+    //         stats.total_points += friendScore;
 
-            if (friendWon) {
-                stats.wins++;
-                currentStreak++;
-                longestStreak = Math.max(longestStreak, currentStreak);
-            } else {
-                stats.losses++;
-                currentStreak = 0;
-            }
-        });
+    //         if (friendWon) {
+    //             stats.wins++;
+    //             currentStreak++;
+    //             longestStreak = Math.max(longestStreak, currentStreak);
+    //         } else {
+    //             stats.losses++;
+    //             currentStreak = 0;
+    //         }
+    //         stats.wins = this.friendData?.stats?.wins || 0;
+    //         stats.losses = this.friendData?.stats?.losses || 0;
+    //     });
 
-        stats.win_rate = stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 100) : 0;
-        stats.avg_points = stats.total_games > 0 ? Math.round((stats.total_points / stats.total_games) * 100) / 100 : 0;
-        stats.longest_streak = longestStreak;
+    //     stats.win_rate = stats.total_games > 0 ? Math.round((stats.wins / stats.total_games) * 100) : 0;
+    //     stats.avg_points = stats.total_games > 0 ? Math.round((stats.total_points / stats.total_games) * 100) / 100 : 0;
+    //     stats.longest_streak = longestStreak;
 
-        // Mock tournaments won (would need separate API call)
-        stats.tournaments_won = Math.floor(stats.tournament_matches * 0.2);
-    }
+    //     // Mock tournaments won (would need separate API call)
+    //     stats.tournaments_won = Math.floor(stats.tournament_matches * 0.2);
+    // }
 
     private populateProfile(): void {
         if (!this.friendData) return;
@@ -415,11 +516,12 @@ class FriendProfile {
         this.updateLastSeenStatus();
 
         // Stats
-        const stats = this.friendData.stats;
+        // this.friendData.stats = profile.calculateUserStats(matchHistory, tournamentHistory, userData?.id?.toString() || app.state.user?.id?.toString() || '');
+        const stats = this.stats;
         if (stats) {
             const totalGamesElement = document.getElementById('friendStatsTotalGames');
             if (totalGamesElement) {
-                totalGamesElement.textContent = stats.total_games.toString();
+                totalGamesElement.textContent = this.stats.totalMatches.toString();
             }
 
             const winsElement = document.getElementById('friendStatsWins');
@@ -434,7 +536,7 @@ class FriendProfile {
 
             const winRateElement = document.getElementById('friendStatsWinRate');
             if (winRateElement) {
-                winRateElement.textContent = `${stats.win_rate}%`;
+                winRateElement.textContent = `${this.stats.winRate}%`;
             }
         }
 
@@ -693,6 +795,7 @@ class FriendProfile {
             if (existingChatRes.ok) {
                 const existingChat = await existingChatRes.json();
                 chatId = existingChat.chat_id;
+                toastManager.success(app.getUsername(), `Opening existing chat with ${this.friendData.username}...`);
             } else if (existingChatRes.status === 404) {
                 // Create new chat
                 const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
@@ -703,20 +806,26 @@ class FriendProfile {
                 });
 
                 if (!createChatRes.ok) {
+                    toastManager.error(app.getUsername(), `Failed to create chat: ${createChatRes.statusText}`);
                     throw new Error('Failed to create chat');
                 }
 
                 const newChat = await createChatRes.json();
-                chatId = newChat.chat_id;
+                chatId = newChat.chat_id || newChat.id;;
 
             } else {
+                toastManager.error(app.getUsername(), 'Failed to get chat information');
                 throw new Error('Failed to get chat information');
             }
 
             // Redirect to chat with the specific chat ID
             // window.location.href = `chat.html?chatId=${chatId}`;
             if (chatId) {
+                toastManager.success(app.getUsername(), `New chat created with ${this.friendData.username}`);
+                chat.currentChatWithUsername = this.friendData.username;
+                // await chat.loadChats();
                 router.navigate(`/chat?chatId=${chatId}`);
+                // await chat.joinRoom(chatId);
             }
             
         } catch (error) {
@@ -787,69 +896,275 @@ class FriendProfile {
         
         if (!modal || !content || !this.friendData?.stats) return;
 
-        const stats = this.friendData.stats;
+        // const stats = this.friendData.stats;
         
-        content.innerHTML = `
-            <div class="cyber-container">
-                <h6 class="font-cyber text-cyber-blue text-lg mb-4">🎮 MATCH TYPES</h6>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">AI Matches</span>
-                        <span class="text-cyber-pink font-cyber text-xl">${stats.ai_matches}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Tournament Matches</span>
-                        <span class="text-purple-400 font-cyber text-xl">${stats.tournament_matches}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Multiplayer Matches</span>
-                        <span class="text-yellow-400 font-cyber text-xl">${stats.multiplayer_matches}</span>
-                    </div>
-                </div>
+        // Get current match history (you'll need to store this from loadProfileData)
+
+        const stats = profile.calculateDetailedStats(this.matchHistory, this.friendId! || this.friendData.id! || null);
+  
+  content.innerHTML = `
+   <!-- CSS Charts Section -->
+  <div class="col-span-full">
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg">
+      <div class="flex items-center mb-6">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-xl font-bold animate-glow">📊 PERFORMANCE ANALYTICS</h6>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Win/Loss Pie Chart -->
+        <div class="cyber-card">
+          <h6 class="font-cyber text-cyber-green text-center mb-4">Win/Loss Distribution</h6>
+          <div class="relative w-32 h-32 mx-auto">
+            <div class="absolute inset-0 rounded-full border-8 border-cyber-green transform rotate-0" 
+                 style="background: conic-gradient(#2DE2E6 0deg ${(stats.wins / (stats.wins + stats.losses)) * 360}deg, #FF2A6D ${(stats.wins / (stats.wins + stats.losses)) * 360}deg 360deg);"></div>
+            <div class="absolute inset-4 bg-cyber-darker rounded-full flex items-center justify-center">
+              <span class="font-cyber text-white text-sm">${stats.winRate}%</span>
             </div>
-            
-            <div class="cyber-container">
-                <h6 class="font-cyber text-cyber-green text-lg mb-4">📊 PERFORMANCE</h6>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Total Points Scored</span>
-                        <span class="text-cyber-green font-cyber text-xl">${stats.total_points}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Average Points/Game</span>
-                        <span class="text-cyber-blue font-cyber text-xl">${stats.avg_points}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Win Rate</span>
-                        <span class="text-cyber-green font-cyber text-xl">${stats.win_rate}%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="cyber-container">
-                <h6 class="font-cyber text-cyber-pink text-lg mb-4">🏆 ACHIEVEMENTS</h6>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Tournaments Won</span>
-                        <span class="text-cyber-green font-cyber text-xl">${stats.tournaments_won}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Longest Win Streak</span>
-                        <span class="text-cyber-blue font-cyber text-xl">${stats.longest_streak}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Total Wins</span>
-                        <span class="text-cyber-green font-cyber text-xl">${stats.wins}</span>
-                    </div>
-                    <div class="flex justify-between items-center p-3 bg-cyber-dark rounded">
-                        <span class="text-white font-cyber">Total Losses</span>
-                        <span class="text-cyber-pink font-cyber text-xl">${stats.losses}</span>
-                    </div>
-                </div>
-            </div>
-        `;
+          </div>
+          <div class="flex justify-center mt-4 space-x-4">
+            <div class="flex items-center"><div class="w-3 h-3 bg-cyber-green mr-2"></div><span class="text-xs">Wins: ${stats.wins}</span></div>
+            <div class="flex items-center"><div class="w-3 h-3 bg-cyber-pink mr-2"></div><span class="text-xs">Losses: ${stats.losses}</span></div>
+          </div>
+        </div>
         
-        modal.classList.remove('hidden');
+        <!-- Match Type Bar Chart -->
+        <div class="cyber-card">
+          <h6 class="font-cyber text-cyber-blue text-center mb-4">Match Types</h6>
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <span class="text-xs w-16">Regular</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-blue h-4 rounded" style="width: ${stats.regularMatches ? (stats.regularMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.regularMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">AI</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-pink h-4 rounded" style="width: ${stats.aiMatches ? (stats.aiMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.aiMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">Multi</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-cyber-yellow h-4 rounded" style="width: ${stats.multiplayerMatches ? (stats.multiplayerMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.multiplayerMatches}</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-xs w-16">Tournament</span>
+              <div class="flex-1 bg-cyber-dark h-4 rounded mx-2">
+                <div class="bg-purple-400 h-4 rounded" style="width: ${stats.tournamentMatches ? (stats.tournamentMatches / stats.totalMatches) * 100 : 0}%"></div>
+              </div>
+              <span class="text-xs w-8">${stats.tournamentMatches}</span>
+            </div>
+          </div>
+        </div>
+        
+  
+        
+        <!-- Top Opponents -->
+        <div class="cyber-card md:col-span-2">
+          <h6 class="font-cyber text-cyber-yellow text-center mb-4">Most Faced Opponents</h6>
+          <div class="space-y-2">
+            ${Object.entries(stats.opponents)
+              .sort(([,a]: any, [,b]: any) => b.matches - a.matches)
+              .slice(0, 5)
+              .map(([name, data]: any, index) => {
+                const winRate = Math.round((data.wins / data.matches) * 100);
+                const colors = ['bg-cyber-blue', 'bg-cyber-green', 'bg-cyber-pink', 'bg-yellow-400', 'bg-purple-400'];
+                return `
+                  <div class="flex items-center justify-between p-2 bg-cyber-dark rounded">
+                    <div class="flex items-center">
+                      <div class="w-3 h-3 ${colors[index]} rounded-full mr-3"></div>
+                      <span class="text-white text-sm font-cyber">${name}</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                      <span class="text-xs text-gray-400">${data.matches} games</span>
+                      <span class="text-xs ${winRate >= 50 ? 'text-cyber-green' : 'text-cyber-pink'}">${winRate}% win</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- Match Types Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🎮 MATCH TYPES</h6>
+      </div>
+      <div class="space-y-3">
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-cyber-green shadow-neon-green hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">REGULAR</span>
+          <span class="text-cyber-green font-cyber font-bold text-xl">${stats.regularWins}/${stats.regularMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-cyber-pink shadow-neon-pink hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">AI MATCHES</span>
+          <span class="text-cyber-pink font-cyber font-bold text-xl">${stats.aiWins}/${stats.aiMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-yellow-400 hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">MULTIPLAYER</span>
+          <span class="text-yellow-400 font-cyber font-bold text-xl">${stats.multiplayerWins}/${stats.multiplayerMatches}</span>
+        </div>
+        <div class="flex justify-between items-center p-3 bg-cyber-dark rounded border-l-4 border-purple-400 hover:bg-opacity-80 transition-all">
+          <span class="text-white font-cyber font-medium">TOURNAMENT</span>
+          <span class="text-purple-400 font-cyber font-bold text-xl">${stats.tournamentWins}/${stats.tournamentMatches}</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tournaments Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
+          <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
+        </div>
+        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
+          <div class="text-sm font-cyber text-gray-300">WON</div>
+        </div>
+      </div>
+      <div class="mt-4 text-center">
+        <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
+          <span class="text-cyber-dark font-cyber font-bold text-lg">
+            ${stats.tournamentsParticipated.size > 0 ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100) : 0}% WIN RATE
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Scoring Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-green rounded-lg p-6 shadow-lg hover:shadow-neon-green transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-green rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-green text-lg font-bold animate-glow">📊 SCORING MATRIX</h6>
+      </div>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-2 bg-cyber-dark rounded">
+          <span class="font-cyber text-gray-300">POINTS SCORED</span>
+          <span class="text-cyber-green font-cyber font-bold text-2xl animate-glow">${stats.totalPointsScored}</span>
+        </div>
+        <div class="w-full bg-cyber-dark rounded-full h-3 border border-cyber-blue">
+          <div class="bg-gradient-to-r from-cyber-green via-cyber-blue to-cyber-pink h-3 rounded-full animate-pulse" 
+               style="width: ${stats.totalPointsScored > 0 ? Math.min((stats.totalPointsScored / (stats.totalPointsScored + stats.totalPointsConceded)) * 100, 100) : 0}%"></div>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-cyber-dark rounded">
+          <span class="font-cyber text-gray-300">POINTS CONCEDED</span>
+          <span class="text-cyber-pink font-cyber font-bold text-2xl">${stats.totalPointsConceded}</span>
+        </div>
+        <div class="text-center mt-4 p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-cyber-blue font-cyber font-bold text-2xl animate-glow">${stats.avgPointsPerMatch}</div>
+          <div class="text-sm font-cyber text-gray-300">AVG PER MATCH</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Streaks Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-pink rounded-lg p-6 shadow-lg hover:shadow-neon-pink transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyber-pink rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyber-pink text-lg font-bold animate-glow">🔥 STREAK DATA</h6>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-green to-green-600 rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.currentWinStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">CURRENT WIN</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-blue to-blue-600 rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.longestWinStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">LONGEST WIN</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-cyber-pink to-red-600 rounded-lg border border-cyber-pink shadow-neon-pink">
+          <div class="text-3xl font-cyber font-bold text-white">${stats.currentLossStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">CURRENT LOSS</div>
+        </div>
+        <div class="text-center p-4 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg border border-purple-400">
+          <div class="text-3xl font-cyber font-bold text-white">${stats.longestLossStreak}</div>
+          <div class="text-sm font-cyber text-gray-100">LONGEST LOSS</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notable Matches Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-purple-400 rounded-lg p-6 shadow-lg hover:shadow-purple-400 transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-purple-400 rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-purple-400 text-lg font-bold animate-glow">⭐ NOTABLE ENCOUNTERS</h6>
+      </div>
+      <div class="space-y-4">
+        <div class="p-4 bg-gradient-to-r from-cyber-green to-green-600 rounded-lg border-2 border-cyber-green shadow-neon-green">
+          <div class="flex items-center mb-2">
+            <span class="text-3xl mr-3">🏆</span>
+            <span class="font-cyber font-bold text-white text-lg">DOMINANT VICTORY</span>
+          </div>
+          <div class="text-white font-cyber font-bold text-2xl animate-glow">${stats.biggestWin.score}</div>
+          <div class="text-gray-200 font-cyber text-sm">VS ${stats.biggestWin.opponent}</div>
+          <div class="text-gray-300 font-cyber text-xs">${stats.biggestWin.date}</div>
+        </div>
+        
+        <div class="p-4 bg-gradient-to-r from-cyber-pink to-red-600 rounded-lg border-2 border-cyber-pink shadow-neon-pink">
+          <div class="flex items-center mb-2">
+            <span class="text-3xl mr-3">🎯</span>
+            <span class="font-cyber font-bold text-white text-lg">CLOSEST BATTLE</span>
+          </div>
+          <div class="text-white font-cyber font-bold text-2xl animate-glow">${stats.closestMatch.score}</div>
+          <div class="text-gray-200 font-cyber text-sm">VS ${stats.closestMatch.opponent}</div>
+          <div class="text-gray-300 font-cyber text-xs">${stats.closestMatch.date}</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Top Opponents Card -->
+    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyan-400 rounded-lg p-6 shadow-lg hover:shadow-cyan-400 transition-all duration-300">
+      <div class="flex items-center mb-4">
+        <div class="w-3 h-3 bg-cyan-400 rounded-full mr-3 animate-pulse"></div>
+        <h6 class="font-cyber text-cyan-400 text-lg font-bold animate-glow">👥 RIVAL ANALYSIS</h6>
+      </div>
+      <div class="space-y-3">
+        ${Object.entries(stats.opponents)
+          .sort(([,a]: any, [,b]: any) => b.matches - a.matches)
+          .slice(0, 5)
+          .map(([name, data]: any, index) => {
+            const winRate = Math.round((data.wins / data.matches) * 100);
+            const borders = ['border-cyber-blue', 'border-cyber-green', 'border-cyber-pink', 'border-yellow-400', 'border-purple-400'];
+            const shadows = ['shadow-neon-blue', 'shadow-neon-green', 'shadow-neon-pink', '', ''];
+            const ranks = ['🥇', '🥈', '🥉', '🏅', '🎖️'];
+            const rankTitles = ['PRIME TARGET', 'MAJOR RIVAL', 'KNOWN ENEMY', 'REGULAR FOE', 'OCCASIONAL MATCH'];
+            
+            return `
+              <div class="flex items-center justify-between p-4 bg-cyber-dark rounded-lg border-2 ${borders[index]} ${shadows[index]} hover:bg-opacity-80 transition-all">
+                <div class="flex items-center">
+                  <span class="text-3xl mr-4">${ranks[index]}</span>
+                  <div>
+                    <div class="text-white font-cyber font-bold text-lg">${name}</div>
+                    <div class="text-gray-400 font-cyber text-xs">${rankTitles[index]}</div>
+                    <div class="text-gray-500 font-cyber text-xs">${data.matches} ENCOUNTERS</div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-cyan-400 font-cyber font-bold text-xl">${data.wins}W</div>
+                  <div class="text-xs font-cyber ${winRate >= 50 ? 'text-cyber-green' : 'text-cyber-pink'}">${winRate}%</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+      </div>
+    </div>
+  `;
+  
+  modal.classList.remove('hidden');
+
     }
 
     private async showMatchHistory(): Promise<void> {
@@ -859,8 +1174,8 @@ class FriendProfile {
         if (!modal || !tbody) return;
 
         try {
-            const matches = await this.fetchFriendMatchHistory();
-            
+            const matches = await this.fetchFriendMatchHistory(this.friendId!, 1, 100);
+            this.matchHistory = matches; // Store match history for later use
             tbody.innerHTML = '';
             
             if (matches.length === 0) {

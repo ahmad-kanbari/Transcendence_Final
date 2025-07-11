@@ -20,7 +20,7 @@ export class ToastManager {
     constructor(config: ToastConfig = {}) {
         this.queue = [];
         this.isShowing = false;
-        this.duration = config.duration || 2000;
+        this.duration = config.duration || 3000;
         this.fadeOutDuration = config.fadeOutDuration || 300;
         this.injectStyles();
     }

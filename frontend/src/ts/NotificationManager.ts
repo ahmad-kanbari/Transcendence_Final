@@ -24,7 +24,6 @@ interface NotificationManagerElementRefs {
 }
 
 class NotificationManager {
-    private socketService: any = null;
     private elements: NotificationManagerElementRefs = {} as NotificationManagerElementRefs;
     public initialized: boolean = false;
     private notificationCount: number = 0;
@@ -40,12 +39,6 @@ class NotificationManager {
         if (this.initialized) return;
         
         console.log('NotificationManager: Starting initialization...');
-            // Add this line to get the socket service from chat
-        if (!this.socketService && window.chat?.socketService) {
-            console.log('NotificationManager: Using socket service from chat');
-            this.socketService = window.chat.socketService;
-        }
-        // Use longer delay and retry mechanism for DOM elements
         this.retryInitialization();
     }
 
@@ -353,18 +346,18 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
             }
             
             // components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
-            toastManager.success(app.getUsername(), 'Opened chat from notification');
+            // toastManager.success(app.getUsername(), 'Opened chat from notification');
             
         } else {
             console.error('Chat not found for sender:', senderId);
             // components.showToast('error', 'Chat Error', 'Could not find chat with this user', 3000);
-            toastManager.error(app.getUsername(), 'Could not find chat with this user');
+            // toastManager.error(app.getUsername(), 'Could not find chat with this user');
         }
         
     } catch (error) {
         console.error('Error handling message notification:', error);
         // components.showToast('error', 'Error', 'Failed to open chat', 3000);
-        toastManager.error(app.getUsername(), 'Failed to open chat');
+        // toastManager.error(app.getUsername(), 'Failed to open chat');
     }
 }
 
@@ -412,13 +405,20 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 
     private setupSocketHandlers(): void {
     
-        if (!this.socketService) {
+        if (!app.socketService) {
             console.log('NotificationManager: Socket service not available, skipping setup');
             return;
         }
-        this.socketService.on('newMessage', (message: any) => {
+        console.log("Here's the socket: ", app.socketService);
+        app.socketService.on('newMessage', (message: any) => {
+            console.log("Sorry!");
+            //when you send new message it will emit into two sockets to sender and reciver
+            //if you are outside the chat room you will not get notified by this event but you will get notified by messageReceivedInform
+            toastManager.info(app.getUsername(), `New message socket from ${message.from_user.username}: ${message.content}`);
             console.log('New message received:', message);
-            if ((message.chat_id == chat.currentChatId)) {
+            console.log('Current chat ID:', chat.currentChatId, 'Received chat ID:', message.chat_id);
+            console.log(typeof chat.currentChatId, typeof message.chat_id);
+            if ((message.chat_id === chat.currentChatId)) {
                 console.log(`New emmiting message in current chat ${chat.currentChatId}:`, message);
                 chat.appendMessage(message);
                 // return; // Ignore messages not in current chat
@@ -436,7 +436,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         });
         
         // Handle message notifications
-        this.socketService.on('messageReceivedInform', async (data: any) => {
+        app.socketService.on('messageReceivedInform', async (data: any) => {
+            //the one out side the chat will get messageReceivedInform but the user inside the chat will get newMessage
+            //this will emit when a message has been received and you are not in the chat  and if you are in the chat you will not get notified by this event
+            toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message} on mesageReceivedInform`);
         //     // Only show toast if not in the current chat
             console.log(' new Message received:', data);
             if (!chat.currentChatId || chat.currentChatId.toString() != data.chatId) {
@@ -473,28 +476,23 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             } catch (error) {
                 console.error('Error updating message notifications:', error);
             }
-                console.log('=== DEBUG MESSAGE RECEIVED ===');
-                console.log('Full data object:', JSON.stringify(data, null, 2));
-                console.log('chat.currentChatId:', chat.currentChatId, 'Type:', typeof chat.currentChatId);
-                console.log('data.chatId:', data.chatId, 'Type:', typeof data.chatId);
-                console.log('data.chat_id:', data.chat_id, 'Type:', typeof data.chat_id);
-                console.log('NotificationManager socketService:', !!this.socketService);
-                console.log('Chat socketService:', !!chat.socketService);
-                console.log('Are they the same?', this.socketService === chat.socketService);
-                console.log('===============================');
+     
         });
 
 
         // Handle friend requests
-        this.socketService.on('friendRequestInform', (data: any) => {
-            toastManager.addToQueue('Friend Request', data.message);
+        app.socketService.on('friendRequestInform', (data: any) => {
+            // toastManager.info(app.getUsername(), `Friend request from ${data.username}: ${data.message} on fre  findRequestInform`);
+            toastManager.info('Friend Request', data.message);
             this.addNotification(data.message);
             chat.loadFriendData();
         });
 
-        this.socketService.on('friendRequestAccept', (data: any) => {
+        app.socketService.on('friendRequestAccept', (data: any) => {
+     
+            // toastManager.info(app.getUsername(), `Friend request accepted by ${data.username}: ${data.message} on friendRequestAccept`);
             console.log('Friend request accepted:', data);
-            toastManager.addToQueue('Friend Request', data.message);
+            toastManager.info('Friend Request', data.message);
             this.addNotification(data.message);
             chat.loadFriendData();
         });
