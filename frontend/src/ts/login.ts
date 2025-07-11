@@ -280,8 +280,7 @@ class Login {
         this.show2FAModal();
       } else {
         // Regular login success
-       
-        this.handleSuccessfulLogin(data, passwordElement);
+        await this.handleSuccessfulLogin(data, passwordElement);
       }
       
       utils.setFormLoading(this.loginForm.submitBtn, false);
@@ -442,7 +441,7 @@ show2FAModal(): void {
       console.log('2FA validation worked', data);
       // 2FA validation successful
       this.hide2FAModal();
-      this.handleSuccessfulLogin(data);
+      await this.handleSuccessfulLogin(data);
       
     } catch (error: any) {
       console.log('2FA validation failed:', error);
@@ -468,7 +467,7 @@ show2FAModal(): void {
     }
   }
 
-  handleSuccessfulLogin(userData: any, passwordElement?: HTMLInputElement): void {
+  async handleSuccessfulLogin(userData: any, passwordElement?: HTMLInputElement): Promise<void> {
     // Clear password field
     if (passwordElement) {
       passwordElement.value = '';
@@ -491,7 +490,35 @@ show2FAModal(): void {
     this.tempToken = null;
     
     this.updateUIAuthState();
-    // components.showToast('success', 'Login Successful', 'You have been logged in successfully.', 200);
+    
+    // Force socket reconnection after successful login to ensure cookies are sent
+    if (app.socketService) {
+      console.log('Forcing socket reconnection after login...');
+      app.socketService.disconnect();
+      app.socketService.connect();
+      
+      // Wait for socket connection before navigating
+      if (!app.socketService.connected) {
+        console.log('Waiting for socket connection after login...');
+        await new Promise<void>((resolve) => {
+          const connectTimeout = setTimeout(() => {
+            console.log('Socket connection timeout after login');
+            if (app.socketService) app.socketService.off('connect', connectHandler);
+            resolve();
+          }, 2000);
+          
+          const connectHandler = () => {
+            console.log('Socket connected after login');
+            clearTimeout(connectTimeout);
+            if (app.socketService) app.socketService.off('connect', connectHandler);
+            resolve();
+          };
+          
+          app.socketService.once('connect', connectHandler);
+        });
+      }
+    }
+    
     toastManager.success(app.getUsername(), 'You have been logged in successfully.');
     console.log('Login successful:', userData);
     router.navigate('/');

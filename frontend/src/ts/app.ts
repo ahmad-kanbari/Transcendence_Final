@@ -96,8 +96,9 @@ class App {
       components.showSpinner();
       components.init(this.appContainer);
 
+      // Initialize socket before restoring auth state
+      // This ensures the socket is ready when authentication is verified
       this.initializeSocket();
-    
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
@@ -118,6 +119,7 @@ class App {
       this.initialized = true;
       
       // Restore authentication state from localStorage
+      // This will now properly wait for socket connection if authenticated
       await this.restoreAuthState();
       
       utils.initLogoutButton(this);
@@ -179,6 +181,33 @@ class App {
                   this.state.user = result.data.user;
                   this.state.isAuthenticated = result.data.isAuthenticated ?? true;
                   
+                  // Force socket reconnection after OAuth login to ensure cookies are sent
+                  if (this.socketService) {
+                    console.log('Forcing socket reconnection after OAuth login...');
+                    this.socketService.disconnect();
+                    this.socketService.connect();
+                    
+                    // Wait for the socket to connect before continuing
+                    if (!this.socketService.connected) {
+                      console.log('Waiting for socket connection after OAuth login...');
+                      await new Promise<void>((resolve) => {
+                        const connectHandler = () => {
+                          console.log('Socket connected after OAuth login');
+                          this.socketService!.off('connect', connectHandler);
+                          resolve();
+                        };
+                        
+                        // Set timeout to avoid hanging if connection fails
+                        const timeout = setTimeout(() => {
+                          console.log('Socket connection timeout after OAuth login');
+                          this.socketService!.off('connect', connectHandler);
+                          resolve();
+                        }, 3000);
+                        
+                        this.socketService!.once('connect', connectHandler);
+                      });
+                    }
+                  }
 
                   toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
                   login.updateUIAuthState();
@@ -641,6 +670,38 @@ class App {
             // Update localStorage with fresh data
             localStorage.setItem('user', JSON.stringify(result.data.user));
             localStorage.setItem('isAuthenticated', String(result.data.isAuthenticated ?? false));
+            
+            // Ensure socket connection is established when authenticated
+            // This helps the socket connect immediately when login state is restored
+            if (this.state.isAuthenticated) {
+              // Force socket reconnection after authentication to ensure cookies are sent
+              if (this.socketService) {
+                console.log('Forcing socket reconnection after auth state restoration...');
+                this.socketService.disconnect();
+                this.socketService.connect();
+                
+                // Wait for the socket to connect before continuing
+                if (!this.socketService.connected) {
+                  console.log('Waiting for socket connection after auth state restoration...');
+                  await new Promise<void>((resolve) => {
+                    const connectHandler = () => {
+                      console.log('Socket connected after auth state restoration');
+                      this.socketService!.off('connect', connectHandler);
+                      resolve();
+                    };
+                    
+                    // Set timeout to avoid hanging if connection fails
+                    const timeout = setTimeout(() => {
+                      console.log('Socket connection timeout after auth state restoration');
+                      this.socketService!.off('connect', connectHandler);
+                      resolve();
+                    }, 5000);
+                    
+                    this.socketService!.once('connect', connectHandler);
+                  });
+                }
+              }
+            }
           } else {
             // Server says user is not authenticated, clear local storage
             this.clearAuthState();
