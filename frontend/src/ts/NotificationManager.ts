@@ -24,7 +24,6 @@ interface NotificationManagerElementRefs {
 }
 
 class NotificationManager {
-    private socketService: any = null;
     private elements: NotificationManagerElementRefs = {} as NotificationManagerElementRefs;
     public initialized: boolean = false;
     private notificationCount: number = 0;
@@ -40,12 +39,6 @@ class NotificationManager {
         if (this.initialized) return;
         
         console.log('NotificationManager: Starting initialization...');
-            // Add this line to get the socket service from chat
-        // if (!this.socketService && window.chat?.socketService) {
-        //     console.log('NotificationManager: Using socket service from chat');
-        //     this.socketService = window.chat.socketService;
-        // }
-        // Use longer delay and retry mechanism for DOM elements
         this.retryInitialization();
     }
 
@@ -416,7 +409,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             console.log('NotificationManager: Socket service not available, skipping setup');
             return;
         }
+        console.log("Here's the socket: ", app.socketService);
         app.socketService.on('newMessage', (message: any) => {
+            console.log("Sorry!");
             //when you send new message it will emit into two sockets to sender and reciver
             //if you are outside the chat room you will not get notified by this event but you will get notified by messageReceivedInform
             toastManager.info(app.getUsername(), `New message socket from ${message.from_user.username}: ${message.content}`);
@@ -481,15 +476,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             } catch (error) {
                 console.error('Error updating message notifications:', error);
             }
-                console.log('=== DEBUG MESSAGE RECEIVED ===');
-                console.log('Full data object:', JSON.stringify(data, null, 2));
-                console.log('chat.currentChatId:', chat.currentChatId, 'Type:', typeof chat.currentChatId);
-                console.log('data.chatId:', data.chatId, 'Type:', typeof data.chatId);
-                console.log('data.chat_id:', data.chat_id, 'Type:', typeof data.chat_id);
-                console.log('NotificationManager socketService:', !!this.socketService);
-                console.log('Chat socketService:', !!chat.socketService);
-                console.log('Are they the same?', this.socketService === chat.socketService);
-                console.log('===============================');
+     
         });
 
 

@@ -60,7 +60,7 @@ interface ChatElements {
 }
 
 class Chat {
-     socketService: any = null;
+
      elements: ChatElements = {} as ChatElements;
      currentChatId: number | null = null;
      currentUserId: number | null = null;
@@ -78,12 +78,7 @@ class Chat {
     currentPopupUser: any = null;
      
     constructor() {
-        // Initialize socket connection
-        // if (typeof io !== 'undefined') {
-        //     console.log('Initializing chat socket connection from chat object, socket Service not initialized yet');
-        //     this.socketService = app.socketService;
-        //     this.setupBaseSocketHandlers();
-        // }
+
         console.log('Chat class initialized and socket service is initialized before going to chat');
     }
 
@@ -114,9 +109,9 @@ class Chat {
     }
 
      setupBaseSocketHandlers(): void {
-        if (!this.socketService) return;
+        if (!app.socketService) return;
 
-        this.socketService.on('connect', () => {
+        app.socketService.on('connect', () => {
             console.log('Chat socket connected');
             if (this.elements.chatRows) {
                 this.loadChats();
@@ -126,18 +121,18 @@ class Chat {
             }
         });
 
-        this.socketService.on('disconnect', () => {
+        app.socketService.on('disconnect', () => {
             console.log('Chat socket disconnected');
         });
     }
 
     cleanupSocketHandlers(): void {
-        if (!this.socketService) return;
+        if (!app.socketService) return;
         
-        chat.socketService.off('messageReceivedInform');
-        chat.socketService.off('friendRequestInform');
-        chat.socketService.off('friendRequestAccept');
-        this.socketService.off('newMessage');
+        app.socketService.off('messageReceivedInform');
+        app.socketService.off('friendRequestInform');
+        app.socketService.off('friendRequestAccept');
+        app.socketService.off('newMessage');
         console.log('Chat socket handlers cleaned up');
     }
      initializeChatPage(): void {
@@ -145,7 +140,7 @@ class Chat {
             this.getElements();
             this.setupEventListeners();
             this.createBlockedUsersSection(); // Create section first
-            this.setupSocketHandlers();
+            // this.setupSocketHandlers();
             this.setupPopupEventListeners(); // FIXED: Setup popup listeners
             this.setupMessageContextMenu();
             this.initializeParticles();
@@ -311,50 +306,7 @@ class Chat {
 
     }
 
-     setupSocketHandlers(): void {
-        // if (!this.socketService) return;
-        // if (!notificationManager.initialized) {
-        //     console.log('NotificationManager not initialized, skipping socket handlers setup');
-        //     return;
-        // }
-        // Socket event handlers
-     
-        // // Handle new messages there is two sockets one in the newMessage event and one in the messageReceivedInform event
-        // this.socketService.on('newMessage', (message: any) => {
-        //     console.log('New message received:', message);
-        //     if ((message.chat_id == this.currentChatId)) {
-        //         console.log(`New emmiting message in current chat ${this.currentChatId}:`, message);
-        //         this.appendMessage(message);
-        //         // return; // Ignore messages not in current chat
-        //     }
-        //     this.debouncedReloadChats(); // Use debounced reload
-        //     // console.log(`New message received in chat ${message.chatId}:`, message);
-        //     // if (!chat.currentChatId || chat.currentChatId.toString() !== message.chatId?.toString()) {
-        //     // toastManager.showToast("Message", message.content);
-        //     // // }
 
-        //     // this.debouncedReloadChats(); // Use debounced reload
-        //     // // this.messagesCount++;
-        //     // notificationManager.incrementMailboxCount();
-        //     // this.updateDashboardStats();
-        // });
-
-        // // Handle friend requests
-        // this.socketService.on('friendRequestInform', (data: any) => {
-        //     this.loadFriendData();
-        //     toastManager.addToQueue('Friend Request', data.message);
-        //     notificationManager.incrementNotificationCount();
-            
-        // });
-
-        // this.socketService.on('friendRequestAccept', (data: any) => {
-
-        //     this.loadFriendData();
-        //     toastManager.addToQueue('Friend Request', data.message);
-        //     notificationManager.incrementNotificationCount();
-         
-        // });
-    }
 
     // ===== IMPROVED CHAT FUNCTIONALITY =====
     
@@ -465,6 +417,7 @@ class Chat {
             console.log(`Joining chat room from selectChatFromList: ${chatId}`);
             this.currentChatWithUsername = user.username || user || null; // Store current username for later use
             console.log(`Current chat with username: ${this.currentChatWithUsername}`);
+            console.log("chatRoom Id: ", chatId);
             await this.joinRoom(chatId);
             // Mark notifications as read for the current chat
             if (notificationManager.getMailboxCount() > 0 && this.elements.mailboxBtn) {
@@ -520,7 +473,7 @@ class Chat {
         // Leave current room
         if (this.currentChatId !== null && app.socketService) {
             console.log(`Leaving current chat room: ${this.currentChatId}`);
-            this.socketService.emit('leaveRoom', this.currentChatId);
+            app.socketService.emit('leaveRoom', this.currentChatId);
         }
 
      
@@ -545,9 +498,11 @@ class Chat {
         // this.clearMessages();
         console.log(`Joining chat room: ${chatId}`);
         if (chatId )  {
-        
-            if (this.socketService) {
-                this.socketService.emit('joinRoom', chatId);
+            if (app.socketService) {
+                console.log(app.socketService);
+                console.log("1. This is the chatId: ", chatId);
+                app.socketService.emit('joinRoom', chatId);
+                console.log("2. This is the chatId: ", chatId);
                 // toastManager.info(app.getUsername(), `Joined chat room ${chatId}`);
             }
         }else {
@@ -612,8 +567,8 @@ class Chat {
             }
             
             // Leave socket room
-            if (this.socketService && this.currentChatId) {
-                this.socketService.emit('leaveRoom', this.currentChatId);
+            if (app.socketService && this.currentChatId) {
+                app.socketService.emit('leaveRoom', this.currentChatId);
             }
             
             // Update URL to remove chatId
@@ -2122,11 +2077,11 @@ private showPopup(user: any): void {
             clearTimeout(this.chatReloadTimeout);
         }
         
-        if (this.socketService) {
+        if (app.socketService) {
             if (this.currentChatId) {
-                this.socketService.emit('leaveRoom', this.currentChatId);
+                app.socketService.emit('leaveRoom', this.currentChatId);
             }
-            this.socketService.disconnect();
+            app.socketService.disconnect();
         }
     }
 
@@ -2313,12 +2268,7 @@ window.chatMessages = {
     joinRoom: (chatId: number) => chat.forceJoinRoom(chatId),
 };
 
-// ADD THIS in constructor
-// window.addEventListener('beforeunload', () => {
-//     // chat.cleanupSocketHandlers();
-//     // chat.socketService.emit("leaveRoom", chat.currentChatId);
-// });
-// 10. Add CSS for enhanced elements (add this to your existing CSS or create a new style tag)
+
 const enhancedChatCSS = `
     .clickable-username:hover {
         color: var(--cyber-green) !important;

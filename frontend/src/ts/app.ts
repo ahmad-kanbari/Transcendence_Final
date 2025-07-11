@@ -97,12 +97,14 @@ class App {
       components.init(this.appContainer);
 
       this.initializeSocket();
+    
       
       pages.init(this.appContainer);
       await pages.loadAllPages();
       
       login.init();
       register.init();
+
     
     //   twoFA.init();
       profile.init();
@@ -1041,13 +1043,11 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
 
     }
 
-    private initializeSocket(): void {
+   initializeSocket(): void {
         if (typeof io !== 'undefined') {
            console.log('Initializing chat socket connection from app class');
             this.socketService = io(CONFIG.socketURL, {
                 withCredentials: true,
-                autoConnect: true,
-                reconnection: true,
             });
 
           }else {
@@ -1070,9 +1070,9 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
         
         
         // Initialize notification manager after a short delay to ensure DOM is ready
-        setTimeout(() => {
-            notificationManager.init();
-        }, 500);
+        setTimeout(() => () => {
+             notificationManager.init();
+        }, 100);
     }
   }
 
