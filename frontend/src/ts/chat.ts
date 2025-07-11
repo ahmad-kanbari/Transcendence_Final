@@ -140,7 +140,7 @@ class Chat {
             this.getElements();
             this.setupEventListeners();
             this.createBlockedUsersSection(); // Create section first
-            // this.setupSocketHandlers();
+            this.setupChatMessageHandlers(); // Enable socket handlers for chat messages
             this.setupPopupEventListeners(); // FIXED: Setup popup listeners
             this.setupMessageContextMenu();
             this.initializeParticles();
@@ -1162,15 +1162,15 @@ class Chat {
                 </div>
                 <div class="friend-actions" style="display: flex; gap: 5px;">
                     <button onclick="ChatNavigationHelper.navigateToFriendProfile('${friend.userId}')" 
-                        style="padding: 2px 8px; background: var(--cyber-green); border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        style="padding: 2px 8px; background: var(--cyber-green); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
                         Profile
                     </button>
                     <button data-i18n="chat.chatBtn" onclick="window.chat.startChatWithFriend('${friend.userId}')" 
-                        style="margin-right: 5px; padding: 2px 8px; background: #2196F3; border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        style="margin-right: 5px; padding: 2px 8px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
                         Chat
                     </button>
                     <button data-i18n="chat.remove" onclick="window.chat.removeFriend('${friend.friendshipId}')" 
-                        style="padding: 2px 8px; background: #f44336; border: none; color: white; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                        style="padding: 2px 8px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
                         Remove
                     </button>
                 </div>
@@ -1975,9 +1975,10 @@ class Chat {
             this.elements.friendSearchPopupCloseBtn.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent click from bubbling up to overlay
                 e.preventDefault(); // Prevent default button behavior
+               
                 this.closePopup();
             });
-        }
+               }
         
         // Click outside to close
         if (this.elements.friendSearchPopupOverlay) {
@@ -2230,9 +2231,36 @@ private showPopup(user: any): void {
         }
     }
 
-
-
-    
+    // Setup socket handlers specifically for chat messages
+    setupChatMessageHandlers(): void {
+        console.log('Chat: Setting up message socket handlers');
+        if (!app.socketService) {
+            console.warn('Chat: Socket service not available');
+            return;
+        }
+        
+        // Clean up any existing handlers to prevent duplicates
+        app.socketService.off('newMessage');
+        
+        // Setup new message handler for direct chat messages
+        app.socketService.on('newMessage', (message: any) => {
+            console.log('Chat: newMessage event received', message);
+            
+            // Convert both IDs to strings for comparison to avoid type mismatch
+            const messageId = message.chat_id?.toString();
+            const currentId = this.currentChatId?.toString();
+            
+            console.log('Chat: Current chat ID:', currentId, 'Received chat ID:', messageId);
+            
+            if (messageId && currentId && messageId === currentId) {
+                console.log(`Chat: New message in current chat ${currentId}:`, message);
+                this.appendMessage(message);
+            }
+            
+            // Update chat list to reflect new messages
+            this.debouncedReloadChats();
+        });
+    }
 }
 
 const chat = new Chat();

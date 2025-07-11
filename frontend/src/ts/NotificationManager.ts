@@ -494,28 +494,29 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         
         console.log('NotificationManager: Attaching newMessage handler');
         app.socketService.on('newMessage', (message: any) => {
-            console.log("Sorry!");
+            console.log("NotificationManager: newMessage event received", message);
             //when you send new message it will emit into two sockets to sender and reciver
             //if you are outside the chat room you will not get notified by this event but you will get notified by messageReceivedInform
-            toastManager.info(app.getUsername(), `New message socket from ${message.from_user.username}: ${message.content}`);
+            toastManager.info(app.getUsername(), `New message from ${message.from_user?.username || 'User'}: ${message.content}`);
+            
+            // Convert both IDs to strings for comparison to avoid type mismatch
+            const messageId = message.chat_id?.toString();
+            const currentId = chat.currentChatId?.toString();
+            
             console.log('New message received:', message);
-            console.log('Current chat ID:', chat.currentChatId, 'Received chat ID:', message.chat_id);
-            console.log(typeof chat.currentChatId, typeof message.chat_id);
-            if ((message.chat_id === chat.currentChatId)) {
-                console.log(`New emmiting message in current chat ${chat.currentChatId}:`, message);
+            console.log('Current chat ID:', currentId, 'Received chat ID:', messageId);
+            
+            // Check if we're in the chat room this message belongs to
+            if (messageId && currentId && messageId === currentId) {
+                console.log(`New message in current chat ${currentId}:`, message);
                 chat.appendMessage(message);
-                // return; // Ignore messages not in current chat
+            } else {
+                // If not in the chat room, increment the mailbox notification count
+                notificationManager.incrementMailboxCount();
             }
-            chat.debouncedReloadChats(); // Use debounced reload
-            // console.log(`New message received in chat ${message.chatId}:`, message);
-            // if (!chat.currentChatId || chat.currentChatId.toString() !== message.chatId?.toString()) {
-            // toastManager.showToast("Message", message.content);
-            // // }
-
-            // this.debouncedReloadChats(); // Use debounced reload
-            // // this.messagesCount++;
-            // notificationManager.incrementMailboxCount();
-            // this.updateDashboardStats();
+            
+            // Always reload the chat list to show the most recent messages
+            chat.debouncedReloadChats();
         });
         
         // Handle message notifications
