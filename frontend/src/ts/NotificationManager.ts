@@ -521,11 +521,15 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         
         // Handle message notifications
         app.socketService.on('messageReceivedInform', async (data: any) => {
+            console.log('NotificationManager: messageReceivedInform event received', data);
             //the one out side the chat will get messageReceivedInform but the user inside the chat will get newMessage
             //this will emit when a message has been received and you are not in the chat  and if you are in the chat you will not get notified by this event
-            toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message} on mesageReceivedInform`);
-        //     // Only show toast if not in the current chat
-            console.log(' new Message received:', data);
+            toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message}`);
+            
+            // Only show toast if not in the current chat
+            console.log('NotificationManager: Message received info:', data);
+            console.log('NotificationManager: Current chat ID:', chat.currentChatId, 'Received chat ID:', data.chatId);
+            
             if (!chat.currentChatId || chat.currentChatId.toString() != data.chatId) {
                 toastManager.addToQueue(data.username, data.message);
             }

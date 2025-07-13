@@ -85,31 +85,67 @@ class Chat {
     init(): void {
         if (this.initialized) return;
 
+        console.log('Chat: Initializing chat module');
+        
         // Listen for page changes
         document.addEventListener('pageShown', (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
+                console.log('Chat: Page shown event received for chat page');
                 this.initializeChatPage();
             } else {
-                // ADD THIS: Cleanup when leaving chat page
+                // Cleanup when leaving chat page
+                console.log(`Chat: Page changed to ${customEvent.detail.page}, cleaning up chat handlers`);
                 this.cleanupSocketHandlers();
+                
+                // Special handler to make sure message notifications work when not on chat page
+                if (app.socketService) {
+                    console.log('Chat: Setting up special messageReceivedInform handler for non-chat page');
+                    
+                    // First remove any existing handler
+                    app.socketService.off('messageReceivedInform');
+                    
+                    // Then add a simplified handler that just shows notifications
+                    app.socketService.on('messageReceivedInform', (data: any) => {
+                        console.log('Chat (non-chat page): Received messageReceivedInform', data);
+                        toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message}`);
+                        notificationManager.incrementMailboxCount();
+                    });
+                }
             }
         });
 
-
-        this.initialized = true;
-
-        // // ADD THIS in constructor after the pageShown listener
+        // Make sure notification handlers are set up after page hidden event too
         document.addEventListener('pageHidden', (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
+                console.log('Chat: Page hidden event received for chat page');
                 this.cleanupSocketHandlers();
+                
+                // Ensure notification manager sets up its handlers again
+                if (notificationManager && notificationManager.initialized) {
+                    console.log('Chat: Re-initializing notification handlers after chat page hidden');
+                    setTimeout(() => {
+                        notificationManager.reinitializeSocketHandlers();
+                    }, 200); // Small delay to ensure cleanup is complete
+                }
             }
         });
+
+        // Set up base socket handlers
+        this.setupBaseSocketHandlers();
+
+        this.initialized = true;
     }
 
      setupBaseSocketHandlers(): void {
         if (!app.socketService) return;
+
+        console.log('Chat: Setting up base socket handlers');
+        
+        // Remove existing handlers first to prevent duplicates
+        app.socketService.off('connect');
+        app.socketService.off('disconnect');
 
         app.socketService.on('connect', () => {
             console.log('Chat socket connected');
@@ -118,6 +154,12 @@ class Chat {
                 this.loadFriendData();
                 this.loadBlockedUsers(); 
                 this.handleURLChatId();
+                
+                // Ensure notification manager reinitializes its handlers
+                if (notificationManager && notificationManager.initialized) {
+                    console.log('Chat: Requesting NotificationManager to reinitialize handlers after socket connection');
+                    notificationManager.reinitializeSocketHandlers();
+                }
             }
         });
 
@@ -129,13 +171,23 @@ class Chat {
     cleanupSocketHandlers(): void {
         if (!app.socketService) return;
         
+        console.log('Chat: Cleaning up socket handlers');
         app.socketService.off('messageReceivedInform');
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        
+        // Important: Tell NotificationManager to reinitialize its handlers
+        // This ensures messageReceivedInform gets properly set up again
+        if (notificationManager && notificationManager.initialized) {
+            console.log('Chat: Requesting NotificationManager to reinitialize handlers');
+            notificationManager.reinitializeSocketHandlers();
+        }
+        
         console.log('Chat socket handlers cleaned up');
     }
      initializeChatPage(): void {
+        console.log('Chat: Initializing chat page');
         setTimeout(() => {
             this.getElements();
             this.setupEventListeners();
@@ -146,8 +198,14 @@ class Chat {
             this.initializeParticles();
             this.loadChats();
             this.loadFriendData();
-             this.loadBlockedUsers(); 
+            this.loadBlockedUsers(); 
             this.updateDashboardStats();
+            
+            // Make sure notification handlers are set up
+            if (notificationManager && notificationManager.initialized) {
+                console.log('Chat: Ensuring notification handlers are initialized');
+                notificationManager.reinitializeSocketHandlers();
+            }
 
             // Handle URL-based chat room joining
             this.handleURLChatId();
@@ -2260,6 +2318,12 @@ private showPopup(user: any): void {
             // Update chat list to reflect new messages
             this.debouncedReloadChats();
         });
+        
+        // Ensure that NotificationManager has its handlers set up for messageReceivedInform
+        if (notificationManager && notificationManager.initialized) {
+            console.log('Chat: Ensuring notification handlers are set up for messages');
+            notificationManager.reinitializeSocketHandlers();
+        }
     }
 }
 
