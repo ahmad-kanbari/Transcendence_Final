@@ -285,19 +285,18 @@ class Chat {
         if (this.elements.messageInput) {
             this.elements.messageInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
-             e.stopPropagation();
-                e.preventDefault();
+                e.stopPropagation();
+                    e.preventDefault();
 
-                if (this.currentChatId !== null) {
-                    // toastManager.info(app.getUsername(), `Sending message in chat with ${this.currentChatWithUsername}`);
-                    await this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
-                } else {
-                    console.log('No active chat to select.');
-                }
-
-                this.sendMessage();
-                chat.debouncedReloadChats();
-                
+                    if (this.currentChatId !== null) {
+                        // toastManager.info(app.getUsername(), `Sending message in chat with ${this.currentChatWithUsername}`);
+                        // this.selectChatFromList(this.currentChatId,this.currentChatWithUsername );
+                        this.sendMessage();
+                        this.debouncedReloadChats();
+                    } else {
+                        console.log('No active chat to select.');
+                    }
+                    
                    // Reload chats after sending message
                 }
             });
@@ -375,7 +374,7 @@ class Chat {
         if (this.chatReloadTimeout) {
             clearTimeout(this.chatReloadTimeout);
         }
-        this.chatReloadTimeout = setTimeout(() => async () => {
+        this.chatReloadTimeout = setTimeout(async () => {
             await this.loadChats();
             this.chatReloadTimeout = null;
         }, 100);
