@@ -53,9 +53,6 @@ module.exports = (chatModel, notificationModel, io, onlineUsers) => {
 			const { message, receiverUserId, isSenderBlocked } =
 				await chatModel.createMessage(senderId, chatId, content);
 
-			reply.send({
-				msg: `Message with id ${message.id} was successfuly sent`,
-			});
 			if (isSenderBlocked) {
 				const senderSocketIds = onlineUsers.get(senderId);
 				if (senderSocketIds) {
@@ -75,6 +72,10 @@ module.exports = (chatModel, notificationModel, io, onlineUsers) => {
 				// Emit the message to the chat room
 				io.to(chatId.toString()).emit("newMessage", message);
 			}
+
+			reply.send({
+				msg: `Message with id ${message.id} was successfuly sent`,
+			});
 		},
 
 		getMessages: async (request, reply) => {
