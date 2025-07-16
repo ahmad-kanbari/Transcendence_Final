@@ -98,6 +98,13 @@ class Chat {
                 console.log(`Chat: Page changed to ${customEvent.detail.page}, cleaning up chat handlers`);
                 this.cleanupSocketHandlers();
                 
+                // IMPORTANT: Force deactivate chat when navigating away from chat page
+                // This ensures we leave any active chat room
+                if (this.currentChatId) {
+                    console.log(`Chat: Force deactivating chat ${this.currentChatId} when navigating to ${customEvent.detail.page}`);
+                    this.deactivateChat();
+                }
+                
                 // Special handler to make sure message notifications work when not on chat page
                 if (app.socketService) {
                     console.log('Chat: Setting up special messageReceivedInform handler for non-chat page');
@@ -129,6 +136,21 @@ class Chat {
                         notificationManager.reinitializeSocketHandlers();
                     }, 200); // Small delay to ensure cleanup is complete
                 }
+            }
+        });
+
+        // Add a listener for router navigation events too, as an extra safeguard
+        document.addEventListener('navigationComplete', (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const path = customEvent.detail.path;
+            
+            // If navigating away from chat page
+            if (!path.includes('/chat') && this.currentChatId) {
+                console.log(`Chat: Navigation detected to ${path}, leaving chat room ${this.currentChatId}`);
+                // Deactivate chat completely
+                this.deactivateChat();
+                // Clean up socket handlers
+                this.cleanupSocketHandlers();
             }
         });
 
@@ -176,6 +198,15 @@ class Chat {
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        
+        // Leave any active chat room when navigating away from chat page
+        if (this.currentChatId) {
+            console.log(`Chat: Leaving chat room ${this.currentChatId} during cleanup`);
+            app.socketService.emit('leaveRoom', this.currentChatId);
+            
+            // For debugging purposes
+            console.trace("Chat: Stack trace for leaveRoom event");
+        }
         
         // Important: Tell NotificationManager to reinitialize its handlers
         // This ensures messageReceivedInform gets properly set up again
@@ -607,6 +638,9 @@ class Chat {
     
     
         private deactivateChat(): void {
+            // Store the current chat ID before clearing it
+            const chatIdToLeave = this.currentChatId;
+            
             // Clear current chat state
             this.currentChatId = null;
             
@@ -623,9 +657,10 @@ class Chat {
                 this.elements.chatHeader.textContent = 'Select a chat';
             }
             
-            // Leave socket room
-            if (app.socketService && this.currentChatId) {
-                app.socketService.emit('leaveRoom', this.currentChatId);
+            // Leave socket room - use the stored chatId since we've cleared currentChatId
+            if (app.socketService && chatIdToLeave) {
+                console.log(`Chat: Leaving chat room ${chatIdToLeave} in deactivateChat`);
+                app.socketService.emit('leaveRoom', chatIdToLeave);
             }
             
             // Update URL to remove chatId
