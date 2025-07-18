@@ -2001,6 +2001,7 @@ createMultiplayerMatchData(
                 console.log("Current Tournament Final Match: this after increment", this.currentTournamentMatch);
                 // this.currentTournamentMatch++;
                 console.log("resetting currentTournamentMatch to 0 for next tournament", this.currentTournamentMatch);
+                toastManager.info(this.userName!, `Game Commencing: ${winner1} VS. ${winner2}`)
         }
         
         // Increment match counter
