@@ -1924,6 +1924,7 @@ createMultiplayerMatchData(
                     toastManager.showToast("Match ID is undefined in the response", "error");
                     return;
                 }
+                toastManager.info(this.userName!, `Game Commencing: ${this.tournamentPlayers[1]} VS. ${this.tournamentPlayers[2]}`)
                 // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
                 this.matchObj.matchId = response.data.match.id; // Update matchId from the response
                 this.tournamentMatchId =  response.data.match.id; // Store the match ID for later use
