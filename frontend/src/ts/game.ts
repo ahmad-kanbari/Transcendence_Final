@@ -1439,6 +1439,7 @@ createMultiplayerMatchData(
        
         if (winnerText && finalScore) {
             winnerText.textContent = `${winnerName} Wins!`;
+            toastManager.info(this.userName!, `the winner is ${winnerName}`)
             finalScore.textContent = `${this.player1Score!.textContent} - ${this.player2Score!.textContent}`;
         }
         
