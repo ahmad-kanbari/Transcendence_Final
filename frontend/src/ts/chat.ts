@@ -432,12 +432,26 @@ class Chat {
                     chatRow.role = 'listitem';
                     chatRow.dataset.chatId = chat_id;
                     
+                    // Update to include user actions with profile button
                     chatRow.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span class="online-status"></span>
                             <span>${user.username || 'Unknown User'}</span>
                         </div>
-                        <div data-i18n="chat.clickToOpenChat" style="font-size: 12px; color: #999; margin-top: 5px;">Click to open chat</div>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <div data-i18n="chat.clickToOpenChat" style="font-size: 12px; color: #999; margin-top: 5px; text-align: right;">Click to open chat</div>
+                            <button class="profile-link-btn" style="
+                                padding: 2px 8px;
+                                background: var(--cyber-green);
+                                color: white;
+                                border: none;
+                                border-radius: 3px;
+                                cursor: pointer;
+                                font-size: 10px;
+                                align-self: flex-end;
+                                transition: all 0.2s ease;
+                            "><i class="bi bi-person-circle mr-1"></i>Profile</button>
+                        </div>
                     `;
 
                     // Mark active chat
@@ -445,7 +459,30 @@ class Chat {
                         chatRow.classList.add('active');
                     }
 
-                    // Add click event listener
+                    // Add hover effects to profile button
+                    const profileBtn = chatRow.querySelector('.profile-link-btn');
+                    if (profileBtn) {
+                        profileBtn.addEventListener('mouseenter', () => {
+                            (profileBtn as HTMLElement).style.transform = 'translateY(-2px)';
+                            (profileBtn as HTMLElement).style.boxShadow = '0 4px 8px rgba(0, 255, 0, 0.3)';
+                            (profileBtn as HTMLElement).style.background = 'var(--cyber-purple)';
+                        });
+                        
+                        profileBtn.addEventListener('mouseleave', () => {
+                            (profileBtn as HTMLElement).style.transform = 'translateY(0)';
+                            (profileBtn as HTMLElement).style.boxShadow = 'none';
+                            (profileBtn as HTMLElement).style.background = 'var(--cyber-green)';
+                        });
+                        
+                        // Add click event to navigate to profile
+                        profileBtn.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent the chatRow click event
+                            e.preventDefault();
+                            ChatNavigationHelper.navigateToFriendProfile(user.id.toString());
+                        });
+                    }
+
+                    // Add click event listener for the chat row
                     chatRow.addEventListener('click', async () => {
                         await this.selectChatFromList(chat_id, user);
                     });
@@ -1919,7 +1956,7 @@ class Chat {
                     cursor: pointer;
                     font-weight: bold;
                     font-size: 16px;
-                    transition: all 0.3s ease;
+                                       transition: all 0.3s ease;
                     flex: 1;
                     max-width: 120px;
                 ">Add Friend</button>
