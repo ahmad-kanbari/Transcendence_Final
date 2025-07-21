@@ -71,6 +71,11 @@ class Chat {
      baseURL: string = CONFIG.baseURL || '';
      chatReloadTimeout: any = null;
      currentChatWithUsername: string | null = null;
+     
+     // Event listener references for proper cleanup
+     private navigationCompleteHandler: ((event: Event) => void) | null = null;
+     private pageShownHandler: ((event: Event) => void) | null = null;
+     private pageHiddenHandler: ((event: Event) => void) | null = null;
 
     // Blocked users management
     blockedUsersCache: Set<string> = new Set();
@@ -87,8 +92,11 @@ class Chat {
 
         console.log('Chat: Initializing chat module');
         
+        // Clean up any existing event listeners before adding new ones
+        this.removeEventListeners();
+        
         // Listen for page changes
-        document.addEventListener('pageShown', (event: Event) => {
+        this.pageShownHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page shown event received for chat page');
@@ -120,10 +128,11 @@ class Chat {
                     });
                 }
             }
-        });
+        };
+        document.addEventListener('pageShown', this.pageShownHandler);
 
         // Make sure notification handlers are set up after page hidden event too
-        document.addEventListener('pageHidden', (event: Event) => {
+        this.pageHiddenHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page hidden event received for chat page');
@@ -137,10 +146,11 @@ class Chat {
                     }, 200); // Small delay to ensure cleanup is complete
                 }
             }
-        });
+        };
+        document.addEventListener('pageHidden', this.pageHiddenHandler);
 
         // Add a listener for router navigation events too, as an extra safeguard
-        document.addEventListener('navigationComplete', (event: Event) => {
+        this.navigationCompleteHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             const path = customEvent.detail.path;
             
@@ -152,12 +162,36 @@ class Chat {
                 // Clean up socket handlers
                 this.cleanupSocketHandlers();
             }
-        });
+        };
+        document.addEventListener('navigationComplete', this.navigationCompleteHandler);
 
         // Set up base socket handlers
         this.setupBaseSocketHandlers();
 
         this.initialized = true;
+    }
+    
+    /**
+     * Clean up event listeners to prevent memory leaks
+     */
+    removeEventListeners(): void {
+        // Remove navigation event listeners
+        if (this.navigationCompleteHandler) {
+            document.removeEventListener('navigationComplete', this.navigationCompleteHandler);
+            this.navigationCompleteHandler = null;
+        }
+        
+        if (this.pageShownHandler) {
+            document.removeEventListener('pageShown', this.pageShownHandler);
+            this.pageShownHandler = null;
+        }
+        
+        if (this.pageHiddenHandler) {
+            document.removeEventListener('pageHidden', this.pageHiddenHandler);
+            this.pageHiddenHandler = null;
+        }
+        
+        console.log('Chat: Event listeners removed to prevent memory leaks');
     }
 
      setupBaseSocketHandlers(): void {
@@ -2164,18 +2198,26 @@ private showPopup(user: any): void {
 
     // Cleanup method
     destroy(): void {
-          // ADD THIS LINE at the start
+        // Remove all event listeners first to prevent memory leaks
+        this.removeEventListeners();
+        
+        // Clean up socket handlers
         this.cleanupSocketHandlers();
+        
+        // Clear any pending timeouts
         if (this.chatReloadTimeout) {
             clearTimeout(this.chatReloadTimeout);
         }
         
+        // Disconnect from socket
         if (app.socketService) {
             if (this.currentChatId) {
                 app.socketService.emit('leaveRoom', this.currentChatId);
             }
             app.socketService.disconnect();
         }
+        
+        console.log('Chat: Destroyed and all resources cleaned up');
     }
 
 
