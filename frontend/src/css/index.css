@@ -12,7 +12,7 @@
     
     /* Toast colors */
     --toast-error-border: #dc3545;
-    --toast-bg: rgba(0, 0, 0, 0.7);
+    --toast-bg: rgb(0 0 0 / 70%);
     --toast-warning-color: #ffc107;
     --toast-success-color: #28a745;
     --toast-info-color: #17a2b8;
@@ -25,7 +25,7 @@
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: Roboto, sans-serif;
     background: radial-gradient(ellipse at center, var(--cyber-dark) 0%, var(--cyber-darker) 60%, var(--cyber-black) 100%);
     color: white;
     min-height: 100vh;
@@ -71,8 +71,8 @@ body::after {
     width: 100%;
     height: 100%;
     background-image: 
-        linear-gradient(90deg, transparent 98%, rgba(5, 217, 232, 0.1) 100%),
-        linear-gradient(180deg, transparent 98%, rgba(255, 42, 109, 0.1) 100%);
+        linear-gradient(90deg, transparent 98%, rgb(5 217 232 / 10%) 100%),
+        linear-gradient(180deg, transparent 98%, rgb(255 42 109 / 10%) 100%);
     background-size: 80px 80px;
     pointer-events: none;
     z-index: -1;
@@ -118,7 +118,7 @@ body::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgb(0 0 0 / 60%);
 }
 
 /* ===== HEADER STYLES ===== */
@@ -142,18 +142,18 @@ body::after {
     color: var(--cyber-blue) !important;
     text-transform: uppercase;
     text-decoration: none;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     text-shadow: 0 0 10px var(--cyber-blue);
 }
 
 .logo-text {
     color: var(--cyber-blue);
     font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 .nav-link-gold {
-    color: #ffffff !important;
+    color: #fff !important;
     padding: 8px 15px !important;
     margin: 0 5px;
     transition: all 0.3s ease;
@@ -169,7 +169,7 @@ body::after {
 }
 
 .navbar-dark .navbar-nav .nav-link {
-    color: #ffffff;
+    color: #fff;
     font-weight: 500;
 }
 
@@ -185,7 +185,7 @@ body::after {
 
 .navbar-toggler:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(5, 217, 232, 0.3);
+    box-shadow: 0 0 0 2px rgb(5 217 232 / 30%);
 }
 
 .navbar-dark .navbar-toggler-icon {
@@ -205,8 +205,8 @@ body::after {
 }
 
 .user-profile:hover {
-    background-color: rgba(5, 217, 232, 0.1);
-    box-shadow: 0 0 10px rgba(5, 217, 232, 0.3);
+    background-color: rgb(5 217 232 / 10%);
+    box-shadow: 0 0 10px rgb(5 217 232 / 30%);
 }
 
 .user-name {
@@ -221,7 +221,7 @@ body::after {
     border: 1px solid var(--cyber-blue);
     border-radius: 50%;
     object-fit: cover;
-    box-shadow: 0 0 5px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 5px rgb(5 217 232 / 50%);
 }
 
 /* Profile dropdown styles */
@@ -236,7 +236,7 @@ body::after {
     border-radius: 8px;
     overflow: hidden;
     min-width: 180px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(5, 217, 232, 0.3);
+    box-shadow: 0 5px 15px rgb(0 0 0 / 50%), 0 0 10px rgb(5 217 232 / 30%);
     padding: 5px;
     backdrop-filter: blur(10px);
 }
@@ -266,7 +266,7 @@ body::after {
 .dropdown-menu .dropdown-item#profileNavBtn:focus {
     background-color: var(--cyber-blue) !important;
     color: var(--cyber-dark) !important;
-    box-shadow: 0 0 10px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 10px rgb(5 217 232 / 50%);
 }
 
 .dropdown-item.logout-btn:hover i, 
@@ -278,7 +278,7 @@ body::after {
 
 /* ===== FOOTER STYLES ===== */
 footer {
-    background-color: rgba(7, 7, 24, 0.8);
+    background-color: rgb(7 7 24 / 80%);
     color: var(--cyber-blue);
     border-top: 1px solid var(--cyber-blue);
     padding: 10px 0;
@@ -297,7 +297,7 @@ footer {
 footer p {
     margin: 0;
     font-size: 0.9rem;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 /* ========== Spinner Component Styles ========== */
@@ -320,7 +320,7 @@ footer p {
 .spinner {
     width: 50px;
     height: 50px;
-    border: 5px solid rgba(5, 217, 232, 0.2);
+    border: 5px solid rgb(5 217 232 / 20%);
     border-top: 5px solid var(--cyber-blue);
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -332,7 +332,7 @@ footer p {
     font-weight: 500;
     text-align: center;
     margin: 0;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 @keyframes spin {
@@ -350,7 +350,7 @@ footer p {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgb(0 0 0 / 70%);
     z-index: 9999;
 }
 
@@ -364,7 +364,7 @@ footer p {
     width: 350px;
     background-color: var(--cyber-darker);
     border-radius: 6px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 0 10px rgba(5, 217, 232, 0.3);
+    box-shadow: 0 4px 15px rgb(0 0 0 / 30%), 0 0 10px rgb(5 217 232 / 30%);
     padding: 12px 16px;
     color: white;
     display: flex;
@@ -399,7 +399,7 @@ footer p {
 .toast-title {
     font-weight: bold;
     margin-bottom: 5px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 /* Toast types */
@@ -498,8 +498,8 @@ footer p {
 
 /* Text Shadows */
 h1, h2, h3, h4, h5, h6 {
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-blue);
 }
 
@@ -517,13 +517,13 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--cyber-dark);
     padding: 12px 25px;
     border-radius: 4px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 10px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 3px 10px rgb(0 0 0 / 40%), 0 0 10px rgb(5 217 232 / 50%);
     z-index: 1000;
     transition: transform 0.3s ease;
     text-align: center;
     max-width: 300px;
     font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 .status-message.active {
@@ -560,14 +560,14 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--cyber-dark);
     border: none;
     font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     transition: all 0.3s ease;
 }
 
 .btn-gold:hover {
     background: linear-gradient(135deg, var(--cyber-green) 0%, var(--cyber-blue) 100%);
     color: var(--cyber-dark);
-    box-shadow: 0 0 15px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 15px rgb(5 217 232 / 50%);
     transform: translateY(-2px);
 }
 
@@ -575,7 +575,7 @@ h1, h2, h3, h4, h5, h6 {
     border: 2px solid var(--cyber-blue);
     color: var(--cyber-blue);
     font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     background: transparent;
     transition: all 0.3s ease;
 }
@@ -583,13 +583,13 @@ h1, h2, h3, h4, h5, h6 {
 .btn-outline-gold:hover {
     background-color: var(--cyber-blue);
     color: var(--cyber-dark);
-    box-shadow: 0 0 15px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 15px rgb(5 217 232 / 50%);
 }
 
 /* Form styling */
 .form-control {
-    background-color: rgba(15, 15, 27, 0.8);
-    border: 1px solid rgba(5, 217, 232, 0.3);
+    background-color: rgb(15 15 27 / 80%);
+    border: 1px solid rgb(5 217 232 / 30%);
     color: white;
     padding: 12px 16px;
     font-size: 16px;
@@ -599,27 +599,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .form-control:focus {
-    background-color: rgba(15, 15, 27, 0.9);
+    background-color: rgb(15 15 27 / 90%);
     border-color: var(--cyber-blue);
-    box-shadow: 0 0 0 4px rgba(5, 217, 232, 0.25);
+    box-shadow: 0 0 0 4px rgb(5 217 232 / 25%);
     color: white;
     outline: none;
 }
 
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgb(255 255 255 / 50%);
 }
 
 .form-label {
     color: var(--cyber-blue);
     font-weight: 500;
     margin-bottom: 8px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 .form-check-input {
-    background-color: rgba(15, 15, 27, 0.8);
-    border: 1px solid rgba(5, 217, 232, 0.3);
+    background-color: rgb(15 15 27 / 80%);
+    border: 1px solid rgb(5 217 232 / 30%);
 }
 
 .form-check-input:checked {
@@ -628,7 +628,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .form-check-label {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgb(255 255 255 / 80%);
 }
 
 /* Generic button styling */
@@ -644,12 +644,12 @@ button {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
 }
 
 button:hover {
     background: linear-gradient(135deg, var(--cyber-green) 0%, var(--cyber-blue) 100%);
-    box-shadow: 0 0 15px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 15px rgb(5 217 232 / 50%);
     transform: translateY(-2px);
 }
 
@@ -689,35 +689,35 @@ button:hover {
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
     border-radius: 6px;
-    box-shadow: 0 0 10px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 10px rgb(5 217 232 / 50%);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(45deg, var(--cyber-green), var(--cyber-blue));
-    box-shadow: 0 0 15px rgba(45, 226, 230, 0.7);
+    box-shadow: 0 0 15px rgb(45 226 230 / 70%);
 }
 
 /* Accessibility - High Contrast Mode */
 body.high-contrast {
-    background: #000000;
+    background: #000;
 }
 
 .high-contrast .navbar,
 .high-contrast .footer {
-    background-color: #000000 !important;
-    border-color: #ffffff !important;
+    background-color: #000 !important;
+    border-color: #fff !important;
 }
 
 .high-contrast a,
 .high-contrast button {
-    color: #ffffff !important;
-    border-color: #ffffff !important;
+    color: #fff !important;
+    border-color: #fff !important;
 }
 
 .high-contrast a:hover,
 .high-contrast button:hover {
-    background-color: #ffffff !important;
-    color: #000000 !important;
+    background-color: #fff !important;
+    color: #000 !important;
 }
 
 /* Text Size Adjustments */
@@ -735,7 +735,7 @@ body.rtl {
 }
 
 /* Responsive Design */
-@media (max-width: 991.98px) {
+@media (width <= 991.98px) {
     .navbar-collapse {
         background-color: var(--cyber-darker);
         padding: 10px;
@@ -770,7 +770,7 @@ body.rtl {
     }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .logo-text {
         font-size: 1.2rem;
     }
@@ -780,7 +780,7 @@ body.rtl {
     }
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
     .navbar {
         padding: 8px 10px;
     }
