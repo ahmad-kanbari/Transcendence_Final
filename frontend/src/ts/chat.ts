@@ -628,7 +628,7 @@ class Chat {
         } catch (error) {
             console.error('Error selecting chat:', error);
             // components.showToast('error', 'Chat Error', 'Failed to open chat', 3000);
-            toastManager.error(app.getUsername(), 'Failed to open chat');
+            // toastManager.error(app.getUsername(), 'Failed to open chat');
         }
     }
 
