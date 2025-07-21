@@ -508,7 +508,7 @@ class FriendProfile {
               // The backend serves static files from the root path via fastifyStatic
               // We need to use the backend server URL which is running on port 3000
               const cleanPath = this.friendData.profile_picture.replace(/^\/+/, '');
-              const apiUrl = `${CONFIG.baseURLWithoutApi}${cleanPath}`;
+              const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
               
               console.log('Trying to fetch profile picture from:', apiUrl);
               
