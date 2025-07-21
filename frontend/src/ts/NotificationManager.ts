@@ -337,12 +337,12 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                 pages.showPage('chat');
             
                        // Wait for chat page to initialize, then join room
-                setTimeout(async () => {
+                // setTimeout(async () => {
                     // await
-                     chat.loadChats();
+                    await chat.loadChats();
                     // await
-                     chat.forceJoinRoom(chatId);
-                }, 50);
+                     await chat.forceJoinRoom(chatId);
+                // }, 50);
 
                 //    setTimeout(async () => {
                 //     await chat.loadChats();
