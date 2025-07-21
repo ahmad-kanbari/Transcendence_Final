@@ -23,22 +23,6 @@ class Chat {
 		return chatWithUser2.chat_id;
 	}
 
-	// async getAllUserChats(user1Id) {
-	// 	const chatsData = await this.db("chat_participants as cp1")
-	// 		.join("chat_participants as cp2", "cp1.chat_id", "cp2.chat_id")
-	// 		.join("chats", "cp1.chat_id", "chats.id")
-	// 		.select(
-	// 			"cp1.chat_id",
-	// 			"cp2.user_id as participantId",
-	// 			"chats.updated_at"
-	// 		)
-	// 		.where("cp1.user_id", user1Id)
-	// 		.andWhereNot("cp2.user_id", user1Id)
-	// 		.orderBy("chats.updated_at", "desc");
-
-	// 	return chatsData;
-	// }
-
 	async getAllUserChats(user1Id) {
 		const chatsData = await this.db("chat_participants as cp1")
 			.join("chat_participants as cp2", "cp1.chat_id", "cp2.chat_id")
