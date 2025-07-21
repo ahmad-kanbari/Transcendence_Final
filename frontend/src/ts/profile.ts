@@ -1186,19 +1186,45 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     }
     if (this.profileForm.profileAvatar) {
       // First check localStorage for cached profile picture
-      const cachedImage = this.getProfilePictureFromLocalStorage();
+      // const cachedImage = this.getProfilePictureFromLocalStorage();
       
-      if (cachedImage) {
-        this.profileForm.profileAvatar.src = cachedImage;
-        console.log('Using cached profile picture from localStorage');
-      } else if (user.profile_picture) {
+      // if (cachedImage) {
+      //   this.profileForm.profileAvatar.src = cachedImage;
+      //   console.log('Using cached profile picture from localStorage', cachedImage);
+      // } else if (user.profile_picture) {
         // Use server URL if no cached version
-        console.log('Using profile picture from user data:', user.profile_picture);
-        this.profileForm.profileAvatar.src = `/backend/public/${user.profile_picture}`;
-      } else {
-        // Fallback to default
-        this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/user.png';
-      }
+        console.log('Using profile picture from user data in populate data:', user.profile_picture);
+          const cleanPath = user.profile_picture.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                   this.profileForm.profileAvatar!.src= 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                 this.profileForm.profileAvatar!.src= imageUrl;
+                 app.state.user!.profile_picture = user.profile_picture; // Update user state with new profile picture URL
+                // this.saveProfilePictureToLocalStorage(imageUrl);
+          
+                // if (this.profileForm.profileAvatar!.src) {
+                //    this.profileForm.profileAvatar!.src = imageUrl;
+                  login.updateUIAuthState();
+                // }
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                 this.profileForm.profileAvatar!.src = 'src/assets/icons/user.png';
+              });
+      // } else {
+      //   // Fallback to default
+      //   this.profileForm.profileAvatar.src = 'src/assets/icons/user.png';
+      // }
     }
     
     if (this.profileForm.displayNameField)
@@ -1279,16 +1305,18 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
 
         if (!res.ok) {
           toastManager.error(app.getUsername(), 'Failed to upload profile picture');
-          throw new Error('Failed to upload profile picture');}
+          throw new Error('Failed to upload profile picture');
+        }
 
         const data = await res.json();
         // Convert file to base64 and save to localStorage
      
-    
+          console.log('Profile picture uploaded successfully:', data);
            if (profileAvatar) {
           // If profile_picture exists, fetch it through the API, otherwise use default
           if (data){
-            
+            app.state.user!.profile_picture = data.url; // Update user state with new profile picture URL
+            localStorage.setItem('user', JSON.stringify(app.state.user));
             const cleanPath = data.url.replace(/^\//, ''); // Remove leading slash if present
             const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
             

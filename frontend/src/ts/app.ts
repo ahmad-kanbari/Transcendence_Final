@@ -821,7 +821,7 @@ class App {
     return this.state.user;
   }
 
-  getUserImg(): any {
+  async getUserImg(): Promise<any> {
     console.log('getUserImg called');
       // First check localStorage for cached profile picture
       const cachedImage = profile.getProfilePictureFromLocalStorage();
@@ -829,16 +829,42 @@ class App {
       if (cachedImage) {
         console.log('Using cached profile picture in navbar from localStorage');
         return cachedImage;
-      } else if (this.state.user) {
+      } else if (this.state.user && this.state.user.profile_picture) {
         // Use server URL if no cached version
-        console.log('Using profile picture from user data:', this.state.user.profile_picture);
-        return  `/backend/public/${this.state.user.profile_picture}`;
-      } else {
-        // Fallback to default
-        console.log('Using default profile picture');
-        return 'src/assets/icons/user.png';
-      }
-    }
+
+            const cleanPath = this.state.user.profile_picture!.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                  // profileAvatar.src = 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                // profileAvatar.src = imageUrl;
+                profile.saveProfilePictureToLocalStorage(apiUrl);
+          
+                // if (profileAvatar) {
+                //   profileAvatar.src = imageUrl;
+                //   login.updateUIAuthState();
+                // }
+                return imageUrl;
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                // profileAvatar.src = 'src/assets/icons/user.png';
+                return 'src/assets/icons/user.png';
+              });
+          } else {
+            return 'src/assets/icons/user.png';
+          }
+      } 
+    
   
 
   getUsername(): string {
