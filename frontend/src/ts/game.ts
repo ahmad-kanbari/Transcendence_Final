@@ -1439,6 +1439,7 @@ createMultiplayerMatchData(
        
         if (winnerText && finalScore) {
             winnerText.textContent = `${winnerName} Wins!`;
+            toastManager.info(this.userName!, `the winner is ${winnerName}`)
             finalScore.textContent = `${this.player1Score!.textContent} - ${this.player2Score!.textContent}`;
         }
         
@@ -1924,6 +1925,7 @@ createMultiplayerMatchData(
                     toastManager.showToast("Match ID is undefined in the response", "error");
                     return;
                 }
+                toastManager.info(this.userName!, `Game Commencing: ${this.tournamentPlayers[0]} VS. ${this.tournamentPlayers[1]}`)
                 // console.log("plyer 1 socre:", this.tournamentArr[this.currentTournamentMatch - 1].player1_score);
                 this.matchObj.matchId = response.data.match.id; // Update matchId from the response
                 this.tournamentMatchId =  response.data.match.id; // Store the match ID for later use
@@ -1949,6 +1951,7 @@ createMultiplayerMatchData(
                     player2_name: this.tournamentPlayers[3],
                 
                 });
+                toastManager.info(this.userName!, `Game Commencing: ${this.tournamentPlayers[2]} VS. ${this.tournamentPlayers[3]}`)
                 console.log("Tournament Match2 Created:", response);
                 // let matchData = JSON.parse(r);
                 console.log("Tournament Match2 Data id:",  response.data.match.id);
@@ -1999,6 +2002,7 @@ createMultiplayerMatchData(
                 console.log("Current Tournament Final Match: this after increment", this.currentTournamentMatch);
                 // this.currentTournamentMatch++;
                 console.log("resetting currentTournamentMatch to 0 for next tournament", this.currentTournamentMatch);
+                toastManager.info(this.userName!, `Game Commencing: ${winner1} VS. ${winner2}`)
         }
         
         // Increment match counter
