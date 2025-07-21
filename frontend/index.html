@@ -122,6 +122,23 @@
             .notification-badge {
                 animation: glow 1s ease-in-out infinite alternate;
             }
+            
+            /* Mobile Navigation Styles - No Scrolling */
+            #navbarNav {
+                max-height: calc(100vh - 80px);
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 64px;
+                z-index: 49;
+            }
+            
+            #navbarNav ul {
+                overflow: visible;
+                max-height: none;
+                margin-left: 16px;
+                margin-right: 16px;
+            }
     
             /* Hide body until authenticated */
             body.pre-auth {
@@ -421,25 +438,22 @@
                 
                 <!-- Mobile Navigation Menu - Hidden by default -->
                 <div class="hidden mt-2 lg:hidden w-full" id="navbarNav">
-                    <ul class="bg-cyber-darker bg-opacity-90 w-full rounded-md border border-cyber-blue p-4 space-y-2 shadow-neon-blue">
+                    <ul class="bg-cyber-darker bg-opacity-90 w-full rounded-md border border-cyber-blue p-4 shadow-neon-blue flex flex-col">
                         <li>
                             <a href="/" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-blue" id="homeNavBtnMobile">
                                 <i class="bi bi-house-door mr-2 text-cyber-blue"></i>
                                 <span data-i18n="navigation.home">Home</span>
                             </a>
                         </li>
-                    
-                       
                             <li>
-                                <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-cente" id="gameNavBtn">
+                                <a href="/game" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="gameNavBtn">
                                     <i class="bi bi-controller mr-2 text-cyber-green"></i>
                                     <span data-i18n="navigation.game">Game</span>
                                 </a>
                             </li>
-                     
-                             <li>
-                                     <a href="/chat" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-cente" id="chatNavBtn">
-                                        <i class="bi bi-chat-dots mr-2 text-cyber-green"></i>
+                            <li>
+                                <a href="/chat" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-green" id="chatNavBtn">
+                                    <i class="bi bi-chat-dots mr-2 text-cyber-green"></i>
                                     <span data-i18n="navigation.chat">Chat</span>
                                 </a>
                             </li>
@@ -576,6 +590,21 @@
                 
                 mobileMenuButton.addEventListener('click', function() {
                     navbarNav.classList.toggle('hidden');
+                    
+                    // Add body overflow control to prevent background scrolling when menu is open
+                    if (!navbarNav.classList.contains('hidden')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Close mobile menu when a link is clicked
+                document.querySelectorAll('#navbarNav a').forEach(link => {
+                    link.addEventListener('click', function() {
+                        navbarNav.classList.add('hidden');
+                        document.body.style.overflow = '';
+                    });
                 });
                 
                 // User profile dropdown toggle

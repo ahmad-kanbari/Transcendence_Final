@@ -53,6 +53,11 @@ interface ChatElements {
     friendSearchPopupAddBtn: HTMLElement | null;
     friendSearchPopupBlockBtn: HTMLElement | null;
     friendSearchPopupCloseBtn: HTMLElement | null;
+    
+    // Friend search results popup elements
+    friendSearchResultsPopup: HTMLElement | null;
+    friendSearchResultsPopupOverlay: HTMLElement | null;
+    friendSearchResultsCloseBtn: HTMLElement | null;
 
     // Blocked users elements
     blockedUsersList: HTMLElement | null;
@@ -254,6 +259,11 @@ class Chat {
             friendSearchPopupAddBtn: document.getElementById('friendSearchPopupAddBtn'),
             friendSearchPopupBlockBtn: document.getElementById('friendSearchPopupBlockBtn'),
             friendSearchPopupCloseBtn: document.getElementById('friendSearchPopupCloseBtn'),
+            
+            // Friend search results popup elements
+            friendSearchResultsPopup: document.getElementById('friendSearchResultsPopup'),
+            friendSearchResultsPopupOverlay: document.getElementById('friendSearchResultsPopupOverlay'),
+            friendSearchResultsCloseBtn: document.getElementById('friendSearchResultsCloseBtn'),
 
             // Blocked users elements
             blockedUsersList: document.getElementById('blockedUsersList'),
@@ -849,89 +859,316 @@ class Chat {
     }
 
      async renderFriendSearchResults(users: any[]): Promise<void> {
-    if (!this.elements.userSearchResults) return;
+    // Create or ensure the search results popup container exists
+    if (!this.elements.friendSearchResultsPopupOverlay) {
+        this.createFriendSearchResultsPopup();
+    }
 
-    this.elements.userSearchResults.innerHTML = '';
-
-    if (users.length === 0) {
-        this.elements.userSearchResults.style.display = 'none';
+    // Get the results container
+    const searchResultsContainer = document.getElementById('friendSearchResultsContainer');
+    if (!searchResultsContainer) {
+        console.error('Friend search results container not found');
         return;
     }
 
-    // Load online status for each user
-    const usersWithStatus = await Promise.all(
-        users.map(async (user: any) => {
-            try {
-                const userResult = await api.getUserById(user.id);
-                return {
-                    ...user,
-                    isOnline: userResult.success ? userResult.data.isOnline : false
-                };
-            } catch (error) {
-                console.error(`Error loading status for user ${user.id}:`, error);
-                return { ...user, isOnline: false };
-            }
-        })
-    );
+    // Clear existing results
+    searchResultsContainer.innerHTML = '';
 
-    usersWithStatus.forEach(user => {
-        const li = document.createElement('li');
-        li.style.cssText = 'padding: 8px; cursor: pointer; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
-        
-        // Online status classes and colors
-        const statusColor = user.isOnline ? '#4CAF50' : '#757575';
-        const statusText = user.isOnline ? 'Online' : 'Offline';
-        
-        li.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="online-status" style="
-                    width: 8px; 
-                    height: 8px; 
-                    border-radius: 50%; 
-                    background-color: ${statusColor};
-                    ${user.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
-                " title="${statusText}"></div>
-                <span>${user.username}</span>
-                ${user.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
-            </div>
-            <div class="user-actions" style="display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s ease;">
-                <button class="mini-btn profile-btn" onclick="ChatNavigationHelper.navigateToFriendProfile('${user.id}')" style="background: var(--cyber-green); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Profile</button>
-                <button class="mini-btn action-btn" style="background: var(--cyber-blue); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">Actions</button>
+    if (users.length === 0) {
+        // Show enhanced no results message
+        searchResultsContainer.innerHTML = `
+            <div style="
+                text-align: center;
+                padding: 30px;
+                color: #999;
+                background: rgba(20, 20, 20, 0.5);
+                border-radius: 10px;
+                border: 1px dashed #444;
+            ">
+                <div style="font-size: 40px; margin-bottom: 15px; opacity: 0.5;">🔍</div>
+                <span data-i18n="chat.noSearchResults" style="font-size: 18px;">No users found</span>
+                <p style="font-size: 14px; margin-top: 10px; color: #777;">Try a different search term</p>
             </div>
         `;
-
-        // Add hover effect
-        li.addEventListener('mouseenter', () => {
-            li.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-            const actions = li.querySelector('.user-actions') as HTMLElement;
-            if (actions) actions.style.opacity = '1';
-        });
-        
-        li.addEventListener('mouseleave', () => {
-            li.style.backgroundColor = 'transparent';
-            const actions = li.querySelector('.user-actions') as HTMLElement;
-            if (actions) actions.style.opacity = '0';
-        });
-
-        // Add click handler for actions button
-        const actionBtn = li.querySelector('.action-btn');
-        if (actionBtn) {
-            actionBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                this.showPopup(user);
-                // Hide search results
-                this.elements.userSearchResults!.style.display = 'none';
-                if (this.elements.userSearch) {
-                    this.elements.userSearch.value = '';
+    } else {
+        // Load online status for each user
+        const usersWithStatus = await Promise.all(
+            users.map(async (user: any) => {
+                try {
+                    const userResult = await api.getUserById(user.id);
+                    return {
+                        ...user,
+                        isOnline: userResult.success ? userResult.data.isOnline : false
+                    };
+                } catch (error) {
+                    console.error(`Error loading status for user ${user.id}:`, error);
+                    return { ...user, isOnline: false };
                 }
+            })
+        );
+
+        // Create a results count header
+        const resultsHeader = document.createElement('div');
+        resultsHeader.className = 'search-results-header';
+        resultsHeader.style.cssText = 'margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--cyber-blue, #0ff); display: flex; justify-content: space-between; align-items: center;';
+        
+        resultsHeader.innerHTML = `
+            <div>
+                <span style="font-size: 16px; color: #ccc;">Found </span>
+                <span style="font-size: 18px; color: var(--cyber-green, #0f0); font-weight: bold;">${users.length}</span>
+                <span style="font-size: 16px; color: #ccc;"> user${users.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div style="font-size: 14px; color: #777;">
+                <span style="color: #4CAF50; margin-right: 5px;">●</span> Online
+                <span style="color: #757575; margin-right: 5px; margin-left: 15px;">●</span> Offline
+            </div>
+        `;
+        searchResultsContainer.appendChild(resultsHeader);
+
+        // Create a results grid container
+        const resultsWrapper = document.createElement('div');
+        resultsWrapper.className = 'search-results-wrapper';
+        resultsWrapper.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; max-height: 400px; overflow-y: auto; margin-top: 15px; padding-right: 5px;';
+        
+        usersWithStatus.forEach(user => {
+            const userCard = document.createElement('div');
+            userCard.className = 'user-card';
+            userCard.style.cssText = `
+                padding: 15px;
+                background: rgba(30, 30, 30, 0.8);
+                border-radius: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                border: 1px solid ${user.isOnline ? 'rgba(76, 175, 80, 0.4)' : '#333'};
+                transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            // Online status colors and styling
+            const statusColor = user.isOnline ? '#4CAF50' : '#757575';
+            const statusText = user.isOnline ? 'Online' : 'Offline';
+            
+            // Create a glow effect for online users
+            if (user.isOnline) {
+                const glow = document.createElement('div');
+                glow.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(to right, transparent, #4CAF50, transparent);
+                    animation: pulse-glow 2s infinite;
+                `;
+                userCard.appendChild(glow);
+            }
+            
+            // User avatar placeholder
+            const avatar = document.createElement('div');
+            avatar.style.cssText = `
+                width: 70px;
+                height: 70px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #333, #222);
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 28px;
+                color: #ddd;
+                border: 2px solid ${user.isOnline ? '#4CAF50' : '#555'};
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            // Username initial in avatar
+            avatar.textContent = user.username.charAt(0).toUpperCase();
+            
+            // Status indicator on avatar
+            const statusIndicator = document.createElement('div');
+            statusIndicator.style.cssText = `
+                position: absolute;
+                bottom: 5px;
+                right: 5px;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background-color: ${statusColor};
+                border: 2px solid #222;
+                ${user.isOnline ? 'box-shadow: 0 0 8px rgba(76, 175, 80, 0.7);' : ''}
+            `;
+            avatar.appendChild(statusIndicator);
+            userCard.appendChild(avatar);
+            
+            // Username
+            const username = document.createElement('div');
+            username.style.cssText = 'font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #eee; text-align: center;';
+            username.textContent = user.username;
+            userCard.appendChild(username);
+            
+            // Status text
+            const status = document.createElement('div');
+            status.style.cssText = `
+                font-size: 12px;
+                color: ${statusColor};
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            `;
+            status.innerHTML = `
+                <span style="
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 50%;
+                    background-color: ${statusColor};
+                    display: inline-block;
+                    ${user.isOnline ? 'animation: pulse-green 2s infinite;' : ''}
+                "></span>
+                ${statusText}
+            `;
+            userCard.appendChild(status);
+            
+            // Action buttons
+            const actions = document.createElement('div');
+            actions.className = 'user-actions';
+            actions.style.cssText = 'display: flex; gap: 10px; width: 100%; margin-top: auto;';
+            
+            // Profile button
+            const profileBtn = document.createElement('button');
+            profileBtn.className = 'action-btn profile-btn';
+            profileBtn.style.cssText = `
+                flex: 1;
+                background: var(--cyber-green, #0f0);
+                color: #111;
+                border: none;
+                padding: 8px 0;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: bold;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            `;
+            profileBtn.innerHTML = '<i class="fas fa-user" style="font-size: 11px;"></i> Profile';
+            
+            // Add Friend button
+            const friendBtn = document.createElement('button');
+            friendBtn.className = 'action-btn friend-btn';
+            friendBtn.style.cssText = `
+                flex: 1;
+                background: var(--cyber-blue, #0ff);
+                color: #111;
+                border: none;
+                padding: 8px 0;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: bold;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            `;
+            friendBtn.innerHTML = '<i class="fas fa-plus" style="font-size: 11px;"></i> Add';
+            
+            actions.appendChild(profileBtn);
+            actions.appendChild(friendBtn);
+            userCard.appendChild(actions);
+            
+            // Add hover effects
+            userCard.addEventListener('mouseenter', () => {
+                userCard.style.transform = 'translateY(-5px)';
+                userCard.style.boxShadow = `0 10px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px ${user.isOnline ? 'rgba(76, 175, 80, 0.6)' : '#444'}`;
+                userCard.style.backgroundColor = 'rgba(40, 40, 40, 0.9)';
+                
+                // Button hover effects
+                profileBtn.style.transform = 'scale(1.05)';
+                friendBtn.style.transform = 'scale(1.05)';
             });
-        }
+            
+            userCard.addEventListener('mouseleave', () => {
+                userCard.style.transform = 'translateY(0)';
+                userCard.style.boxShadow = 'none';
+                userCard.style.backgroundColor = 'rgba(30, 30, 30, 0.8)';
+                
+                // Reset button transforms
+                profileBtn.style.transform = 'scale(1)';
+                friendBtn.style.transform = 'scale(1)';
+            });
+            
+            // Button hover effects
+            profileBtn.addEventListener('mouseenter', () => {
+                profileBtn.style.backgroundColor = '#00dd00';
+                profileBtn.style.transform = 'scale(1.05)';
+            });
+            
+            profileBtn.addEventListener('mouseleave', () => {
+                profileBtn.style.backgroundColor = 'var(--cyber-green, #0f0)';
+                profileBtn.style.transform = 'scale(1)';
+            });
+            
+            friendBtn.addEventListener('mouseenter', () => {
+                friendBtn.style.backgroundColor = '#00ddff';
+                friendBtn.style.transform = 'scale(1.05)';
+            });
+            
+            friendBtn.addEventListener('mouseleave', () => {
+                friendBtn.style.backgroundColor = 'var(--cyber-blue, #0ff)';
+                friendBtn.style.transform = 'scale(1)';
+            });
 
-        this.elements.userSearchResults!.appendChild(li);
-    });
+            // Add click handlers for buttons
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                ChatNavigationHelper.navigateToFriendProfile(user.id);
+                this.closeFriendSearchPopup();
+            });
+            
+            friendBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showPopup(user);
+                this.closeFriendSearchPopup();
+            });
 
-    this.elements.userSearchResults.style.display = 'block';
+            resultsWrapper.appendChild(userCard);
+        });
+
+        searchResultsContainer.appendChild(resultsWrapper);
+        
+        // Add CSS animation for the glow effect
+        const styleEl = document.createElement('style');
+        styleEl.textContent = `
+            @keyframes pulse-glow {
+                0% { opacity: 0.4; }
+                50% { opacity: 1; }
+                100% { opacity: 0.4; }
+            }
+            
+            @keyframes pulse-green {
+                0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+                70% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
+    // Show the popup with a nice fade-in animation
+    if (this.elements.friendSearchResultsPopupOverlay) {
+        this.elements.friendSearchResultsPopupOverlay.style.opacity = '0';
+        this.elements.friendSearchResultsPopupOverlay.style.display = 'flex';
+        setTimeout(() => {
+            this.elements.friendSearchResultsPopupOverlay!.style.opacity = '1';
+            this.elements.friendSearchResultsPopupOverlay!.style.transition = 'opacity 0.3s ease-in-out';
+        }, 10);
+    }
 }
 
 
@@ -2160,6 +2397,245 @@ private showPopup(user: any): void {
             this.elements.friendSearchPopupOverlay.style.display = 'none';
         }
         this.currentPopupUser = null;
+    }
+    
+    /**
+     * Creates a popup for displaying friend search results
+     */
+    private createFriendSearchResultsPopup(): void {
+        // Only create if popup doesn't exist in HTML or already created
+        if (document.getElementById('friendSearchResultsPopupOverlay')) {
+            console.log('Friend search results popup already exists in HTML');
+            return;
+        }
+
+        // Create overlay with enhanced visual effects
+        const overlay = document.createElement('div');
+        overlay.id = 'friendSearchResultsPopupOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--cyber-dark, #0F0F1B) 70%, var(--cyber-blue, #05D9E8) 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(12px) brightness(1.1);
+            box-shadow: 0 0 80px 10px var(--cyber-blue, #05D9E8) inset, 0 0 120px 10px var(--cyber-pink, #FF2A6D) inset;
+            border: 2px solid var(--cyber-blue, #05D9E8);
+            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        `;
+
+        // Create popup with modern design and better visuals
+        const popup = document.createElement('div');
+        popup.id = 'friendSearchResultsPopup';
+        popup.style.cssText = `
+            background: linear-gradient(135deg, var(--cyber-darker, #070718) 0%, var(--cyber-purple, #9D4EDD) 100%);
+            border: 2px solid var(--cyber-blue, #05D9E8);
+            border-radius: 18px;
+            padding: 36px 32px 32px 32px;
+            max-width: 850px;
+            width: 92%;
+            position: relative;
+            box-shadow:
+            0 0 40px 10px var(--cyber-blue, #05D9E8),
+            0 0 0 2px var(--cyber-blue, #05D9E8),
+            0 0 30px 0px var(--cyber-pink, #FF2A6D) inset;
+            animation: popupSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 82vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--cyber-blue, #05D9E8) var(--cyber-dark, #0F0F1B);
+            transition: box-shadow 0.3s;
+        `;
+
+        // Add glowing border effect
+        const borderGlow = document.createElement('div');
+        borderGlow.style.cssText = `
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: 15px;
+            pointer-events: none;
+            z-index: -1;
+            box-shadow: 0 0 15px var(--cyber-green, #2DE2E6);
+            opacity: 0.8;
+            animation: borderGlowAnimation 4s ease-in-out infinite;
+        `;
+
+        // Add popup header with search icon and title
+        popup.innerHTML = `
+            <style>
+                @keyframes popupSlideIn {
+                    0% { transform: translateY(-20px); opacity: 0; }
+                    100% { transform: translateY(0); opacity: 1; }
+                }
+                
+                @keyframes borderGlowAnimation {
+                    0% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+                    50% { box-shadow: 0 0 25px rgba(0, 255, 0, 0.5); }
+                    100% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
+                }
+                
+                @keyframes titleAnimation {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                
+                /* Custom scrollbar styles */
+                #friendSearchResultsPopup::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                #friendSearchResultsPopup::-webkit-scrollbar-track {
+                    background: rgba(30, 30, 30, 0.5);
+                    border-radius: 10px;
+                }
+                
+                #friendSearchResultsPopup::-webkit-scrollbar-thumb {
+                    background: var(--cyber-green, #0f0);
+                    border-radius: 10px;
+                    opacity: 0.7;
+                }
+                
+                #friendSearchResultsPopup::-webkit-scrollbar-thumb:hover {
+                    background: #00ff00;
+                }
+            </style>
+            
+            <div style="
+                position: absolute; 
+                top: 12px; 
+                right: 12px;
+                display: flex;
+                gap: 10px;
+            ">
+                <button id="friendSearchResultsCloseBtn" style="
+                    background: rgba(0, 0, 0, 0.3);
+                    border: 1px solid #444;
+                    color: #eee;
+                    font-size: 16px;
+                    cursor: pointer;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.3s ease;
+                ">×</button>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 25px; position: relative;">
+                <div style="font-size: 28px; margin-bottom: 5px;">🔍</div>
+                <h3 style="
+                    background: linear-gradient(90deg, #00ff00, #00ffaa, #00ff00);
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    color: transparent;
+                    margin-bottom: 5px;
+                    font-size: 28px;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                    animation: titleAnimation 6s ease infinite;
+                    background-size: 200% auto;
+                ">Friend Search Results</h3>
+                <div style="
+                    width: 80px;
+                    height: 3px;
+                    background: linear-gradient(90deg, transparent, var(--cyber-green, #0f0), transparent);
+                    margin: 0 auto;
+                "></div>
+            </div>
+            
+            <div id="friendSearchResultsContainer" style="
+                width: 100%;
+                padding: 5px;
+                position: relative;
+            "></div>
+        `;
+
+        document.body.appendChild(overlay);
+        overlay.appendChild(popup);
+        popup.appendChild(borderGlow);
+
+        // Store elements for later use
+        this.elements.friendSearchResultsPopup = popup;
+        this.elements.friendSearchResultsPopupOverlay = overlay;
+        this.elements.friendSearchResultsCloseBtn = document.getElementById('friendSearchResultsCloseBtn');
+
+        // Add close button event listener with hover effects
+        if (this.elements.friendSearchResultsCloseBtn) {
+            const closeBtn = this.elements.friendSearchResultsCloseBtn;
+            
+            closeBtn.addEventListener('click', () => {
+                this.closeFriendSearchPopup();
+            });
+            
+            closeBtn.addEventListener('mouseenter', () => {
+                closeBtn.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+                closeBtn.style.transform = 'scale(1.1)';
+                closeBtn.style.border = '1px solid #ff3333';
+            });
+            
+            closeBtn.addEventListener('mouseleave', () => {
+                closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
+                closeBtn.style.transform = 'scale(1)';
+                closeBtn.style.border = '1px solid #444';
+            });
+        }
+
+        // Close when clicking outside with fade effect
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.closeFriendSearchPopup();
+            }
+        });
+
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.style.display === 'flex') {
+                this.closeFriendSearchPopup();
+            }
+        });
+    }
+
+    /**
+     * Closes the friend search results popup with a smooth fade-out animation
+     */
+    private closeFriendSearchPopup(): void {
+        if (this.elements.friendSearchResultsPopupOverlay) {
+            // Animate fade out
+            this.elements.friendSearchResultsPopupOverlay.style.transition = 'opacity 0.3s ease-in-out';
+            this.elements.friendSearchResultsPopupOverlay.style.opacity = '0';
+            
+            // Add a subtle transform animation to the popup
+            if (this.elements.friendSearchResultsPopup) {
+                this.elements.friendSearchResultsPopup.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+                this.elements.friendSearchResultsPopup.style.transform = 'translateY(10px)';
+                this.elements.friendSearchResultsPopup.style.opacity = '0';
+            }
+            
+            // Hide overlay after animation completes
+            setTimeout(() => {
+                if (this.elements.friendSearchResultsPopupOverlay) {
+                    this.elements.friendSearchResultsPopupOverlay.style.display = 'none';
+                    
+                    // Reset transform and opacity for next open
+                    if (this.elements.friendSearchResultsPopup) {
+                        this.elements.friendSearchResultsPopup.style.transform = '';
+                        this.elements.friendSearchResultsPopup.style.opacity = '1';
+                    }
+                }
+            }, 300);
+        }
     }
 
 
