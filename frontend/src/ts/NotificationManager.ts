@@ -637,10 +637,12 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 const onlineStatus = document.getElementById("onlineStatus");
                 if (data.isOnline) {
                     friendProfile.friendData.isOnline = true;
+                    friendProfile.refreshFriendProfile();
                     // onlineStatus.classList.add("online");
                     // onlineStatus.title = "Online";
                 } else {
                   friendProfile.friendData.isOnline = false;
+                  friendProfile.refreshFriendProfile();
                     // onlineStatus.classList.remove("online");
                     // onlineStatus.classList.add("offline");
                     // onlineStatus.title = "Offline";
