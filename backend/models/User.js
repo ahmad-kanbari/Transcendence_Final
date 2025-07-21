@@ -358,7 +358,7 @@ class User {
 
 		// If no fields to update, return error
 		if (Object.keys(updateData).length === 0) {
-			throw new CustomError.BadRequestError("No fields to update");
+			throw new CustomError.BadRequestError("No fields have been updated");
 		}
 
 		const [updatedUser] = await this.db("users")
