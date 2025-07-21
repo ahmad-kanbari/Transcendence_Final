@@ -634,15 +634,23 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             // If this status change is for the user we're currently viewing
             if (parseInt(friendProfile.friendData.id) === data.userId) {
                 console.log("Updating status for current profile user");
-                const onlineStatus = document.getElementById("onlineStatus");
                 if (data.isOnline) {
                     friendProfile.friendData.isOnline = true;
                     friendProfile.refreshFriendProfile();
+                       setTimeout(async () => {
+                        await chat.loadFriendsList();
+                        await chat.loadChats(); // Also update the chat list to show online status
+                        }, 500);
                     // onlineStatus.classList.add("online");
                     // onlineStatus.title = "Online";
                 } else {
                   friendProfile.friendData.isOnline = false;
                   friendProfile.refreshFriendProfile();
+                    setTimeout(async () => {
+                        await chat.loadFriendsList();
+                        await chat.loadChats(); // Also update the chat list to show online status
+                        }, 500);
+                   
                     // onlineStatus.classList.remove("online");
                     // onlineStatus.classList.add("offline");
                     // onlineStatus.title = "Offline";

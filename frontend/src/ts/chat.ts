@@ -508,10 +508,19 @@ class Chat {
                     chatRow.role = 'listitem';
                     chatRow.dataset.chatId = chat_id;
                     
+                    // Check online status
+                    const isOnline = user.isOnline || false;
+                    const statusColor = isOnline ? '#2DE2E6' : '#666';
+                    const statusTitle = isOnline ? 'Online' : 'Offline';
+                    const statusGlow = isOnline ? 'box-shadow: 0 0 5px rgba(45, 226, 230, 0.8);' : '';
+                    
                     // Update to include user actions with profile button
                     chatRow.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="online-status"></span>
+                            <span class="online-status" 
+                                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; 
+                                  background-color: ${statusColor}; border: 1px solid #333; ${statusGlow}"
+                                  title="${statusTitle}"></span>
                             <span>${user.username || 'Unknown User'}</span>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 5px;">
