@@ -1,7 +1,7 @@
 import api from './api';
 import app from './app';
 import utils from './utils';
-import { baseURL } from './constants';
+import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
 import router from './router';
 import chat from './chat';
@@ -482,6 +482,8 @@ class FriendProfile {
     //     stats.tournaments_won = Math.floor(stats.tournament_matches * 0.2);
     // }
 
+
+
     private populateProfile(): void {
         if (!this.friendData) return;
 
@@ -495,12 +497,42 @@ class FriendProfile {
         if (displayNameElement) {
             displayNameElement.textContent = this.friendData.username;
         }
-
         // Profile picture
         const profileImg = document.getElementById('friendProfileAvatar') as HTMLImageElement;
         if (profileImg) {
-            profileImg.src = this.friendData.profile_picture || 'src/assets/icons/user.png';
+            // If profile_picture exists, fetch it through the API, otherwise use default
+            if (this.friendData.profile_picture) {
+              console.log('Friend profile picture found:', this.friendData.profile_picture);
+              console.log('Base URL:', this.baseURL);
+              
+              // The backend serves static files from the root path via fastifyStatic
+              // We need to use the backend server URL which is running on port 3000
+              const cleanPath = this.friendData.profile_picture.replace(/^\/+/, '');
+              const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+              
+              console.log('Trying to fetch profile picture from:', apiUrl);
+              
+              fetch(apiUrl, { credentials: 'include' })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    console.error('Image not found, using default');
+                    profileImg.src = 'src/assets/icons/user.png';
+                    throw new Error('Image not found');
+                  }
+                  const blob = await res.blob();
+                  const imageUrl = URL.createObjectURL(blob);
+                  profileImg.src = imageUrl;
+                })
+                .catch((e) => {
+                  console.error('Failed to load profile picture, using default', e);
+                  profileImg.src = 'src/assets/icons/user.png';
+                });
+            } else {
+              profileImg.src = 'src/assets/icons/user.png';
+            }
         }
+        // Priority order: localStorage cache > server URL > default image
+        // const cachedImage = this.getProfilePictureFromLocalStorage();
 
         // Online status
         this.updateOnlineStatus();
@@ -724,7 +756,7 @@ class FriendProfile {
 
             default:
                 if (statusElement) {
-                    statusElement.textContent = 'No Relationship';
+                    // statusElement.textContent = 'No Relationship';
                     statusElement.className = 'relationship-status status-none';
                 }
                 if (addBtn) addBtn.style.display = 'inline-block';

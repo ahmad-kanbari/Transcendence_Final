@@ -2,10 +2,11 @@ import api from './api';
 import app from './app';
 import utils from './utils';
 import components from './components';
-import { VALIDATION_INPUTS } from './constants';
+import { CONFIG, VALIDATION_INPUTS } from './constants';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
 import game from './game';
+import login from './login';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
@@ -1185,18 +1186,45 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     }
     if (this.profileForm.profileAvatar) {
       // First check localStorage for cached profile picture
-      const cachedImage = this.getProfilePictureFromLocalStorage();
+      // const cachedImage = this.getProfilePictureFromLocalStorage();
       
-      if (cachedImage) {
-        this.profileForm.profileAvatar.src = cachedImage;
-        console.log('Using cached profile picture from localStorage');
-      } else if (user.profile_picture) {
+      // if (cachedImage) {
+      //   this.profileForm.profileAvatar.src = cachedImage;
+      //   console.log('Using cached profile picture from localStorage', cachedImage);
+      // } else if (user.profile_picture) {
         // Use server URL if no cached version
-        this.profileForm.profileAvatar.src = user.profile_picture;
-      } else {
-        // Fallback to default
-        this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/user.png';
-      }
+        console.log('Using profile picture from user data in populate data:', user.profile_picture);
+            const cleanPath = user.profile_picture?.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                   this.profileForm.profileAvatar!.src= 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                 this.profileForm.profileAvatar!.src= imageUrl;
+                 app.state.user!.profile_picture = user.profile_picture; // Update user state with new profile picture URL
+                // this.saveProfilePictureToLocalStorage(imageUrl);
+          
+                // if (this.profileForm.profileAvatar!.src) {
+                //    this.profileForm.profileAvatar!.src = imageUrl;
+                  login.updateUIAuthState();
+                // }
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                 this.profileForm.profileAvatar!.src = 'src/assets/icons/user.png';
+              });
+      // } else {
+      //   // Fallback to default
+      //   this.profileForm.profileAvatar.src = 'src/assets/icons/user.png';
+      // }
     }
     
     if (this.profileForm.displayNameField)
@@ -1277,19 +1305,48 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
 
         if (!res.ok) {
           toastManager.error(app.getUsername(), 'Failed to upload profile picture');
-          throw new Error('Failed to upload profile picture');}
+          throw new Error('Failed to upload profile picture');
+        }
 
         const data = await res.json();
         // Convert file to base64 and save to localStorage
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64String = event.target?.result as string;
-          this.saveProfilePictureToLocalStorage(base64String);
+     
+          console.log('Profile picture uploaded successfully:', data);
+           if (profileAvatar) {
+          // If profile_picture exists, fetch it through the API, otherwise use default
+          if (data){
+            app.state.user!.profile_picture = data.url; // Update user state with new profile picture URL
+            localStorage.setItem('user', JSON.stringify(app.state.user));
+            const cleanPath = data.url.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                  profileAvatar.src = 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                profileAvatar.src = imageUrl;
+                this.saveProfilePictureToLocalStorage(data.url);
           
-          if (profileAvatar) {
-            profileAvatar.src = base64String;
+                if (profileAvatar) {
+                  profileAvatar.src = imageUrl;
+                  login.updateUIAuthState();
+                }
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                profileAvatar.src = 'src/assets/icons/user.png';
+              });
+          } else {
+            profileAvatar.src = 'src/assets/icons/user.png';
           }
-          
+          }
           // Update user state if available
           if (app.state.user) {
             app.state.user.profile_picture = data.url;
@@ -1298,16 +1355,16 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           // Update logged in user image if available
           let loggedInUserImg = document.getElementById('loggedInUserImg');
           if (loggedInUserImg) {
-            loggedInUserImg.setAttribute('src', base64String);
+            loggedInUserImg.setAttribute('src', data.url || 'src/assets/icons/user.png');
           }
-          let loggedInUsername = document.getElementById('loggedInUsername');
+       
           // if (loggedInUsername ) {
           //   loggedInUsername.textContent = app.state.user!.username || app.getUsername() || user.username || 'Unknown User';
         
           // }
-        };
-        reader.readAsDataURL(file);
+
         
+       
         // components.showToast('success', 'Success', 'Profile picture updated successfully');
         toastManager.success(app.getUsername(), 'Profile picture updated successfully');
       } catch (err) {
@@ -1331,20 +1388,27 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           );
 
           if (!res.ok) {
+            console.log('Failed to remove profile picture, response:', res);
             throw new Error('Failed to remove profile picture')
           };
 
           // Remove from localStorage
           this.removeProfilePictureFromLocalStorage();
-
+          console.log('Profile picture removed from localStorage');
           if (profileAvatar) {
             profileAvatar.src = 'src/assets/icons/user.png';
           }
 
           // Update user state if available
           if (app.state.user) {
-            app.state.user.profile_picture = 'src/assets/icons/user.svg';
+            app.state.user.profile_picture = 'src/assets/icons/user.png'; // Use consistent path
             localStorage.setItem('user', JSON.stringify(app.state.user));
+          }
+          
+          // Update logged in user image if available
+          let loggedInUserImg = document.getElementById('loggedInUserImg');
+          if (loggedInUserImg) {
+            loggedInUserImg.setAttribute('src', 'src/assets/icons/user.png');
           }
           
           // components.showToast('success', 'Success', 'Profile picture removed successfully');
@@ -1352,6 +1416,9 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         } catch (err) {
           console.error('Error removing profile picture:', err);
           // components.showToast('error', 'Remove Error', 'Failed to remove profile picture');
+          if (profileAvatar) {
+            profileAvatar.src = 'src/assets/icons/user.png';
+          }
           toastManager.error(app.getUsername(), 'Failed to remove profile picture');
         }
       });
@@ -1394,6 +1461,12 @@ saveProfilePictureToLocalStorage(base64String: string): void {
       localStorage.removeItem('current_profile_picture_key');
       
       console.log('Profile picture removed from localStorage');
+      
+      // This method is sometimes called without UI updates, so let's ensure 
+      // our state is consistent when this happens outside the click handler
+      if (this.profileForm && this.profileForm.profileAvatar) {
+        this.profileForm.profileAvatar.src = 'src/assets/icons/user.png';
+      }
     } catch (error) {
       console.error('Failed to remove profile picture from localStorage:', error);
     }

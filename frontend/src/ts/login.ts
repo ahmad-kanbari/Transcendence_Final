@@ -5,7 +5,7 @@ import utils from './utils';
 import router from './router';
 import register from './register';
 import components from './components';
-import { baseURL } from './constants';
+import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
 
 // Define interface for the login form elements
@@ -632,7 +632,7 @@ show2FAModal(): void {
 }
 
   
-  updateUIAuthState(): void {
+  async updateUIAuthState(): Promise<void> {
     const loginNavBtn = document.getElementById('loginNavBtn');
     const loginBtnHome = document.getElementById('loginBtnHome');
     const loginNavBtnMobile = document.getElementById('loginNavBtnMobile');
@@ -654,8 +654,7 @@ show2FAModal(): void {
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
       if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'block';
       
-      if (typeof app.getIs42User === 'function' && app.getIs42User()) {
-
+    
         
         // if (loggedInUserImg) {
           
@@ -663,34 +662,54 @@ show2FAModal(): void {
         //   loggedInUserImg.style.display = 'block';
         // } else if (loggedInUserImg) {
         //   loggedInUserImg.style.display = 'none';
+        console.log('Logged in user image element found:', loggedInUserImg);
         // }
         if (loggedInUserImg) {
-          // Priority order: localStorage cache > server URL > default image
-          const cachedImage = this.getProfilePictureFromLocalStorage();
-          const serverImage = app.getUserImg();
-          
-          const imageToUse = cachedImage || serverImage || 'src/assets/icons/user.png';
-          
-          if (imageToUse && imageToUse !== 'src/assets/icons/user.png') {
-            loggedInUserImg.src = imageToUse;
-            loggedInUserImg.style.display = 'block';
-          } else {
-            loggedInUserImg.style.display = 'none';
-          }
-        }  
+          //  console.log('Logged in user image element found2:', loggedInUserImg);
+          // // Priority order: localStorage cache > server URL > default image
+          // // const cachedImage = this.getProfilePictureFromLocalStorage();
+          // const serverImage = await app.getUserImg();
+          // console.log('Server image URL:', serverImage);
+          // const imageToUse =  serverImage || 'src/assets/icons/user.png';
+          // console.log('Using profile image:', imageToUse);
+          // if (imageToUse) {
+          //   console.log('Setting profile image from cache or server:', imageToUse);
+          // loggedInUserImg.src = imageToUse;
 
+           const cleanPath = app.state?.user.profile_picture?.replace(/^\/+/, '');
+              const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+                        
+                        console.log('Trying to fetch profile picture from:', apiUrl);
+                        
+                        fetch(apiUrl, { credentials: 'include' })
+                          .then(async (res) => {
+                            if (!res.ok) {
+                              console.error('Image not found, using default');
+                              loggedInUserImg.src = 'src/assets/icons/user.png';
+                              throw new Error('Image not found');
+                            }
+                            const blob = await res.blob();
+                            const imageUrl = URL.createObjectURL(blob);
+                            loggedInUserImg.src = imageUrl;
+                          })
+                          .catch((e) => {
+                            console.error('Failed to load profile picture, using default', e);
+                            loggedInUserImg.src = 'src/assets/icons/user.png';
+                          });
+                loggedInUserImg.style.display = 'block';
+                } else {
+                  loggedInUserImg!.style.display = 'none';
+                }
+            
 
-
-
-
-      } else {
-        if (typeof app.getEmail === 'function' && app.getEmail() && loggedInEmail) {
-          loggedInEmail.textContent = app.getEmail();
-          loggedInEmail.style.display = 'inline';
-        } else if (loggedInEmail) {
-          loggedInEmail.style.display = 'none';
-        }
-      }
+      // } else {
+      //   if (app.getEmail() && loggedInEmail) {
+      //     loggedInEmail.textContent = app.getEmail();
+      //     loggedInEmail.style.display = 'inline';
+      //   } else if (loggedInEmail) {
+      //     loggedInEmail.style.display = 'none';
+      //   }
+      
     } else {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
       if (loginBtn) loginBtn.style.display = 'block';

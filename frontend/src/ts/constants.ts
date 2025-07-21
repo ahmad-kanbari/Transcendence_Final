@@ -21,6 +21,7 @@ export const baseURL = "/api/v1";
 export const CONFIG = {
     baseURL: "/api/v1",
     socketURL: 'http://localhost:3000',
+    baseURLWithoutApi: "http://localhost:3000",
     pagination: {
         defaultLimit: 5,
         maxLimit: 50
