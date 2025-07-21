@@ -6,6 +6,7 @@ import toastManager from './toastManager';
 import router from './router';
 import chat from './chat';
 import profile from './profile';
+import { t } from './localization';
 
 interface FriendProfileData {
     id: number;
@@ -47,7 +48,7 @@ interface UserGameplayStats {
 
 class FriendProfile {
     private friendId: string | null = null;
-    private friendData:FriendProfileData | any | null = null;
+    friendData:FriendProfileData | any | null = null;
     private relationshipStatus: RelationshipStatus | null = null;
     private initialized: boolean = false;
     private baseURL: string = baseURL;
@@ -78,6 +79,31 @@ class FriendProfile {
             if (customEvent.detail.page === 'friend-profile') {
                 this.initializeFriendProfilePage();
             }
+
+        // app.socketService.on("userStatusChange", (data : any) => {
+        //     // const currentProfileUserId = new URLSearchParams(
+        //     //     window.location.search
+        //     // ).get("userId");
+
+        //     console.log("Status change event received:", data);
+        //     // console.log("Current profile user ID:", currentProfileUserId);
+
+        //     // If this status change is for the user we're currently viewing
+        //     if (parseInt(this.friendData.id) === data.userId) {
+        //         console.log("Updating status for current profile user");
+        //         const onlineStatus = document.getElementById("onlineStatus");
+        //         if (data.isOnline) {
+        //             this.friendData.isOnline = true;
+        //             // onlineStatus.classList.add("online");
+        //             // onlineStatus.title = "Online";
+        //         } else {
+        //           this.friendData.isOnline = false;
+        //             // onlineStatus.classList.remove("online");
+        //             // onlineStatus.classList.add("offline");
+        //             // onlineStatus.title = "Offline";
+        //         }
+        //     }
+        // });
         });
 
         this.initialized = true;
@@ -575,10 +601,12 @@ class FriendProfile {
         // Update relationship status and action buttons
         this.updateRelationshipDisplay();
     }
+    
 
     private updateOnlineStatus(): void {
         if (!this.friendData) return;
         
+
         const isOnline = this.friendData.isOnline || false;
         
         // Update avatar indicator

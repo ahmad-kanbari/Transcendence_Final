@@ -237,6 +237,7 @@ class Chat {
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        app.socketService.off('userStatusChange');
         
         // Leave any active chat room when navigating away from chat page
         if (this.currentChatId) {

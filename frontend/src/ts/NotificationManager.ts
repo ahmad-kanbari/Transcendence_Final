@@ -6,6 +6,7 @@ import toastManager from './toastManager';
 import chat from './chat';
 import pages from './pages';
 import app from './app';
+import friendProfile from './friendProfileData';
 // import notificationManager from './NotificationManager';
 
 // Declare socket.io global
@@ -450,6 +451,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         app.socketService.off('messageReceivedInform');
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
+        app.socketService.off('userStatusChange');
     }
     
     // Public method to reinitialize socket handlers after reconnection
@@ -620,6 +622,34 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 console.error('Error handling friendRequestAccept event:', error);
             }
         });
+
+           app.socketService.on("userStatusChange", (data : any) => {
+            // const currentProfileUserId = new URLSearchParams(
+            //     window.location.search
+            // ).get("userId");
+
+            console.log("Status change event received:", data);
+            // console.log("Current profile user ID:", currentProfileUserId);
+            if (friendProfile){
+            // If this status change is for the user we're currently viewing
+            if (parseInt(friendProfile.friendData.id) === data.userId) {
+                console.log("Updating status for current profile user");
+                const onlineStatus = document.getElementById("onlineStatus");
+                if (data.isOnline) {
+                    friendProfile.friendData.isOnline = true;
+                    // onlineStatus.classList.add("online");
+                    // onlineStatus.title = "Online";
+                } else {
+                  friendProfile.friendData.isOnline = false;
+                    // onlineStatus.classList.remove("online");
+                    // onlineStatus.classList.add("offline");
+                    // onlineStatus.title = "Offline";
+                }
+            }
+        }
+        });
+
+
     }
     // ===== NOTIFICATION SYSTEM =====
     private addNotification(message: string): void {
