@@ -600,7 +600,7 @@ show2FAModal(): void {
           //   console.log('Setting profile image from cache or server:', imageToUse);
           // loggedInUserImg.src = imageToUse;
 
-           const cleanPath = app.state?.user.profile_picture!.replace(/^\/+/, '');
+           const cleanPath = app.state?.user.profile_picture?.replace(/^\/+/, '');
               const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
                         
                         console.log('Trying to fetch profile picture from:', apiUrl);

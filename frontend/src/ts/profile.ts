@@ -1194,7 +1194,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       // } else if (user.profile_picture) {
         // Use server URL if no cached version
         console.log('Using profile picture from user data in populate data:', user.profile_picture);
-          const cleanPath = user.profile_picture.replace(/^\//, ''); // Remove leading slash if present
+            const cleanPath = user.profile_picture?.replace(/^\//, ''); // Remove leading slash if present
             const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
             
             console.log('Trying to fetch profile picture from:', apiUrl);
