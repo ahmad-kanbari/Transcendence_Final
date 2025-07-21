@@ -627,7 +627,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             // const currentProfileUserId = new URLSearchParams(
             //     window.location.search
             // ).get("userId");
-
+            setTimeout(async () => {
+                        await chat.loadFriendsList();
+                        await chat.loadChats(); // Also update the chat list to show online status
+                        }, 500);
             console.log("Status change event received:", data);
             // console.log("Current profile user ID:", currentProfileUserId);
             if (friendProfile){
@@ -637,19 +640,19 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 if (data.isOnline) {
                     friendProfile.friendData.isOnline = true;
                     friendProfile.refreshFriendProfile();
-                       setTimeout(async () => {
-                        await chat.loadFriendsList();
-                        await chat.loadChats(); // Also update the chat list to show online status
-                        }, 500);
+                    // setTimeout(async () => {
+                    //     await chat.loadFriendsList();
+                    //     await chat.loadChats(); // Also update the chat list to show online status
+                    //     }, 500);
                     // onlineStatus.classList.add("online");
                     // onlineStatus.title = "Online";
                 } else {
                   friendProfile.friendData.isOnline = false;
                   friendProfile.refreshFriendProfile();
-                    setTimeout(async () => {
-                        await chat.loadFriendsList();
-                        await chat.loadChats(); // Also update the chat list to show online status
-                        }, 500);
+                    // setTimeout(async () => {
+                    //     await chat.loadFriendsList();
+                    //     await chat.loadChats(); // Also update the chat list to show online status
+                    // }, 500);
                    
                     // onlineStatus.classList.remove("online");
                     // onlineStatus.classList.add("offline");
