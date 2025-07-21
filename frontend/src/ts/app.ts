@@ -821,9 +821,24 @@ class App {
     return this.state.user;
   }
 
-  getUserImg(): string {
-    return this.state.user?.profile_picture || '';
-  }
+  getUserImg(): any {
+    console.log('getUserImg called');
+      // First check localStorage for cached profile picture
+      const cachedImage = profile.getProfilePictureFromLocalStorage();
+      
+      if (cachedImage) {
+        console.log('Using cached profile picture in navbar from localStorage');
+        return cachedImage;
+      } else if (this.state.user && this.state.user.profile_picture) {
+        // Use server URL if no cached version
+        console.log('Using profile picture from user data:', this.state.user.profile_picture);
+        return  `/backend/public/${this.state.user.profile_picture}`;
+      } else {
+        // Fallback to default
+        return 'src/assets/icons/user.png';
+      }
+    }
+  
 
   getUsername(): string {
         let usernameFromLocalStorage = localStorage.getItem('user') || null ;

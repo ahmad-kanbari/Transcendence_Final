@@ -594,13 +594,40 @@ show2FAModal(): void {
           const serverImage = app.getUserImg();
           
           const imageToUse = cachedImage || serverImage || 'src/assets/icons/user.png';
-          
+          console.log('Using profile image:', imageToUse);
           if (imageToUse && imageToUse !== 'src/assets/icons/user.png') {
+            console.log('Setting profile image from cache or server:', imageToUse);
+            if (loggedInUserImg) {
+            // loggedInUserImg.setAttribute('src', base64String);
+          }
             loggedInUserImg.src = imageToUse;
             loggedInUserImg.style.display = 'block';
           } else {
             loggedInUserImg.style.display = 'none';
           }
+          
+//  const data = await res.json();
+//         // Convert file to base64 and save to localStorage
+//         const reader = new FileReader();
+//         reader.onload = (event) => {
+//           const base64String = event.target?.result as string;
+//           this.saveProfilePictureToLocalStorage(base64String);
+          
+//           if (profileAvatar) {
+//             profileAvatar.src = base64String;
+//           }
+          
+//           // Update user state if available
+//           if (app.state.user) {
+//             app.state.user.profile_picture = data.url;
+//             localStorage.setItem('user', JSON.stringify(app.state.user));
+//           }
+//           // Update logged in user image if available
+//           let loggedInUserImg = document.getElementById('loggedInUserImg');
+//           if (loggedInUserImg) {
+//             loggedInUserImg.setAttribute('src', base64String);
+//           }
+
         }  
 
 

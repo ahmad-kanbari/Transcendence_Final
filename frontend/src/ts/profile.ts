@@ -1192,7 +1192,8 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         console.log('Using cached profile picture from localStorage');
       } else if (user.profile_picture) {
         // Use server URL if no cached version
-        this.profileForm.profileAvatar.src = user.profile_picture;
+        console.log('Using profile picture from user data:', user.profile_picture);
+        this.profileForm.profileAvatar.src = `/backend/public/${user.profile_picture}`;
       } else {
         // Fallback to default
         this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/user.png';
