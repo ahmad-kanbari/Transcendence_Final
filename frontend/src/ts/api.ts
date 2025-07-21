@@ -193,8 +193,14 @@ class API {
           currentPassword: currentPassword
         })
       });
-      console.log('Update user password message:', message);
-      return { success: true , response: message };
+          if (message.ok){
+        console.log('Update user username message:', message);
+        return { success: true , response: message };
+
+      }else {
+        console.error('Update user username error:', message);
+        return { success: false, response: message || 'Failed to update password' };
+      }
     } catch (error: any) {  
       console.error('Update user password error:', error);
       return { success: false, error: error.message };
@@ -214,8 +220,14 @@ class API {
           email: userEmail,
         })
       });
-      console.log('Update user email message:', message);
-      return { success: true , response: message };
+      if (message.ok){
+        console.log('Update user user email message:', message);
+        return { success: true , response: message };
+
+      }else {
+        console.error('Update user user email error:', message);
+        return { success: false, response: message || 'Failed to update email - email exists' };
+      }
     } catch (error: any) {  
       console.error('Update user email error:', error);
       return { success: false, error: error.message };
@@ -235,8 +247,14 @@ class API {
           username: useranme 
         })
       });
-      console.log('Update user username message:', message);
-      return { success: true , response: message };
+      if (message.ok){
+        console.log('Update user username message:', message);
+        return { success: true , response: message };
+
+      }else {
+        console.error('Update user username error:', message);
+        return { success: false, response: message || 'Failed to update username - it is already exists' };
+      }
     } catch (error: any) {  
       console.error('Update user username error:',  error );
       return { success: false, error: error.message };
