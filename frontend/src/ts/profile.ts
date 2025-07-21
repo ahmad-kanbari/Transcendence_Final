@@ -705,7 +705,7 @@ showDetailedStatsModal(): void {
       <div class="grid grid-cols-2 gap-4">
         <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
           <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
-          <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
+          <div class="text-sm font-cyber text-gray-300">JOINED</div>
         </div>
         <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
           <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
