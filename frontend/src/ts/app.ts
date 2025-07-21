@@ -829,12 +829,13 @@ class App {
       if (cachedImage) {
         console.log('Using cached profile picture in navbar from localStorage');
         return cachedImage;
-      } else if (this.state.user && this.state.user.profile_picture) {
+      } else if (this.state.user) {
         // Use server URL if no cached version
         console.log('Using profile picture from user data:', this.state.user.profile_picture);
         return  `/backend/public/${this.state.user.profile_picture}`;
       } else {
         // Fallback to default
+        console.log('Using default profile picture');
         return 'src/assets/icons/user.png';
       }
     }

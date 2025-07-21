@@ -6,6 +6,7 @@ import { VALIDATION_INPUTS } from './constants';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
 import game from './game';
+import login from './login';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
@@ -1289,6 +1290,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           
           if (profileAvatar) {
             profileAvatar.src = base64String;
+            login.updateUIAuthState();
           }
           
           // Update user state if available

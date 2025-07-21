@@ -578,8 +578,7 @@ show2FAModal(): void {
       if (loginDropdown) loginDropdown.style.display = 'block';
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
       
-      if (typeof app.getIs42User === 'function' && app.getIs42User()) {
-
+    
         
         // if (loggedInUserImg) {
           
@@ -587,21 +586,20 @@ show2FAModal(): void {
         //   loggedInUserImg.style.display = 'block';
         // } else if (loggedInUserImg) {
         //   loggedInUserImg.style.display = 'none';
+        console.log('Logged in user image element found:', loggedInUserImg);
         // }
         if (loggedInUserImg) {
+           console.log('Logged in user image element found2:', loggedInUserImg);
           // Priority order: localStorage cache > server URL > default image
-          const cachedImage = this.getProfilePictureFromLocalStorage();
+          // const cachedImage = this.getProfilePictureFromLocalStorage();
           const serverImage = app.getUserImg();
-          
-          const imageToUse = cachedImage || serverImage || 'src/assets/icons/user.png';
+          console.log('Server image URL:', serverImage);
+          const imageToUse =  serverImage || 'src/assets/icons/user.png';
           console.log('Using profile image:', imageToUse);
-          if (imageToUse && imageToUse !== 'src/assets/icons/user.png') {
+          if (imageToUse) {
             console.log('Setting profile image from cache or server:', imageToUse);
-            if (loggedInUserImg) {
-            // loggedInUserImg.setAttribute('src', base64String);
-          }
-            loggedInUserImg.src = imageToUse;
-            loggedInUserImg.style.display = 'block';
+          loggedInUserImg.src = imageToUse;
+          loggedInUserImg.style.display = 'block';
           } else {
             loggedInUserImg.style.display = 'none';
           }
@@ -628,7 +626,7 @@ show2FAModal(): void {
 //             loggedInUserImg.setAttribute('src', base64String);
 //           }
 
-        }  
+        
 
 
 
