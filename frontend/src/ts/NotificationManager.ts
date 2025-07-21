@@ -338,9 +338,16 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
             
                        // Wait for chat page to initialize, then join room
                 setTimeout(async () => {
-                    await chat.loadChats();
-                    await chat.forceJoinRoom(chatId);
-                }, 100);
+                    // await
+                     chat.loadChats();
+                    // await
+                     chat.forceJoinRoom(chatId);
+                }, 50);
+
+                //    setTimeout(async () => {
+                //     await chat.loadChats();
+                //     await chat.forceJoinRoom(chatId);
+                // }, 100);
                 
                     await api.fetchWithAutoRefresh(
                     `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
@@ -407,7 +414,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             // window.location.href = `/chat`;
             // Ensure the chat page is shown
             window.history.pushState({}, '', '/chat');
+      
             pages.showPage('chat');
+        
             return;
         }
         
@@ -541,7 +550,11 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             }else {
                 notificationManager.incrementMailboxCount();
             }
-            chat.debouncedReloadChats(); // Use debounced reload
+            // chat.debouncedReloadChats(); // Use debounced reload
+            setTimeout(async () : Promise<void> => {  
+                await chat.reloadChats(); 
+            }, 100); // Reload chats after a short delay to ensure UI updates
+             // Reload chats to update message counts
             // Update mailbox notification count for message notifications
             try {
                 // const page = 1;
