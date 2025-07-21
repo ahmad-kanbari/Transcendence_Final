@@ -562,6 +562,7 @@ show2FAModal(): void {
     const loginNavBtn = document.getElementById('loginNavBtn');
     const loginBtnHome = document.getElementById('loginBtnHome');
     const loginNavBtnMobile = document.getElementById('loginNavBtnMobile');
+    const logoutNavBtnMobile = document.getElementById('logoutNavBtnMobile');
     const loginBtn = document.getElementById('loginBtn');
     const loginDropdown = document.getElementById('loginDropdown');
     const loggedInUserImg = document.getElementById('loggedInUserImg') as HTMLImageElement | null;
@@ -577,6 +578,7 @@ show2FAModal(): void {
       };
       if (loginDropdown) loginDropdown.style.display = 'block';
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
+      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'block';
       
       if (typeof app.getIs42User === 'function' && app.getIs42User()) {
 
@@ -623,6 +625,7 @@ show2FAModal(): void {
         loginBtnHome.style.display = 'block';
       }
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
+      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'none';
     }
   }
 
