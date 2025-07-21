@@ -237,6 +237,7 @@ class Chat {
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        app.socketService.off('userStatusChange');
         
         // Leave any active chat room when navigating away from chat page
         if (this.currentChatId) {
@@ -507,10 +508,19 @@ class Chat {
                     chatRow.role = 'listitem';
                     chatRow.dataset.chatId = chat_id;
                     
+                    // Check online status
+                    const isOnline = user.isOnline || false;
+                    const statusColor = isOnline ? '#2DE2E6' : '#666';
+                    const statusTitle = isOnline ? 'Online' : 'Offline';
+                    const statusGlow = isOnline ? 'box-shadow: 0 0 5px rgba(45, 226, 230, 0.8);' : '';
+                    
                     // Update to include user actions with profile button
                     chatRow.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="online-status"></span>
+                            <span class="online-status" 
+                                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; 
+                                  background-color: ${statusColor}; border: 1px solid #333; ${statusGlow}"
+                                  title="${statusTitle}"></span>
                             <span>${user.username || 'Unknown User'}</span>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -1540,6 +1550,8 @@ class Chat {
 
             friendsWithStatus.forEach((friend: any) => {
             const li = document.createElement('li');
+            // Add data-user-id attribute to make it easier to find this element when status changes
+            li.setAttribute('data-user-id', friend.userId);
             li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
             console.log(`Rendering friend: ${friend.username} with object: ${JSON.stringify(friend)}`);
             
@@ -1557,8 +1569,8 @@ class Chat {
                         background-color: ${statusColor};
                         ${friend.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
                     " title="${statusText}"></div>
-                    <span>${friend.username}</span>
-                    ${friend.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
+                    <span class="friend-username">${friend.username}</span>
+                    ${friend.isOnline ? '<span class="online-dot" style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
                 </div>
                 <div class="friend-actions" style="display: flex; gap: 5px;">
                     <button onclick="ChatNavigationHelper.navigateToFriendProfile('${friend.userId}')" 

@@ -6,6 +6,7 @@ import toastManager from './toastManager';
 import chat from './chat';
 import pages from './pages';
 import app from './app';
+import friendProfile from './friendProfileData';
 // import notificationManager from './NotificationManager';
 
 // Declare socket.io global
@@ -450,6 +451,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         app.socketService.off('messageReceivedInform');
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
+        app.socketService.off('userStatusChange');
     }
     
     // Public method to reinitialize socket handlers after reconnection
@@ -618,6 +620,87 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 chat.loadFriendData();
             } catch (error) {
                 console.error('Error handling friendRequestAccept event:', error);
+            }
+        });
+
+        // Optimized userStatusChange handler
+        console.log('NotificationManager: Attaching userStatusChange handler');
+        app.socketService.on("userStatusChange", (data: any) => {
+            console.log("Status change event received:", data);
+            
+            // Update single friend in the list instead of reloading entire list
+            if (chat && chat.elements && chat.elements.friendsList) {
+                // Find the specific friend element in the list by userId
+                const friendItem = chat.elements.friendsList.querySelector(`li[data-user-id="${data.userId}"]`) as HTMLElement | null;
+                
+                if (friendItem) {
+                    // Update status indicator
+                    const statusIndicator = friendItem.querySelector('.online-status') as HTMLElement | null;
+                    
+                    if (statusIndicator) {
+                        // Update status class
+                        statusIndicator.classList.remove('online', 'offline');
+                        statusIndicator.classList.add(data.isOnline ? 'online' : 'offline');
+                        
+                        // Update status color and animation
+                        statusIndicator.style.backgroundColor = data.isOnline ? '#4CAF50' : '#757575';
+                        statusIndicator.setAttribute('title', data.isOnline ? 'Online' : 'Offline');
+                        
+                        if (data.isOnline) {
+                            statusIndicator.style.boxShadow = '0 0 6px rgba(76, 175, 80, 0.6)';
+                            statusIndicator.style.animation = 'pulse-green 2s infinite';
+                        } else {
+                            statusIndicator.style.boxShadow = '';
+                            statusIndicator.style.animation = '';
+                        }
+                    }
+                    
+                    // Update or remove the online dot
+                    let onlineDot = friendItem.querySelector('.online-dot') as HTMLElement | null;
+                    
+                    if (data.isOnline) {
+                        if (!onlineDot) {
+                            onlineDot = document.createElement('span');
+                            onlineDot.className = 'online-dot';
+                            onlineDot.style.color = '#4CAF50';
+                            onlineDot.style.fontSize = '10px';
+                            onlineDot.style.marginLeft = '5px';
+                            onlineDot.textContent = '●';
+                            
+                            // Find the username element's parent and insert the dot after the username
+                            const usernameElement = friendItem.querySelector('.friend-username');
+                            if (usernameElement) {
+                                usernameElement.insertAdjacentElement('afterend', onlineDot);
+                            }
+                        }
+                    } else if (onlineDot) {
+                        onlineDot.remove();
+                    }
+                    
+                    console.log(`Updated status for friend ${data.userId} to ${data.isOnline ? 'online' : 'offline'}`);
+                } else {
+                    console.log(`Friend element with userId ${data.userId} not found in the list`);
+                }
+            }
+            
+            // We still need to update the chat list to show online status correctly
+            setTimeout(async () => {
+                await chat.loadChats(); // Only reload chat list, not friends list
+            }, 100);
+            
+            // Update friend profile if we're viewing it
+            if (friendProfile) {
+                // If this status change is for the user we're currently viewing
+                if (parseInt(friendProfile.friendData.id) === data.userId) {
+                    console.log("Updating status for current profile user");
+                    if (data.isOnline) {
+                        friendProfile.friendData.isOnline = true;
+                        friendProfile.refreshFriendProfile();
+                    } else {
+                        friendProfile.friendData.isOnline = false;
+                        friendProfile.refreshFriendProfile();
+                    }
+                }
             }
         });
     }
