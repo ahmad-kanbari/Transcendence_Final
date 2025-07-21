@@ -76,6 +76,11 @@ class Chat {
      baseURL: string = CONFIG.baseURL || '';
      chatReloadTimeout: any = null;
      currentChatWithUsername: string | null = null;
+     
+     // Event listener references for proper cleanup
+     private navigationCompleteHandler: ((event: Event) => void) | null = null;
+     private pageShownHandler: ((event: Event) => void) | null = null;
+     private pageHiddenHandler: ((event: Event) => void) | null = null;
 
     // Blocked users management
     blockedUsersCache: Set<string> = new Set();
@@ -92,8 +97,11 @@ class Chat {
 
         console.log('Chat: Initializing chat module');
         
+        // Clean up any existing event listeners before adding new ones
+        this.removeEventListeners();
+        
         // Listen for page changes
-        document.addEventListener('pageShown', (event: Event) => {
+        this.pageShownHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page shown event received for chat page');
@@ -102,6 +110,13 @@ class Chat {
                 // Cleanup when leaving chat page
                 console.log(`Chat: Page changed to ${customEvent.detail.page}, cleaning up chat handlers`);
                 this.cleanupSocketHandlers();
+                
+                // IMPORTANT: Force deactivate chat when navigating away from chat page
+                // This ensures we leave any active chat room
+                if (this.currentChatId) {
+                    console.log(`Chat: Force deactivating chat ${this.currentChatId} when navigating to ${customEvent.detail.page}`);
+                    this.deactivateChat();
+                }
                 
                 // Special handler to make sure message notifications work when not on chat page
                 if (app.socketService) {
@@ -118,10 +133,11 @@ class Chat {
                     });
                 }
             }
-        });
+        };
+        document.addEventListener('pageShown', this.pageShownHandler);
 
         // Make sure notification handlers are set up after page hidden event too
-        document.addEventListener('pageHidden', (event: Event) => {
+        this.pageHiddenHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page hidden event received for chat page');
@@ -135,12 +151,52 @@ class Chat {
                     }, 200); // Small delay to ensure cleanup is complete
                 }
             }
-        });
+        };
+        document.addEventListener('pageHidden', this.pageHiddenHandler);
+
+        // Add a listener for router navigation events too, as an extra safeguard
+        this.navigationCompleteHandler = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const path = customEvent.detail.path;
+            
+            // If navigating away from chat page
+            if (!path.includes('/chat') && this.currentChatId) {
+                console.log(`Chat: Navigation detected to ${path}, leaving chat room ${this.currentChatId}`);
+                // Deactivate chat completely
+                this.deactivateChat();
+                // Clean up socket handlers
+                this.cleanupSocketHandlers();
+            }
+        };
+        document.addEventListener('navigationComplete', this.navigationCompleteHandler);
 
         // Set up base socket handlers
         this.setupBaseSocketHandlers();
 
         this.initialized = true;
+    }
+    
+    /**
+     * Clean up event listeners to prevent memory leaks
+     */
+    removeEventListeners(): void {
+        // Remove navigation event listeners
+        if (this.navigationCompleteHandler) {
+            document.removeEventListener('navigationComplete', this.navigationCompleteHandler);
+            this.navigationCompleteHandler = null;
+        }
+        
+        if (this.pageShownHandler) {
+            document.removeEventListener('pageShown', this.pageShownHandler);
+            this.pageShownHandler = null;
+        }
+        
+        if (this.pageHiddenHandler) {
+            document.removeEventListener('pageHidden', this.pageHiddenHandler);
+            this.pageHiddenHandler = null;
+        }
+        
+        console.log('Chat: Event listeners removed to prevent memory leaks');
     }
 
      setupBaseSocketHandlers(): void {
@@ -181,6 +237,15 @@ class Chat {
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        
+        // Leave any active chat room when navigating away from chat page
+        if (this.currentChatId) {
+            console.log(`Chat: Leaving chat room ${this.currentChatId} during cleanup`);
+            app.socketService.emit('leaveRoom', this.currentChatId);
+            
+            // For debugging purposes
+            console.trace("Chat: Stack trace for leaveRoom event");
+        }
         
         // Important: Tell NotificationManager to reinitialize its handlers
         // This ensures messageReceivedInform gets properly set up again
@@ -654,6 +719,9 @@ class Chat {
     
     
         private deactivateChat(): void {
+            // Store the current chat ID before clearing it
+            const chatIdToLeave = this.currentChatId;
+            
             // Clear current chat state
             this.currentChatId = null;
             
@@ -670,9 +738,10 @@ class Chat {
                 this.elements.chatHeader.textContent = 'Select a chat';
             }
             
-            // Leave socket room
-            if (app.socketService && this.currentChatId) {
-                app.socketService.emit('leaveRoom', this.currentChatId);
+            // Leave socket room - use the stored chatId since we've cleared currentChatId
+            if (app.socketService && chatIdToLeave) {
+                console.log(`Chat: Leaving chat room ${chatIdToLeave} in deactivateChat`);
+                app.socketService.emit('leaveRoom', chatIdToLeave);
             }
             
             // Update URL to remove chatId
@@ -2642,18 +2711,26 @@ private showPopup(user: any): void {
 
     // Cleanup method
     destroy(): void {
-          // ADD THIS LINE at the start
+        // Remove all event listeners first to prevent memory leaks
+        this.removeEventListeners();
+        
+        // Clean up socket handlers
         this.cleanupSocketHandlers();
+        
+        // Clear any pending timeouts
         if (this.chatReloadTimeout) {
             clearTimeout(this.chatReloadTimeout);
         }
         
+        // Disconnect from socket
         if (app.socketService) {
             if (this.currentChatId) {
                 app.socketService.emit('leaveRoom', this.currentChatId);
             }
             app.socketService.disconnect();
         }
+        
+        console.log('Chat: Destroyed and all resources cleaned up');
     }
 
 

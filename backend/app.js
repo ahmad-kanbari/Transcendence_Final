@@ -54,6 +54,10 @@ const start = async () => {
 		const db = connectDB("application");
 		console.log("Database connected");
 
+		// 1.5. Run migrations to ensure all tables exist
+		await db.migrate.latest();
+		console.log("Database migrations completed");
+
 		// 2. Initialize models
 		const friendModel = new Friend(db);
 		const userModel = new User(db);

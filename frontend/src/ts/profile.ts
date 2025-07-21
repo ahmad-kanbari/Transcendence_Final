@@ -2102,7 +2102,7 @@ async handleUsernameUpdate(): Promise<void> {
         
         if (result.success) {
             // components.showToast('success', 'Success', 'Username updated successfully');
-            toastManager.success(app.getUsername(), 'Username updated successfully');
+            toastManager.success(app.getUsername(), result.message || 'Username updated successfully');
             console.log("the new username in profile", newUsername);
           
             // Update local state
@@ -2118,7 +2118,7 @@ async handleUsernameUpdate(): Promise<void> {
             // console.log("the new username in game", app.getUsername());// Update username in game state
         } else {
             // components.showToast('error', 'Update Error', result.error || 'Failed to update username');
-            toastManager.error(app.getUsername(), result.error || 'Failed to update username');
+            toastManager.error(app.getUsername(), result.error || 'Failed to update username, user exists');
         }
     } catch (error: any) {
         // components.showToast('error', 'Update Error', 'An error occurred while updating username');

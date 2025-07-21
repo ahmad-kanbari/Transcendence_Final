@@ -47,6 +47,14 @@ class Login {
   initialized: boolean;
   tempToken: string | null;
   deviceId: string | null;
+  // Add event listener references
+  private pageShownHandler: ((event: Event) => void) | null = null;
+  private googleLoginHandler: ((event: Event) => void) | null = null;
+  private submitHandler: ((event: Event) => void) | null = null;
+  private twoFactorSubmitHandler: ((event: Event) => void) | null = null;
+  private twoFactorCloseHandler: ((event: Event) => void) | null = null;
+  private loginTabHandler: ((event: Event) => void) | null = null;
+  private registerTabHandler: ((event: Event) => void) | null = null;
   
   constructor() {
     this.loginForm = {} as LoginForm;
@@ -61,16 +69,82 @@ class Login {
   init(): void {
     if (this.initialized) return;
     
-    document.addEventListener('pageShown', (event: Event) => {
+    // Clean up any existing listeners before adding new ones
+    this.cleanup();
+    
+    // Store reference to the event handler
+    this.pageShownHandler = (event: Event) => {
       const customEvent = event as CustomEvent;
       if (customEvent.detail.page === 'login')
         this.renderForms();
-    });
+    };
+    
+    // Add the listener
+    document.addEventListener('pageShown', this.pageShownHandler);
     
     this.initialized = true;
     // if(this.loginForm.loginBtnHome) {
     //   this.loginForm.loginBtnHome.onclick = this.handleLoginBtnHomeClick.bind(this);
     // }
+  }
+  
+  // Add cleanup method to remove event listeners
+  cleanup(): void {
+    if (this.pageShownHandler) {
+      document.removeEventListener('pageShown', this.pageShownHandler);
+      this.pageShownHandler = null;
+    }
+    
+    this.cleanupFormHandlers();
+    
+    console.log('Login: Event listeners removed to prevent memory leaks');
+  }
+  
+  // Method to clean up form-specific handlers
+  cleanupFormHandlers(): void {
+    // Clean up Google login handler
+    if (this.loginForm.loginGoogleLink && this.googleLoginHandler) {
+      this.loginForm.loginGoogleLink.removeEventListener('click', this.googleLoginHandler);
+      this.googleLoginHandler = null;
+    }
+    
+    // Clean up form submit handler
+    if (this.loginForm.submitBtn && this.submitHandler) {
+      this.loginForm.submitBtn.removeEventListener('click', this.submitHandler);
+      this.submitHandler = null;
+    }
+    
+    // Clean up two factor form handlers
+    if (this.loginForm.twoFactorSubmitBtn && this.twoFactorSubmitHandler) {
+      this.loginForm.twoFactorSubmitBtn.removeEventListener('click', this.twoFactorSubmitHandler);
+      this.twoFactorSubmitHandler = null;
+    }
+    
+    if (this.loginForm.twoFactorCloseBtn && this.twoFactorCloseHandler) {
+      this.loginForm.twoFactorCloseBtn.removeEventListener('click', this.twoFactorCloseHandler);
+      this.twoFactorCloseHandler = null;
+    }
+    
+    // Clean up tab handlers
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    
+    if (loginTab && this.loginTabHandler) {
+      loginTab.removeEventListener('click', this.loginTabHandler);
+      this.loginTabHandler = null;
+    }
+    
+    if (registerTab && this.registerTabHandler) {
+      registerTab.removeEventListener('click', this.registerTabHandler);
+      this.registerTabHandler = null;
+    }
+  }
+  
+  // Method to destroy the component
+  destroy(): void {
+    this.cleanup();
+    this.initialized = false;
+    console.log('Login: Component destroyed');
   }
   
   renderForms(): void {
@@ -562,6 +636,7 @@ show2FAModal(): void {
     const loginNavBtn = document.getElementById('loginNavBtn');
     const loginBtnHome = document.getElementById('loginBtnHome');
     const loginNavBtnMobile = document.getElementById('loginNavBtnMobile');
+    const logoutNavBtnMobile = document.getElementById('logoutNavBtnMobile');
     const loginBtn = document.getElementById('loginBtn');
     const loginDropdown = document.getElementById('loginDropdown');
     const loggedInUserImg = document.getElementById('loggedInUserImg') as HTMLImageElement | null;
@@ -577,6 +652,7 @@ show2FAModal(): void {
       };
       if (loginDropdown) loginDropdown.style.display = 'block';
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
+      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'block';
       
     
         
@@ -642,6 +718,7 @@ show2FAModal(): void {
         loginBtnHome.style.display = 'block';
       }
       if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
+      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'none';
     }
   }
 
