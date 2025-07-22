@@ -124,14 +124,36 @@
 
             <div class="section">
                 <h3 data-i18n="chat.searchUser">Search User</h3>
-                <input
+                <!-- <input
                     type="text"
                     id="userSearch"
                     placeholder="Search for a friend..."
                     aria-label="Search for users"
                     data-i18n-attr="placeholder:chat.searchForFriend"
                 />
-                <ul id="userSearchResults" role="listbox" aria-label="Search results"></ul>
+                <ul id="userSearchResults" role="listbox" aria-label="Search results"></ul> -->
+           <button 
+                id="openFriendSearchBtn"
+                style="
+                    width: 100%;
+                    padding: 12px 20px;
+                    background: linear-gradient(45deg, #00ffff, #0080ff);
+                    color: #000;
+                    border: 2px solid #00ffff;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+                    position: relative;
+                "
+                data-i18n="chat.searchUser"
+            >
+                🔍 Search for Users
+            </button>
             </div>
 
             <div class="section">
@@ -308,4 +330,26 @@
             font-size: 16px;
         }
     </style>
+    <style>
+#openFriendSearchBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+#openFriendSearchBtn:hover::before {
+    transform: translateX(100%);
+}
+
+#openFriendSearchBtn:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8) !important;
+}
+</style>
 </div>
