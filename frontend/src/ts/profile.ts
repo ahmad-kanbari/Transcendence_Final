@@ -698,30 +698,44 @@ showDetailedStatsModal(): void {
     </div>
     
     <!-- Tournaments Card -->
-    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
-      <div class="flex items-center mb-4">
-        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
-        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
-          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
+   
+          <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+    <div class="flex items-center mb-4">
+      <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+      <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
+    </div>
+
+      <!-- STACKED VERTICAL LAYOUT -->
+      <div class="flex flex-col items-center gap-4">
+        <!-- Joined -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">
+            ${stats.tournamentsParticipated.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
         </div>
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
-          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
+
+        <!-- Won -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">
+            ${stats.tournamentsWon.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">WON</div>
         </div>
-      </div>
-      <div class="mt-4 text-center">
-        <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
-          <span class="text-cyber-dark font-cyber font-bold text-lg">
-            ${stats.tournamentsParticipated.size > 0 ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100) : 0}% WIN RATE
-          </span>
+
+        <!-- Win Rate -->
+        <div class="w-full text-center">
+          <div class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
+            <span class="text-cyber-dark font-cyber font-bold text-lg">
+              ${stats.tournamentsParticipated.size > 0
+                ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100)
+                : 0}% WIN RATE
+            </span>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- Scoring Card -->
     <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-green rounded-lg p-6 shadow-lg hover:shadow-neon-green transition-all duration-300">
       <div class="flex items-center mb-4">
