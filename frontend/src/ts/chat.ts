@@ -624,6 +624,8 @@ private setupPopupEvents(): void {
     // ESC key to close
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && overlay?.style.display === 'flex') {
+             e.preventDefault();
+             e.stopPropagation();
             this.closeFriendSearchPopup();
         }
     });
@@ -738,6 +740,7 @@ public async addFriendFromPopup(userId: string, username: string): Promise<void>
         if (result.ok) {
             toastManager.success(app.getUsername(), `Friend request sent to ${username}!`);
             await this.loadFriendData(); // Refresh friend data
+            this.closeFriendSearchPopup(); // Close popup after sending request
         } else {
             const errorText = await result.text();
             toastManager.error(app.getUsername(), errorText || 'Failed to send friend request');
@@ -807,6 +810,7 @@ public async startChatFromPopup(userId: string, username: string): Promise<void>
  * Close popup
  */
 private closeFriendSearchPopup(): void {
+    
     const overlay = document.getElementById('friendSearchResultsPopupOverlay');
     if (overlay) {
         overlay.style.display = 'none';
@@ -1026,6 +1030,7 @@ private addSearchButtons(): void {
                             e.stopPropagation(); // Prevent the chatRow click event
                             e.preventDefault();
                             ChatNavigationHelper.navigateToFriendProfile(user.id.toString());
+                           
                         });
                     }
 
@@ -1704,6 +1709,7 @@ async handleFriendSearch(): Promise<void> {
             // Add click handlers for buttons
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 ChatNavigationHelper.navigateToFriendProfile(user.id);
                 this.closeFriendSearchPopup();
             });
@@ -2231,6 +2237,7 @@ async handleFriendSearch(): Promise<void> {
         profileOption.onclick = () => {
             ChatNavigationHelper.navigateToFriendProfile(senderId);
             document.body.removeChild(contextMenu);
+            this.closeFriendSearchPopup();
         };
 
         contextMenu.appendChild(profileOption);
