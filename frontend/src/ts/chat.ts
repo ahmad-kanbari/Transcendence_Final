@@ -581,7 +581,9 @@ private setupPopupEvents(): void {
     const overlay = document.getElementById('friendSearchResultsPopupOverlay');
 
     // Close popup
-    closeBtn?.addEventListener('click', () => {
+    closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         this.closeFriendSearchPopup();
     });
 
@@ -682,6 +684,8 @@ private async performPopupSearch(): Promise<void> {
         cursor: pointer;
     ">Add Friend</button>`;
 
+// Create a unique ID for the profile button to attach the event listener
+const profileBtnId = `profileBtn_${user.id}_${Math.random().toString(36).substr(2, 9)}`;
 html += `
     <div style="
         border: 1px solid var(--cyber-blue, #05D9E8);
@@ -695,7 +699,7 @@ html += `
     ">
         <span style="color: var(--cyber-green, #2DE2E6); font-weight: bold;">${user.username}</span>
         <div style="display: flex; gap: 8px;">
-            <button onclick="ChatNavigationHelper.navigateToFriendProfile('${user.id}')" style="
+            <button id="${profileBtnId}" style="
                 background: var(--cyber-yellow, #F9C80E);
                 color: var(--cyber-black, #030303);
                 border: none;
@@ -708,6 +712,20 @@ html += `
         </div>
     </div>
 `;
+
+        // After rendering, attach the event listener
+        setTimeout(() => {
+            const btn = document.getElementById(profileBtnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    ChatNavigationHelper.navigateToFriendProfile(user.id);
+                    // Optionally close the popup if desired:
+                    this.closeFriendSearchPopup();
+                });
+            }
+        }, 0);
         }
         
         resultsContainer.innerHTML = html;
