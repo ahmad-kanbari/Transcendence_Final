@@ -79,7 +79,7 @@ class Chat {
      
      // Add these properties to your Chat class
         private currentSearchPage: number = 1;
-        private searchLimit: number = 6;
+        private searchLimit: number = 5;
         private searchMode: 'friend' | 'chat' = 'friend';
      
      // Event listener references for proper cleanup
