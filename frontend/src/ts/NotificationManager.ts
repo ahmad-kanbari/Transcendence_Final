@@ -31,6 +31,7 @@ class NotificationManager {
     private mailboxNotificationCount: number = 0;
     private baseURL: string = CONFIG.baseURL || '';
     private pendingStatusChanges: {[userId: string]: NodeJS.Timeout} = {};
+    private chatListUpdateTimeout: NodeJS.Timeout | null = null;
 
     constructor() {
         // Don't auto-initialize here, let the app call init when ready
@@ -659,6 +660,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                     this.applyUserStatusChange(data);
                     // Remove from pending changes
                     delete this.pendingStatusChanges[data.userId];
+
+              
+                     chat.loadChats();
+                     
                 }, 3000); // 3 second grace period
             } else {
                 // If this is an ONLINE status, cancel any pending offline status change
@@ -892,10 +897,62 @@ private applyUserStatusChange(data: any): void {
         }
     }
     
-    // We still need to update the chat list to show online status correctly
-    setTimeout(async () => {
-        await chat.loadChats(); // Only reload chat list, not friends list
-    }, 100);
+    // Update chat list status indicators without reloading the entire list
+    if (chat && chat.elements && chat.elements.chatRows) {
+        // Since we don't have direct user ID mapping in chat rows, we'll use a more efficient approach
+        // We'll store the userId in a data attribute when we update, so subsequent updates are faster
+        const chatRows = chat.elements.chatRows.querySelectorAll('.chat-row, .chatRow');
+        
+        chatRows.forEach((chatRow) => {
+            const chatRowElement = chatRow as HTMLElement;
+            const statusIndicator = chatRowElement.querySelector('.online-status') as HTMLElement | null;
+            
+            if (statusIndicator) {
+                // Check if this chat row has the user ID stored (from previous updates)
+                const storedUserId = chatRowElement.dataset.participantId;
+                
+                if (storedUserId === data.userId.toString()) {
+                    console.log(`Updating chat row status for user ${data.userId}`);
+                    
+                    // Update the status indicator directly
+                    const statusColor = data.isOnline ? '#2DE2E6' : '#666';
+                    const statusTitle = data.isOnline ? 'Online' : 'Offline';
+                    const statusGlow = data.isOnline ? '0 0 5px rgba(45, 226, 230, 0.8)' : '';
+                    
+                    statusIndicator.style.backgroundColor = statusColor;
+                    statusIndicator.style.boxShadow = statusGlow;
+                    statusIndicator.setAttribute('title', statusTitle);
+                    
+                    // Add a subtle animation for status changes
+                    if (data.isOnline) {
+                        statusIndicator.style.animation = 'pulse-cyan 2s infinite';
+                    } else {
+                        statusIndicator.style.animation = '';
+                    }
+                }
+            }
+        });
+    }
+    
+    // Instead of always reloading, only reload chat list very infrequently since we're doing targeted updates
+    // This significantly reduces the number of API calls and DOM rebuilds
+    if (data.isOnline || data.isDelayedOffline) {
+        console.log(`Scheduling infrequent chat list refresh for user ${data.userId} status change to ${data.isOnline ? 'online' : 'offline'} ${data.isDelayedOffline ? '(after grace period)' : ''}`);
+        
+        // Use a much longer delay since we're doing targeted updates above
+        if (this.chatListUpdateTimeout) {
+            clearTimeout(this.chatListUpdateTimeout);
+        }
+        
+        this.chatListUpdateTimeout = setTimeout(async () => {
+            // Only do a full reload occasionally to catch any missed updates
+            console.log('Performing periodic chat list refresh to sync any missed changes');
+            await chat.loadChats();
+            this.chatListUpdateTimeout = null;
+        }, 10000); // Wait 10 seconds and debounce - much less frequent since we have targeted updates
+    } else {
+        console.log(`Skipping chat list reload for user ${data.userId} - offline status change blocked by grace period`);
+    }
     
     // Update friend profile if we're viewing it
     if (friendProfile) {
@@ -909,7 +966,7 @@ private applyUserStatusChange(data: any): void {
 }
 
 // ===== NOTIFICATION SYSTEM =====
-    // ...existing code...
+   
 
     // Public method to test if socket handlers are working correctly
     public testSocketHandlers(): void {
