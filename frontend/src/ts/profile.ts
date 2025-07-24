@@ -253,13 +253,9 @@ showGameSessionModal(matchId: string): void {
       <div class="cyber-container">
         <h6 class="font-cyber text-cyber-blue text-lg mb-4">🎮 Session Overview</h6>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="cyber-card text-center">
-            <div class="text-2xl font-cyber text-cyber-blue">${sessionStats.duration}</div>
-            <div class="text-xs text-gray-400">Duration</div>
-          </div>
-          <div class="cyber-card text-center">
-            <div class="text-2xl font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
-            <div class="text-xs text-gray-400">Total Points</div>
+          <div class="cyber-card text-center grid-cols-4 col-span-4">
+            <div class="text-2xl font-cyber text-cyber-green">${Number.isNaN(sessionStats.totalPoints) ? `${0}` : sessionStats.totalPoints }</div>
+            <div class="text-xs text-gray-400">Total Pointss</div>
           </div>
           <div class="cyber-card text-center">
             <div class="text-2xl font-cyber text-cyber-pink">${sessionStats.longestRally}</div>
@@ -283,7 +279,7 @@ showGameSessionModal(matchId: string): void {
       <!-- Performance Metrics -->
       <div class="cyber-container">
         <h6 class="font-cyber text-cyber-pink text-lg mb-4">⚡ Performance Metrics</h6>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
           <div class="space-y-3">
             <div class="flex justify-between">
               <span>Scoring Efficiency: </span>
@@ -875,13 +871,9 @@ showGameSessionPopup(matchId: string, buttonElement: HTMLElement): void {
   content.innerHTML = `
     <div class="space-y-3">
       <!-- Quick Stats -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-blue">
-          <div class="text-lg font-cyber text-cyber-blue">${sessionStats.duration}</div>
-          <div class="text-xs text-gray-400">Duration</div>
-        </div>
-        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-green">
-          <div class="text-lg font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
+      <div class="grid grid-cols-1 gap-2">
+        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-green ">
+          <div class="text-lg font-cyber text-cyber-green">${Number.isNaN(sessionStats.totalPoints) ? `${0}` :sessionStats.totalPoints  }</div>
           <div class="text-xs text-gray-400">Total Points</div>
         </div>
       </div>
