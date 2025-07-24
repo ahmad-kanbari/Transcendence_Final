@@ -282,11 +282,11 @@ ul {
 li {
     padding: 12px 15px;
     margin: 8px 0;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.8) 100%);
-    border: 1px solid var(--cyber-purple);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    /* background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.8) 100%); */
+    /* border: 1px solid var(--cyber-purple); */
+    /* border-radius: 8px; */
+    /* cursor: pointer; */
+    /* transition: all 0.3s ease; */
     font-size: 14px;
     position: relative;
     overflow: hidden;
@@ -299,7 +299,7 @@ li::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.2), transparent);
+    /* background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.2), transparent); */
     transition: left 0.5s ease;
 }
 
@@ -307,14 +307,14 @@ li:hover::before {
     left: 100%;
 }
 
-li:hover {
+/* li:hover {
     background: linear-gradient(135deg, var(--cyber-purple) 0%, rgba(157, 78, 221, 0.8) 100%);
     color: white;
     box-shadow: 
         0 5px 15px rgba(157, 78, 221, 0.4),
         0 0 0 1px rgba(157, 78, 221, 0.6);
     transform: translateX(5px);
-}
+} */
 
 /* Enhanced Search Results */
 #userSearchResults {
@@ -438,9 +438,9 @@ li:hover {
     cursor: pointer;
     font-size: 1.6rem;
     padding: 12px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%);
-    border: 2px solid var(--cyber-blue);
+    /* border-radius: 50%; */
+    /* background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%); */
+    /* border: 2px solid var(--cyber-blue); */
     transition: all 0.4s ease;
     backdrop-filter: blur(5px);
 }
