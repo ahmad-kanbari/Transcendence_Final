@@ -507,6 +507,7 @@ class Chat {
                     chatRow.className = 'chat-row chatRow'; // Keep both class names for compatibility
                     chatRow.role = 'listitem';
                     chatRow.dataset.chatId = chat_id;
+                    chatRow.dataset.participantId = participantId; // Store participant ID for status updates
                     
                     // Check online status
                     const isOnline = user.isOnline || false;

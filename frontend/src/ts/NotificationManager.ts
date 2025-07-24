@@ -30,6 +30,8 @@ class NotificationManager {
     private notificationCount: number = 0;
     private mailboxNotificationCount: number = 0;
     private baseURL: string = CONFIG.baseURL || '';
+    private pendingStatusChanges: {[userId: string]: NodeJS.Timeout} = {};
+    private chatListUpdateTimeout: NodeJS.Timeout | null = null;
 
     constructor() {
         // Don't auto-initialize here, let the app call init when ready
@@ -53,7 +55,7 @@ class NotificationManager {
                 console.log('NotificationManager: Socket health check - ensuring event handlers are attached');
                 this.reinitializeSocketHandlers();
             }
-        }, 30000); // Check every 30 seconds
+        }, 2000); // Check every 30 seconds
     }
 
     init(): void {
@@ -636,84 +638,43 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             }
         });
 
-        // Optimized userStatusChange handler
+        // Optimized userStatusChange handler with grace period for offline status
         console.log('NotificationManager: Attaching userStatusChange handler');
         app.socketService.on("userStatusChange", (data: any) => {
             console.log("Status change event received:", data);
             
-            // Update single friend in the list instead of reloading entire list
-            if (chat && chat.elements && chat.elements.friendsList) {
-                // Find the specific friend element in the list by userId
-                const friendItem = chat.elements.friendsList.querySelector(`li[data-user-id="${data.userId}"]`) as HTMLElement | null;
+            // If this is an OFFLINE status change, delay processing it to prevent flicker
+            if (!data.isOnline) {
+                console.log(`Adding grace period for offline status of user ${data.userId}`);
                 
-                if (friendItem) {
-                    // Update status indicator
-                    const statusIndicator = friendItem.querySelector('.online-status') as HTMLElement | null;
-                    
-                    if (statusIndicator) {
-                        // Update status class
-                        statusIndicator.classList.remove('online', 'offline');
-                        statusIndicator.classList.add(data.isOnline ? 'online' : 'offline');
-                        
-                        // Update status color and animation
-                        statusIndicator.style.backgroundColor = data.isOnline ? '#4CAF50' : '#757575';
-                        statusIndicator.setAttribute('title', data.isOnline ? 'Online' : 'Offline');
-                        
-                        if (data.isOnline) {
-                            statusIndicator.style.boxShadow = '0 0 6px rgba(76, 175, 80, 0.6)';
-                            statusIndicator.style.animation = 'pulse-green 2s infinite';
-                        } else {
-                            statusIndicator.style.boxShadow = '';
-                            statusIndicator.style.animation = '';
-                        }
-                    }
-                    
-                    // Update or remove the online dot
-                    let onlineDot = friendItem.querySelector('.online-dot') as HTMLElement | null;
-                    
-                    if (data.isOnline) {
-                        if (!onlineDot) {
-                            onlineDot = document.createElement('span');
-                            onlineDot.className = 'online-dot';
-                            onlineDot.style.color = '#4CAF50';
-                            onlineDot.style.fontSize = '10px';
-                            onlineDot.style.marginLeft = '5px';
-                            onlineDot.textContent = '●';
-                            
-                            // Find the username element's parent and insert the dot after the username
-                            const usernameElement = friendItem.querySelector('.friend-username');
-                            if (usernameElement) {
-                                usernameElement.insertAdjacentElement('afterend', onlineDot);
-                            }
-                        }
-                    } else if (onlineDot) {
-                        onlineDot.remove();
-                    }
-                    
-                    console.log(`Updated status for friend ${data.userId} to ${data.isOnline ? 'online' : 'offline'}`);
-                } else {
-                    console.log(`Friend element with userId ${data.userId} not found in the list`);
+                // Cancel any existing pending status change for this user
+                if (this.pendingStatusChanges[data.userId]) {
+                    console.log(`Clearing existing pending status change for user ${data.userId}`);
+                    clearTimeout(this.pendingStatusChanges[data.userId]);
                 }
-            }
-            
-            // We still need to update the chat list to show online status correctly
-            setTimeout(async () => {
-                await chat.loadChats(); // Only reload chat list, not friends list
-            }, 100);
-            
-            // Update friend profile if we're viewing it
-            if (friendProfile) {
-                // If this status change is for the user we're currently viewing
-                if (parseInt(friendProfile.friendData.id) === data.userId) {
-                    console.log("Updating status for current profile user");
-                    if (data.isOnline) {
-                        friendProfile.friendData.isOnline = true;
-                        friendProfile.refreshFriendProfile();
-                    } else {
-                        friendProfile.friendData.isOnline = false;
-                        friendProfile.refreshFriendProfile();
-                    }
+                
+                // Create a new timeout for this offline status change
+                this.pendingStatusChanges[data.userId] = setTimeout(() => {
+                    console.log(`Grace period expired for user ${data.userId}, applying offline status`);
+                    // Apply the offline status after the grace period
+                    this.applyUserStatusChange(data);
+                    // Remove from pending changes
+                    delete this.pendingStatusChanges[data.userId];
+
+              
+                     chat.loadChats();
+                     
+                }, 3000); // 3 second grace period
+            } else {
+                // If this is an ONLINE status, cancel any pending offline status change
+                if (this.pendingStatusChanges[data.userId]) {
+                    console.log(`Cancelling pending offline status change for user ${data.userId}`);
+                    clearTimeout(this.pendingStatusChanges[data.userId]);
+                    delete this.pendingStatusChanges[data.userId];
                 }
+                
+                // Apply online status immediately
+                this.applyUserStatusChange(data);
             }
         });
     }
@@ -879,8 +840,133 @@ public getMailboxCount(): number {
     return this.mailboxNotificationCount;
 }
 
+// Handle applying user status changes
+private applyUserStatusChange(data: any): void {
+    // Update single friend in the list instead of reloading entire list
+    if (chat && chat.elements && chat.elements.friendsList) {
+        // Find the specific friend element in the list by userId
+        const friendItem = chat.elements.friendsList.querySelector(`li[data-user-id="${data.userId}"]`) as HTMLElement | null;
+        
+        if (friendItem) {
+            // Update status indicator
+            const statusIndicator = friendItem.querySelector('.online-status') as HTMLElement | null;
+            
+            if (statusIndicator) {
+                // Update status class
+                statusIndicator.classList.remove('online', 'offline');
+                statusIndicator.classList.add(data.isOnline ? 'online' : 'offline');
+                
+                // Update status color and animation
+                statusIndicator.style.backgroundColor = data.isOnline ? '#4CAF50' : '#757575';
+                statusIndicator.setAttribute('title', data.isOnline ? 'Online' : 'Offline');
+                
+                if (data.isOnline) {
+                    statusIndicator.style.boxShadow = '0 0 6px rgba(76, 175, 80, 0.6)';
+                    statusIndicator.style.animation = 'pulse-green 2s infinite';
+                } else {
+                    statusIndicator.style.boxShadow = '';
+                    statusIndicator.style.animation = '';
+                }
+            }
+            
+            // Update or remove the online dot
+            let onlineDot = friendItem.querySelector('.online-dot') as HTMLElement | null;
+            
+            if (data.isOnline) {
+                if (!onlineDot) {
+                    onlineDot = document.createElement('span');
+                    onlineDot.className = 'online-dot';
+                    onlineDot.style.color = '#4CAF50';
+                    onlineDot.style.fontSize = '10px';
+                    onlineDot.style.marginLeft = '5px';
+                    onlineDot.textContent = '●';
+                    
+                    // Find the username element's parent and insert the dot after the username
+                    const usernameElement = friendItem.querySelector('.friend-username');
+                    if (usernameElement) {
+                        usernameElement.insertAdjacentElement('afterend', onlineDot);
+                    }
+                }
+            } else if (onlineDot) {
+                onlineDot.remove();
+            }
+            
+            console.log(`Updated status for friend ${data.userId} to ${data.isOnline ? 'online' : 'offline'}`);
+        } else {
+            console.log(`Friend element with userId ${data.userId} not found in the list`);
+        }
+    }
+    
+    // Update chat list status indicators without reloading the entire list
+    if (chat && chat.elements && chat.elements.chatRows) {
+        // Since we don't have direct user ID mapping in chat rows, we'll use a more efficient approach
+        // We'll store the userId in a data attribute when we update, so subsequent updates are faster
+        const chatRows = chat.elements.chatRows.querySelectorAll('.chat-row, .chatRow');
+        
+        chatRows.forEach((chatRow) => {
+            const chatRowElement = chatRow as HTMLElement;
+            const statusIndicator = chatRowElement.querySelector('.online-status') as HTMLElement | null;
+            
+            if (statusIndicator) {
+                // Check if this chat row has the user ID stored (from previous updates)
+                const storedUserId = chatRowElement.dataset.participantId;
+                
+                if (storedUserId === data.userId.toString()) {
+                    console.log(`Updating chat row status for user ${data.userId}`);
+                    
+                    // Update the status indicator directly
+                    const statusColor = data.isOnline ? '#2DE2E6' : '#666';
+                    const statusTitle = data.isOnline ? 'Online' : 'Offline';
+                    const statusGlow = data.isOnline ? '0 0 5px rgba(45, 226, 230, 0.8)' : '';
+                    
+                    statusIndicator.style.backgroundColor = statusColor;
+                    statusIndicator.style.boxShadow = statusGlow;
+                    statusIndicator.setAttribute('title', statusTitle);
+                    
+                    // Add a subtle animation for status changes
+                    if (data.isOnline) {
+                        statusIndicator.style.animation = 'pulse-cyan 2s infinite';
+                    } else {
+                        statusIndicator.style.animation = '';
+                    }
+                }
+            }
+        });
+    }
+    
+    // Instead of always reloading, only reload chat list very infrequently since we're doing targeted updates
+    // This significantly reduces the number of API calls and DOM rebuilds
+    if (data.isOnline || data.isDelayedOffline) {
+        console.log(`Scheduling infrequent chat list refresh for user ${data.userId} status change to ${data.isOnline ? 'online' : 'offline'} ${data.isDelayedOffline ? '(after grace period)' : ''}`);
+        
+        // Use a much longer delay since we're doing targeted updates above
+        if (this.chatListUpdateTimeout) {
+            clearTimeout(this.chatListUpdateTimeout);
+        }
+        
+        this.chatListUpdateTimeout = setTimeout(async () => {
+            // Only do a full reload occasionally to catch any missed updates
+            console.log('Performing periodic chat list refresh to sync any missed changes');
+            await chat.loadChats();
+            this.chatListUpdateTimeout = null;
+        }, 10000); // Wait 10 seconds and debounce - much less frequent since we have targeted updates
+    } else {
+        console.log(`Skipping chat list reload for user ${data.userId} - offline status change blocked by grace period`);
+    }
+    
+    // Update friend profile if we're viewing it
+    if (friendProfile) {
+        // If this status change is for the user we're currently viewing
+        if (parseInt(friendProfile.friendData.id) === data.userId) {
+            console.log("Updating status for current profile user");
+            friendProfile.friendData.isOnline = data.isOnline;
+            friendProfile.refreshFriendProfile();
+        }
+    }
+}
+
 // ===== NOTIFICATION SYSTEM =====
-    // ...existing code...
+   
 
     // Public method to test if socket handlers are working correctly
     public testSocketHandlers(): void {
