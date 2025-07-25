@@ -316,7 +316,7 @@ li:hover {
         0 5px 15px rgb(157 78 221 / 40%),
         0 0 0 1px rgb(157 78 221 / 60%);
     transform: translateX(5px);
-}
+} */
 
 /* Enhanced Search Results */
 #userSearchResults {
@@ -440,9 +440,9 @@ li:hover {
     cursor: pointer;
     font-size: 1.6rem;
     padding: 12px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%);
-    border: 2px solid var(--cyber-blue);
+    /* border-radius: 50%; */
+    /* background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%); */
+    /* border: 2px solid var(--cyber-blue); */
     transition: all 0.4s ease;
     backdrop-filter: blur(5px);
 }

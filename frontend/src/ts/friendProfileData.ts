@@ -1,11 +1,12 @@
 import api from './api';
 import app from './app';
 import utils from './utils';
-import { baseURL } from './constants';
+import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
 import router from './router';
 import chat from './chat';
 import profile from './profile';
+import { t } from './localization';
 
 interface FriendProfileData {
     id: number;
@@ -47,7 +48,7 @@ interface UserGameplayStats {
 
 class FriendProfile {
     private friendId: string | null = null;
-    private friendData:FriendProfileData | any | null = null;
+    friendData:FriendProfileData | any | null = null;
     private relationshipStatus: RelationshipStatus | null = null;
     private initialized: boolean = false;
     private baseURL: string = baseURL;
@@ -78,6 +79,31 @@ class FriendProfile {
             if (customEvent.detail.page === 'friend-profile') {
                 this.initializeFriendProfilePage();
             }
+
+        // app.socketService.on("userStatusChange", (data : any) => {
+        //     // const currentProfileUserId = new URLSearchParams(
+        //     //     window.location.search
+        //     // ).get("userId");
+
+        //     console.log("Status change event received:", data);
+        //     // console.log("Current profile user ID:", currentProfileUserId);
+
+        //     // If this status change is for the user we're currently viewing
+        //     if (parseInt(this.friendData.id) === data.userId) {
+        //         console.log("Updating status for current profile user");
+        //         const onlineStatus = document.getElementById("onlineStatus");
+        //         if (data.isOnline) {
+        //             this.friendData.isOnline = true;
+        //             // onlineStatus.classList.add("online");
+        //             // onlineStatus.title = "Online";
+        //         } else {
+        //           this.friendData.isOnline = false;
+        //             // onlineStatus.classList.remove("online");
+        //             // onlineStatus.classList.add("offline");
+        //             // onlineStatus.title = "Offline";
+        //         }
+        //     }
+        // });
         });
 
         this.initialized = true;
@@ -482,6 +508,8 @@ class FriendProfile {
     //     stats.tournaments_won = Math.floor(stats.tournament_matches * 0.2);
     // }
 
+
+
     private populateProfile(): void {
         if (!this.friendData) return;
 
@@ -495,12 +523,42 @@ class FriendProfile {
         if (displayNameElement) {
             displayNameElement.textContent = this.friendData.username;
         }
-
         // Profile picture
         const profileImg = document.getElementById('friendProfileAvatar') as HTMLImageElement;
         if (profileImg) {
-            profileImg.src = this.friendData.profile_picture || 'src/assets/icons/user.png';
+            // If profile_picture exists, fetch it through the API, otherwise use default
+            if (this.friendData.profile_picture) {
+              console.log('Friend profile picture found:', this.friendData.profile_picture);
+              console.log('Base URL:', this.baseURL);
+              
+              // The backend serves static files from the root path via fastifyStatic
+              // We need to use the backend server URL which is running on port 3000
+              const cleanPath = this.friendData.profile_picture.replace(/^\/+/, '');
+              const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+              
+              console.log('Trying to fetch profile picture from:', apiUrl);
+              
+              fetch(apiUrl, { credentials: 'include' })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    console.error('Image not found, using default');
+                    profileImg.src = 'src/assets/icons/user.png';
+                    throw new Error('Image not found');
+                  }
+                  const blob = await res.blob();
+                  const imageUrl = URL.createObjectURL(blob);
+                  profileImg.src = imageUrl;
+                })
+                .catch((e) => {
+                  console.error('Failed to load profile picture, using default', e);
+                  profileImg.src = 'src/assets/icons/user.png';
+                });
+            } else {
+              profileImg.src = 'src/assets/icons/user.png';
+            }
         }
+        // Priority order: localStorage cache > server URL > default image
+        // const cachedImage = this.getProfilePictureFromLocalStorage();
 
         // Online status
         this.updateOnlineStatus();
@@ -543,10 +601,12 @@ class FriendProfile {
         // Update relationship status and action buttons
         this.updateRelationshipDisplay();
     }
+    
 
     private updateOnlineStatus(): void {
         if (!this.friendData) return;
         
+
         const isOnline = this.friendData.isOnline || false;
         
         // Update avatar indicator
@@ -724,7 +784,7 @@ class FriendProfile {
 
             default:
                 if (statusElement) {
-                    statusElement.textContent = 'No Relationship';
+                    // statusElement.textContent = 'No Relationship';
                     statusElement.className = 'relationship-status status-none';
                 }
                 if (addBtn) addBtn.style.display = 'inline-block';
@@ -1020,30 +1080,43 @@ class FriendProfile {
     </div>
     
     <!-- Tournaments Card -->
-    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
-      <div class="flex items-center mb-4">
-        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
-        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
-          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
+   
+          <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+    <div class="flex items-center mb-4">
+      <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+      <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
+    </div>
+
+      <!-- STACKED VERTICAL LAYOUT -->
+      <div class="flex flex-col items-center gap-4">
+        <!-- Joined -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">
+            ${stats.tournamentsParticipated.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
         </div>
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
-          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
+
+        <!-- Won -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">
+            ${stats.tournamentsWon.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">WON</div>
         </div>
-      </div>
-      <div class="mt-4 text-center">
-        <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
-          <span class="text-cyber-dark font-cyber font-bold text-lg">
-            ${stats.tournamentsParticipated.size > 0 ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100) : 0}% WIN RATE
-          </span>
+
+        <!-- Win Rate -->
+        <div class="w-full text-center">
+          <div class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
+            <span class="text-cyber-dark font-cyber font-bold text-lg">
+              ${stats.tournamentsParticipated.size > 0
+                ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100)
+                : 0}% WIN RATE
+            </span>
+          </div>
         </div>
       </div>
     </div>
-    
     <!-- Scoring Card -->
     <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-green rounded-lg p-6 shadow-lg hover:shadow-neon-green transition-all duration-300">
       <div class="flex items-center mb-4">

@@ -48,9 +48,9 @@
     background-color: #070718;
   }
   
-  .cyber-navbar {
+  /* .cyber-navbar {
     @apply bg-cyber-darker border-b-2 border-cyber-blue bg-opacity-90 backdrop-blur-md;
-  }
+  } */
 
   .cyber-link {
     @apply text-cyber-green hover:text-cyber-blue transition-colors duration-300 relative;

@@ -182,7 +182,7 @@ class API {
    async updateUserPassword(newPassword:string, currentPassword: string): Promise<ApiResponse> {
     try {
       console.log('updating user password');
-      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+      let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -193,8 +193,16 @@ class API {
           currentPassword: currentPassword
         })
       });
-      console.log('Update user password message:', message);
-      return { success: true , response: message };
+      const message = await response.json();
+      // console.log('message in updateUserUsername:', message.error);
+      if (message.message){
+        console.log('Update user password message:', message);
+        return { success: true , response: message.message };
+
+      }else {
+        console.log('error in username',message.error);
+        return { success: false, error: message.error || 'Failed to update password ' };
+      }
     } catch (error: any) {  
       console.error('Update user password error:', error);
       return { success: false, error: error.message };
@@ -204,7 +212,7 @@ class API {
      async updateUserEmail(userEmail:string): Promise<ApiResponse> {
     try {
       console.log('updating user email');
-      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+      let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -214,18 +222,26 @@ class API {
           email: userEmail,
         })
       });
-      console.log('Update user email message:', message);
-      return { success: true , response: message };
+        const message = await response.json();
+      // console.log('message in updateUserUsername:', message.error);
+      if (message.message){
+        // console.log('Update user username message:', message);
+        return { success: true , response: message.message };
+
+      }else {
+        // console.log('error in username',message.error);
+        return { success: false, error: message.error || 'Failed to update email - it is already exists' };
+      }
     } catch (error: any) {  
-      console.error('Update user email error:', error);
+      // console.error('Update user email error:', error);
       return { success: false, error: error.message };
     }
   }
 
   async updateUserUsername(useranme: string): Promise<ApiResponse> {
     try {
-      console.log('updating user username');
-      let message = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
+      console.log('updating user username to:', useranme);
+      let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -235,11 +251,19 @@ class API {
           username: useranme 
         })
       });
-      console.log('Update user username message:', message);
-      return { success: true , response: message };
+      const message = await response.json();
+      // console.log('message in updateUserUsername:', message.error);
+      if (message.message){
+        console.log('Update user username message:', message);
+        return { success: true , response: message.message };
+
+      }else {
+        console.log('error in username',message.error);
+        return { success: false, error: message.error || 'Failed to update username - it is already exists' };
+      }
     } catch (error: any) {  
       console.error('Update user username error:',  error );
-      return { success: false, error: error.message };
+      return { success: false, response: error.message };
     }
   }
   getGoogleAuthUrl(): AuthUrlResponse{

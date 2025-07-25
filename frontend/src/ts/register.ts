@@ -29,6 +29,8 @@ interface RegisterData {
 class Register {
   registerForm: RegisterForm;
   initialized: boolean;
+  // Add event listener reference
+  private pageShownHandler: ((event: Event) => void) | null = null;
   
   constructor() {
     this.registerForm = {} as RegisterForm;
@@ -38,13 +40,36 @@ class Register {
   init(): void {
     if (this.initialized) return;
     
-    document.addEventListener('pageShown', (event: Event) => {
+    // Clean up any existing listeners before adding new ones
+    this.cleanup();
+    
+    // Store reference to the event handler
+    this.pageShownHandler = (event: Event) => {
         const customEvent = event as CustomEvent;
         if (customEvent.detail.page === 'login') 
             this.renderForms();
-    });
+    };
+    
+    // Add the listener
+    document.addEventListener('pageShown', this.pageShownHandler);
     
     this.initialized = true;
+  }
+  
+  // Add cleanup method to remove event listeners
+  cleanup(): void {
+    if (this.pageShownHandler) {
+      document.removeEventListener('pageShown', this.pageShownHandler);
+      this.pageShownHandler = null;
+      console.log('Register: Event listeners removed to prevent memory leaks');
+    }
+  }
+  
+  // Method to destroy the component
+  destroy(): void {
+    this.cleanup();
+    this.initialized = false;
+    console.log('Register: Component destroyed');
   }
   
   renderForms(): void {

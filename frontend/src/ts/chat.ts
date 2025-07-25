@@ -53,7 +53,7 @@ interface ChatElements {
     friendSearchPopupAddBtn: HTMLElement | null;
     friendSearchPopupBlockBtn: HTMLElement | null;
     friendSearchPopupCloseBtn: HTMLElement | null;
-    
+    openFriendSearchBtn: HTMLElement | null;
     // Friend search results popup elements
     friendSearchResultsPopup: HTMLElement | null;
     friendSearchResultsPopupOverlay: HTMLElement | null;
@@ -76,6 +76,16 @@ class Chat {
      baseURL: string = CONFIG.baseURL || '';
      chatReloadTimeout: any = null;
      currentChatWithUsername: string | null = null;
+     
+     // Add these properties to your Chat class
+        private currentSearchPage: number = 1;
+        private searchLimit: number = 5;
+        private searchMode: 'friend' | 'chat' = 'friend';
+     
+     // Event listener references for proper cleanup
+     private navigationCompleteHandler: ((event: Event) => void) | null = null;
+     private pageShownHandler: ((event: Event) => void) | null = null;
+     private pageHiddenHandler: ((event: Event) => void) | null = null;
 
     // Blocked users management
     blockedUsersCache: Set<string> = new Set();
@@ -92,8 +102,11 @@ class Chat {
 
         console.log('Chat: Initializing chat module');
         
+        // Clean up any existing event listeners before adding new ones
+        this.removeEventListeners();
+        
         // Listen for page changes
-        document.addEventListener('pageShown', (event: Event) => {
+        this.pageShownHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page shown event received for chat page');
@@ -102,6 +115,13 @@ class Chat {
                 // Cleanup when leaving chat page
                 console.log(`Chat: Page changed to ${customEvent.detail.page}, cleaning up chat handlers`);
                 this.cleanupSocketHandlers();
+                
+                // IMPORTANT: Force deactivate chat when navigating away from chat page
+                // This ensures we leave any active chat room
+                if (this.currentChatId) {
+                    console.log(`Chat: Force deactivating chat ${this.currentChatId} when navigating to ${customEvent.detail.page}`);
+                    this.deactivateChat();
+                }
                 
                 // Special handler to make sure message notifications work when not on chat page
                 if (app.socketService) {
@@ -118,10 +138,11 @@ class Chat {
                     });
                 }
             }
-        });
+        };
+        document.addEventListener('pageShown', this.pageShownHandler);
 
         // Make sure notification handlers are set up after page hidden event too
-        document.addEventListener('pageHidden', (event: Event) => {
+        this.pageHiddenHandler = (event: Event) => {
             const customEvent = event as CustomEvent;
             if (customEvent.detail.page === 'chat') {
                 console.log('Chat: Page hidden event received for chat page');
@@ -135,12 +156,52 @@ class Chat {
                     }, 200); // Small delay to ensure cleanup is complete
                 }
             }
-        });
+        };
+        document.addEventListener('pageHidden', this.pageHiddenHandler);
+
+        // Add a listener for router navigation events too, as an extra safeguard
+        this.navigationCompleteHandler = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const path = customEvent.detail.path;
+            
+            // If navigating away from chat page
+            if (!path.includes('/chat') && this.currentChatId) {
+                console.log(`Chat: Navigation detected to ${path}, leaving chat room ${this.currentChatId}`);
+                // Deactivate chat completely
+                this.deactivateChat();
+                // Clean up socket handlers
+                this.cleanupSocketHandlers();
+            }
+        };
+        document.addEventListener('navigationComplete', this.navigationCompleteHandler);
 
         // Set up base socket handlers
         this.setupBaseSocketHandlers();
 
         this.initialized = true;
+    }
+    
+    /**
+     * Clean up event listeners to prevent memory leaks
+     */
+    removeEventListeners(): void {
+        // Remove navigation event listeners
+        if (this.navigationCompleteHandler) {
+            document.removeEventListener('navigationComplete', this.navigationCompleteHandler);
+            this.navigationCompleteHandler = null;
+        }
+        
+        if (this.pageShownHandler) {
+            document.removeEventListener('pageShown', this.pageShownHandler);
+            this.pageShownHandler = null;
+        }
+        
+        if (this.pageHiddenHandler) {
+            document.removeEventListener('pageHidden', this.pageHiddenHandler);
+            this.pageHiddenHandler = null;
+        }
+        
+        console.log('Chat: Event listeners removed to prevent memory leaks');
     }
 
      setupBaseSocketHandlers(): void {
@@ -181,6 +242,16 @@ class Chat {
         app.socketService.off('friendRequestInform');
         app.socketService.off('friendRequestAccept');
         app.socketService.off('newMessage');
+        app.socketService.off('userStatusChange');
+        
+        // Leave any active chat room when navigating away from chat page
+        if (this.currentChatId) {
+            console.log(`Chat: Leaving chat room ${this.currentChatId} during cleanup`);
+            app.socketService.emit('leaveRoom', this.currentChatId);
+            
+            // For debugging purposes
+            console.trace("Chat: Stack trace for leaveRoom event");
+        }
         
         // Important: Tell NotificationManager to reinitialize its handlers
         // This ensures messageReceivedInform gets properly set up again
@@ -259,7 +330,7 @@ class Chat {
             friendSearchPopupAddBtn: document.getElementById('friendSearchPopupAddBtn'),
             friendSearchPopupBlockBtn: document.getElementById('friendSearchPopupBlockBtn'),
             friendSearchPopupCloseBtn: document.getElementById('friendSearchPopupCloseBtn'),
-            
+            openFriendSearchBtn: document.getElementById('openFriendSearchBtn'),
             // Friend search results popup elements
             friendSearchResultsPopup: document.getElementById('friendSearchResultsPopup'),
             friendSearchResultsPopupOverlay: document.getElementById('friendSearchResultsPopupOverlay'),
@@ -312,10 +383,11 @@ class Chat {
             });
         }
 
-        // Friend search (sidebar)
-        if (this.elements.userSearch) {
-            this.elements.userSearch.addEventListener('input', () => this.handleFriendSearch());
-        }
+        // // Friend search (sidebar)
+        // if (this.elements.userSearch) {
+        //     this.elements.userSearch.addEventListener('input', () => this.handleFriendSearch());
+        // }
+          
 
         // Chat search
         if (this.elements.userSearchInput) {
@@ -326,6 +398,17 @@ class Chat {
         if (this.elements.showDashboard) {
             this.elements.showDashboard.addEventListener('click', () => this.showDashboard());
         }
+        if (this.elements.openFriendSearchBtn) {
+            console.log('Adding click event listener to openFriendSearchBtn');
+            this.elements.openFriendSearchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Friend search button clicked!');
+                this.openFriendSearchPopup();
+            });
+        } else {
+            console.log('openFriendSearchBtn element not found!');
+        }
 
         if (this.elements.closeDashboard) {
             this.elements.closeDashboard.addEventListener('click', () => this.hideDashboard());
@@ -335,6 +418,7 @@ class Chat {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.elements.dashboardView?.classList.contains('active')) {
                 this.hideDashboard();
+                this.closeFriendSearchPopup();
             }
         });
 
@@ -374,6 +458,472 @@ class Chat {
     }
 
 
+    /**
+ * Simple popup with search input and pagination
+ */
+private createFriendSearchResultsPopup(): void {
+    if (document.getElementById('friendSearchResultsPopupOverlay')) {
+        return;
+    }
+
+const overlay = document.createElement('div');
+overlay.id = 'friendSearchResultsPopupOverlay';
+overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(7, 7, 24, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+`;
+
+const popup = document.createElement('div');
+popup.id = 'friendSearchResultsPopup';
+popup.style.cssText = `
+    background: var(--cyber-darker, #070718);
+    border: 2px solid var(--cyber-blue, #05D9E8);
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+`;
+
+popup.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 id="popupTitle" style="color: var(--cyber-green, #2DE2E6); margin: 0;">Search Friends</h3>
+        <button id="friendSearchResultsCloseBtn" style="
+            background: var(--cyber-pink, #FF2A6D);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 30px;
+        ">×</button>
+    </div>
+    
+    <!-- Search Input -->
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="popupSearchInput" placeholder="Enter username to search..." style="
+            width: calc(100% - 80px);
+            padding: 10px;
+            background: var(--cyber-black, #030303);
+            color: var(--cyber-green, #2DE2E6);
+            border: 1px solid var(--cyber-purple, #9D4EDD);
+            border-radius: 5px;
+        "/>
+        <button id="searchButton" style="
+            width: 70px;
+            padding: 10px;
+            background: var(--cyber-blue, #05D9E8);
+            color: var(--cyber-black, #030303);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 5px;
+        ">Search</button>
+    </div>
+    
+    <!-- Results Container -->
+    <div id="friendSearchResultsContainer" style="margin-bottom: 20px;">
+        <p style="color: var(--cyber-blue, #05D9E8); text-align: center;">Enter a username to search for friends</p>
+    </div>
+    
+    <!-- Pagination -->
+    <div id="paginationControls" style="text-align: center; display: none;">
+        <button id="prevPage" style="
+            background: var(--cyber-purple, #9D4EDD);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        ">Previous</button>
+        <span id="pageInfo" style="color: var(--cyber-yellow, #F9C80E); margin: 0 15px;">Page 1</span>
+        <button id="nextPage" style="
+            background: var(--cyber-purple, #9D4EDD);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        ">Next</button>
+    </div>
+`;
+
+overlay.appendChild(popup);
+document.body.appendChild(overlay);
+    // Store elements
+    this.elements.friendSearchResultsPopup = popup;
+    this.elements.friendSearchResultsPopupOverlay = overlay;
+    this.elements.friendSearchResultsCloseBtn = document.getElementById('friendSearchResultsCloseBtn');
+
+    this.setupPopupEvents();
+}
+
+/**
+ * Setup popup events
+ */
+private setupPopupEvents(): void {
+    const closeBtn = document.getElementById('friendSearchResultsCloseBtn');
+    const searchBtn = document.getElementById('searchButton');
+    const searchInput = document.getElementById('popupSearchInput') as HTMLInputElement;
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    const overlay = document.getElementById('friendSearchResultsPopupOverlay');
+
+    // Close popup
+    closeBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        this.closeFriendSearchPopup();
+    });
+
+    // Close on overlay click
+    overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            e.stopPropagation();
+            e.preventDefault();
+            this.closeFriendSearchPopup();
+        }
+    });
+
+    // Search on button click
+    searchBtn?.addEventListener('click', () => {
+        this.currentSearchPage = 1;
+        this.performPopupSearch();
+    });
+
+    // Search on Enter key
+    searchInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            this.currentSearchPage = 1;
+            this.performPopupSearch();
+        }
+    });
+
+    // Pagination
+    prevBtn?.addEventListener('click', () => {
+        if (this.currentSearchPage > 1) {
+            this.currentSearchPage--;
+            this.performPopupSearch();
+        }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+        this.currentSearchPage++;
+        this.performPopupSearch();
+    });
+
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay?.style.display === 'flex') {
+             e.preventDefault();
+             e.stopPropagation();
+            this.closeFriendSearchPopup();
+        }
+    });
+}
+
+/**
+ * Perform search in popup
+ */
+private async performPopupSearch(): Promise<void> {
+    const searchInput = document.getElementById('popupSearchInput') as HTMLInputElement;
+    const resultsContainer = document.getElementById('friendSearchResultsContainer');
+    const paginationDiv = document.getElementById('paginationControls');
+    const pageInfo = document.getElementById('pageInfo');
+
+    if (!searchInput || !resultsContainer) return;
+
+    const query = searchInput.value.trim();
+    if (!query) {
+        resultsContainer.innerHTML = '<p style="color: #999; text-align: center;">Enter a username to search for friends</p>';
+        if (paginationDiv) paginationDiv.style.display = 'none';
+        return;
+    }
+
+    // Show loading
+    resultsContainer.innerHTML = '<p style="color: #0ff; text-align: center;">Searching...</p>';
+
+    try {
+        const users = await api.searchUsers(query, this.currentSearchPage, this.searchLimit);
+        
+        if (users.length === 0) {
+            resultsContainer.innerHTML = '<p style="color: #999; text-align: center;">No users found</p>';
+            if (paginationDiv) paginationDiv.style.display = 'none';
+            return;
+        }
+
+        // Display results
+        let html = '';
+        for (const user of users) {
+          const actionButton = this.searchMode === 'chat'                 
+    ? `<button onclick="window.chat.startChatFromPopup('${user.id}', '${user.username}')" style="
+        background: var(--cyber-pink, #FF2A6D);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    ">Chat</button>`
+    : `<button onclick="window.chat.addFriendFromPopup('${user.id}', '${user.username}')" style="
+        background: var(--cyber-purple, #9D4EDD);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    ">Add Friend</button>`;
+
+// Create a unique ID for the profile button to attach the event listener
+const profileBtnId = `profileBtn_${user.id}_${Math.random().toString(36).substr(2, 9)}`;
+html += `
+    <div style="
+        border: 1px solid var(--cyber-blue, #05D9E8);
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--cyber-black, #030303);
+    ">
+        <span style="color: var(--cyber-green, #2DE2E6); font-weight: bold;">${user.username}</span>
+        <div style="display: flex; gap: 8px;">
+            <button id="${profileBtnId}" style="
+                background: var(--cyber-yellow, #F9C80E);
+                color: var(--cyber-black, #030303);
+                border: none;
+                padding: 5px 10px;
+                border-radius: 3px;
+                cursor: pointer;
+                font-weight: bold;
+            ">Profile</button>
+            ${actionButton}
+        </div>
+    </div>
+`;
+
+        // After rendering, attach the event listener
+        setTimeout(() => {
+            const btn = document.getElementById(profileBtnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    ChatNavigationHelper.navigateToFriendProfile(user.id);
+                    // Optionally close the popup if desired:
+                    this.closeFriendSearchPopup();
+                });
+            }
+        }, 0);
+        }
+        
+        resultsContainer.innerHTML = html;
+
+        // Show pagination
+        if (paginationDiv && pageInfo) {
+            paginationDiv.style.display = 'block';
+            pageInfo.textContent = `Page ${this.currentSearchPage}`;
+            
+            // Update pagination buttons
+            const prevBtn = document.getElementById('prevPage') as HTMLButtonElement;
+            const nextBtn = document.getElementById('nextPage') as HTMLButtonElement;
+            
+            if (prevBtn) prevBtn.disabled = this.currentSearchPage <= 1;
+            if (nextBtn) nextBtn.disabled = users.length < this.searchLimit;
+        }
+
+    } catch (error) {
+        console.error('Search error:', error);
+        resultsContainer.innerHTML = '<p style="color: #ff4444; text-align: center;">Search failed. Please try again.</p>';
+    }
+}
+
+/**
+ * Add friend from popup
+ */
+public async addFriendFromPopup(userId: string, username: string): Promise<void> {
+    try {
+        const result = await api.sendFriendRequest(userId);
+        if (result.ok) {
+            toastManager.success(app.getUsername(), `Friend request sent to ${username}!`);
+            await this.loadFriendData(); // Refresh friend data
+            this.closeFriendSearchPopup(); // Close popup after sending request
+        } else {
+            const errorText = await result.text();
+            toastManager.error(app.getUsername(), errorText || 'Failed to send friend request');
+        }
+    } catch (error) {
+        console.error('Error sending friend request:', error);
+        toastManager.error(app.getUsername(), 'Failed to send friend request');
+    }
+}
+
+/**
+ * Start chat from popup
+ */
+public async startChatFromPopup(userId: string, username: string): Promise<void> {
+    try {
+        // Close popup first
+        this.closeFriendSearchPopup();
+
+        // Check if chat exists
+        let chatId;
+        const existingChatRes = await api.fetchWithAutoRefresh(
+            `${this.baseURL}/chats/between/${userId}`,
+            { credentials: 'include' }
+        );
+        
+        if (existingChatRes.ok) {
+            const existingChat = await existingChatRes.json();
+            chatId = existingChat.chat_id;
+        } else if (existingChatRes.status === 404) {
+            // Create new chat
+            const createChatRes = await api.fetchWithAutoRefresh(`${this.baseURL}/chats`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ 
+                    user2Id: userId,
+                    participantId: userId
+                })
+            });
+            
+            if (!createChatRes.ok) {
+                throw new Error(`Failed to create chat: ${createChatRes.status}`);
+            }
+            
+            const newChat = await createChatRes.json();
+            chatId = newChat.chat_id || newChat.id;
+            
+            await this.loadChats(); // Refresh chat list
+        } else {
+            throw new Error(`Failed to check existing chat: ${existingChatRes.status}`);
+        }
+        
+        // Join the chat
+        if (chatId) {
+            this.currentChatWithUsername = username;
+            await this.joinRoom(chatId);
+            toastManager.success(app.getUsername(), `Chat with ${username} opened!`);
+        }
+        
+    } catch (error) {
+        console.error('Error starting chat:', error);
+        toastManager.error(app.getUsername(), `Failed to start chat with ${username}`);
+    }
+}
+
+/**
+ * Close popup
+ */
+private closeFriendSearchPopup(): void {
+    
+    const overlay = document.getElementById('friendSearchResultsPopupOverlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
+}
+
+/**
+ * Open popup for friend search
+ */
+public openFriendSearchPopup(): void {
+    this.searchMode = 'friend';
+    this.openPopup('Search Friends');
+}
+
+/**
+ * Open popup for chat search
+ */
+public openChatSearchPopup(): void {
+    this.searchMode = 'chat';
+    this.openPopup('Start New Chat');
+}
+
+/**
+ * Open popup with title
+ */
+private openPopup(title: string): void {
+    if (!document.getElementById('friendSearchResultsPopupOverlay')) {
+        this.createFriendSearchResultsPopup();
+    }
+    
+    const overlay = document.getElementById('friendSearchResultsPopupOverlay');
+    const popupTitle = document.getElementById('popupTitle');
+    const searchInput = document.getElementById('popupSearchInput') as HTMLInputElement;
+    const resultsContainer = document.getElementById('friendSearchResultsContainer');
+    const paginationDiv = document.getElementById('paginationControls');
+    
+    if (overlay) overlay.style.display = 'flex';
+    if (popupTitle) popupTitle.textContent = title;
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '<p style="color: #999; text-align: center;">Enter a username to search</p>';
+    }
+    if (paginationDiv) paginationDiv.style.display = 'none';
+    
+    // Reset pagination
+    this.currentSearchPage = 1;
+}
+
+/**
+ * Add buttons to sections
+ */
+private addSearchButtons(): void {
+    // Add friend search button
+    const friendSection = this.elements.userSearch?.parentElement;
+    if (friendSection && !document.getElementById('friendSearchBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'friendSearchBtn';
+        btn.textContent = 'Search Friends';
+        btn.style.cssText = `
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            background: #0f0;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        `;
+        btn.addEventListener('click', () => this.openFriendSearchPopup());
+        friendSection.appendChild(btn);
+    }
+
+    // Add chat search button
+    const chatSection = this.elements.userSearchInput?.parentElement;
+    if (chatSection && !document.getElementById('chatSearchBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'chatSearchBtn';
+        btn.textContent = 'Search Users';
+        btn.style.cssText = `
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            background: #0ff;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        `;
+        btn.addEventListener('click', () => this.openChatSearchPopup());
+        chatSection.appendChild(btn);
+    }
+}
 
     // ===== IMPROVED CHAT FUNCTIONALITY =====
     
@@ -441,11 +991,21 @@ class Chat {
                     chatRow.className = 'chat-row chatRow'; // Keep both class names for compatibility
                     chatRow.role = 'listitem';
                     chatRow.dataset.chatId = chat_id;
+                    chatRow.dataset.participantId = participantId; // Store participant ID for status updates
+                    
+                    // Check online status
+                    const isOnline = user.isOnline || false;
+                    const statusColor = isOnline ? '#2DE2E6' : '#666';
+                    const statusTitle = isOnline ? 'Online' : 'Offline';
+                    const statusGlow = isOnline ? 'box-shadow: 0 0 5px rgba(45, 226, 230, 0.8);' : '';
                     
                     // Update to include user actions with profile button
                     chatRow.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="online-status"></span>
+                            <span class="online-status" 
+                                  style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; 
+                                  background-color: ${statusColor}; border: 1px solid #333; ${statusGlow}"
+                                  title="${statusTitle}"></span>
                             <span>${user.username || 'Unknown User'}</span>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -489,6 +1049,7 @@ class Chat {
                             e.stopPropagation(); // Prevent the chatRow click event
                             e.preventDefault();
                             ChatNavigationHelper.navigateToFriendProfile(user.id.toString());
+                           
                         });
                     }
 
@@ -553,7 +1114,7 @@ class Chat {
         } catch (error) {
             console.error('Error selecting chat:', error);
             // components.showToast('error', 'Chat Error', 'Failed to open chat', 3000);
-            toastManager.error(app.getUsername(), 'Failed to open chat');
+            // toastManager.error(app.getUsername(), 'Failed to open chat');
         }
     }
 
@@ -654,6 +1215,9 @@ class Chat {
     
     
         private deactivateChat(): void {
+            // Store the current chat ID before clearing it
+            const chatIdToLeave = this.currentChatId;
+            
             // Clear current chat state
             this.currentChatId = null;
             
@@ -670,9 +1234,10 @@ class Chat {
                 this.elements.chatHeader.textContent = 'Select a chat';
             }
             
-            // Leave socket room
-            if (app.socketService && this.currentChatId) {
-                app.socketService.emit('leaveRoom', this.currentChatId);
+            // Leave socket room - use the stored chatId since we've cleared currentChatId
+            if (app.socketService && chatIdToLeave) {
+                console.log(`Chat: Leaving chat room ${chatIdToLeave} in deactivateChat`);
+                app.socketService.emit('leaveRoom', chatIdToLeave);
             }
             
             // Update URL to remove chatId
@@ -821,23 +1386,59 @@ class Chat {
     }
 
     // ===== FRIEND FUNCTIONALITY =====
-     async handleFriendSearch(): Promise<void> {
-        if (!this.elements.userSearch || !this.elements.userSearchResults) return;
+/**
+ * Simple handleFriendSearch - redirects to popup instead of inline results
+ */
+async handleFriendSearch(): Promise<void> {
+    if (!this.elements.userSearch || !this.elements.userSearchResults) return;
 
-        const query = this.elements.userSearch.value.trim();
-        
-        if (!query) {
+    const query = this.elements.userSearch.value.trim();
+    
+    // Hide results if query is empty
+    if (!query) {
+        this.elements.userSearchResults.style.display = 'none';
+        return;
+    }
+
+    // Show suggestion to use popup for search
+    this.elements.userSearchResults.innerHTML = `
+        <div style="
+            padding: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+        " onclick="window.chat.openFriendSearchWithQuery('${query}')">
+            <p style="color: #0f0; margin: 0;">🔍 Click for Advanced Friend Search</p>
+            <p style="color: #999; margin: 5px 0 0 0; font-size: 12px;">Search "${query}" with pagination</p>
+        </div>
+    `;
+    this.elements.userSearchResults.style.display = 'block';
+}
+
+    /**
+     * Open friend search popup with pre-filled query
+     */
+    public openFriendSearchWithQuery(query: string): void {
+        // Hide the sidebar results first
+        if (this.elements.userSearchResults) {
             this.elements.userSearchResults.style.display = 'none';
-            return;
         }
 
-        try {
-            const users = await api.searchUsers(query);
-            await this.renderFriendSearchResults(users);
-        } catch (error) {
-            console.error('Error searching users:', error);
-
-        }
+        // Open the popup
+        this.openFriendSearchPopup();
+        
+        // Pre-fill the search input and perform search
+        setTimeout(() => {
+            const searchInput = document.getElementById('popupSearchInput') as HTMLInputElement;
+            if (searchInput) {
+                searchInput.value = query;
+                // Automatically perform the search
+                this.currentSearchPage = 1;
+                this.performPopupSearch();
+            }
+        }, 100); // Small delay to ensure popup is fully loaded
     }
 
      async handleChatSearch(): Promise<void> {
@@ -1127,6 +1728,7 @@ class Chat {
             // Add click handlers for buttons
             profileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 ChatNavigationHelper.navigateToFriendProfile(user.id);
                 this.closeFriendSearchPopup();
             });
@@ -1471,6 +2073,8 @@ class Chat {
 
             friendsWithStatus.forEach((friend: any) => {
             const li = document.createElement('li');
+            // Add data-user-id attribute to make it easier to find this element when status changes
+            li.setAttribute('data-user-id', friend.userId);
             li.style.cssText = 'padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;';
             console.log(`Rendering friend: ${friend.username} with object: ${JSON.stringify(friend)}`);
             
@@ -1488,8 +2092,8 @@ class Chat {
                         background-color: ${statusColor};
                         ${friend.isOnline ? 'box-shadow: 0 0 6px rgba(76, 175, 80, 0.6); animation: pulse-green 2s infinite;' : ''}
                     " title="${statusText}"></div>
-                    <span>${friend.username}</span>
-                    ${friend.isOnline ? '<span style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
+                    <span class="friend-username">${friend.username}</span>
+                    ${friend.isOnline ? '<span class="online-dot" style="color: #4CAF50; font-size: 10px; margin-left: 5px;">●</span>' : ''}
                 </div>
                 <div class="friend-actions" style="display: flex; gap: 5px;">
                     <button onclick="ChatNavigationHelper.navigateToFriendProfile('${friend.userId}')" 
@@ -1652,6 +2256,7 @@ class Chat {
         profileOption.onclick = () => {
             ChatNavigationHelper.navigateToFriendProfile(senderId);
             document.body.removeChild(contextMenu);
+            this.closeFriendSearchPopup();
         };
 
         contextMenu.appendChild(profileOption);
@@ -2398,262 +3003,31 @@ private showPopup(user: any): void {
         }
         this.currentPopupUser = null;
     }
-    
-    /**
-     * Creates a popup for displaying friend search results
-     */
-    private createFriendSearchResultsPopup(): void {
-        // Only create if popup doesn't exist in HTML or already created
-        if (document.getElementById('friendSearchResultsPopupOverlay')) {
-            console.log('Friend search results popup already exists in HTML');
-            return;
-        }
-
-        // Create overlay with enhanced visual effects
-        const overlay = document.createElement('div');
-        overlay.id = 'friendSearchResultsPopupOverlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(135deg, var(--cyber-dark, #0F0F1B) 70%, var(--cyber-blue, #05D9E8) 100%);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(12px) brightness(1.1);
-            box-shadow: 0 0 80px 10px var(--cyber-blue, #05D9E8) inset, 0 0 120px 10px var(--cyber-pink, #FF2A6D) inset;
-            border: 2px solid var(--cyber-blue, #05D9E8);
-            transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        `;
-
-        // Create popup with modern design and better visuals
-        const popup = document.createElement('div');
-        popup.id = 'friendSearchResultsPopup';
-        popup.style.cssText = `
-            background: linear-gradient(135deg, var(--cyber-darker, #070718) 0%, var(--cyber-purple, #9D4EDD) 100%);
-            border: 2px solid var(--cyber-blue, #05D9E8);
-            border-radius: 18px;
-            padding: 36px 32px 32px 32px;
-            max-width: 850px;
-            width: 92%;
-            position: relative;
-            box-shadow:
-            0 0 40px 10px var(--cyber-blue, #05D9E8),
-            0 0 0 2px var(--cyber-blue, #05D9E8),
-            0 0 30px 0px var(--cyber-pink, #FF2A6D) inset;
-            animation: popupSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 82vh;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--cyber-blue, #05D9E8) var(--cyber-dark, #0F0F1B);
-            transition: box-shadow 0.3s;
-        `;
-
-        // Add glowing border effect
-        const borderGlow = document.createElement('div');
-        borderGlow.style.cssText = `
-            position: absolute;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-            border-radius: 15px;
-            pointer-events: none;
-            z-index: -1;
-            box-shadow: 0 0 15px var(--cyber-green, #2DE2E6);
-            opacity: 0.8;
-            animation: borderGlowAnimation 4s ease-in-out infinite;
-        `;
-
-        // Add popup header with search icon and title
-        popup.innerHTML = `
-            <style>
-                @keyframes popupSlideIn {
-                    0% { transform: translateY(-20px); opacity: 0; }
-                    100% { transform: translateY(0); opacity: 1; }
-                }
-                
-                @keyframes borderGlowAnimation {
-                    0% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
-                    50% { box-shadow: 0 0 25px rgba(0, 255, 0, 0.5); }
-                    100% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.3); }
-                }
-                
-                @keyframes titleAnimation {
-                    0% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                    100% { background-position: 0% 50%; }
-                }
-                
-                /* Custom scrollbar styles */
-                #friendSearchResultsPopup::-webkit-scrollbar {
-                    width: 8px;
-                }
-                
-                #friendSearchResultsPopup::-webkit-scrollbar-track {
-                    background: rgba(30, 30, 30, 0.5);
-                    border-radius: 10px;
-                }
-                
-                #friendSearchResultsPopup::-webkit-scrollbar-thumb {
-                    background: var(--cyber-green, #0f0);
-                    border-radius: 10px;
-                    opacity: 0.7;
-                }
-                
-                #friendSearchResultsPopup::-webkit-scrollbar-thumb:hover {
-                    background: #00ff00;
-                }
-            </style>
-            
-            <div style="
-                position: absolute; 
-                top: 12px; 
-                right: 12px;
-                display: flex;
-                gap: 10px;
-            ">
-                <button id="friendSearchResultsCloseBtn" style="
-                    background: rgba(0, 0, 0, 0.3);
-                    border: 1px solid #444;
-                    color: #eee;
-                    font-size: 16px;
-                    cursor: pointer;
-                    padding: 0;
-                    width: 30px;
-                    height: 30px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.3s ease;
-                ">×</button>
-            </div>
-            
-            <div style="text-align: center; margin-bottom: 25px; position: relative;">
-                <div style="font-size: 28px; margin-bottom: 5px;">🔍</div>
-                <h3 style="
-                    background: linear-gradient(90deg, #00ff00, #00ffaa, #00ff00);
-                    -webkit-background-clip: text;
-                    background-clip: text;
-                    color: transparent;
-                    margin-bottom: 5px;
-                    font-size: 28px;
-                    font-weight: bold;
-                    letter-spacing: 1px;
-                    animation: titleAnimation 6s ease infinite;
-                    background-size: 200% auto;
-                ">Friend Search Results</h3>
-                <div style="
-                    width: 80px;
-                    height: 3px;
-                    background: linear-gradient(90deg, transparent, var(--cyber-green, #0f0), transparent);
-                    margin: 0 auto;
-                "></div>
-            </div>
-            
-            <div id="friendSearchResultsContainer" style="
-                width: 100%;
-                padding: 5px;
-                position: relative;
-            "></div>
-        `;
-
-        document.body.appendChild(overlay);
-        overlay.appendChild(popup);
-        popup.appendChild(borderGlow);
-
-        // Store elements for later use
-        this.elements.friendSearchResultsPopup = popup;
-        this.elements.friendSearchResultsPopupOverlay = overlay;
-        this.elements.friendSearchResultsCloseBtn = document.getElementById('friendSearchResultsCloseBtn');
-
-        // Add close button event listener with hover effects
-        if (this.elements.friendSearchResultsCloseBtn) {
-            const closeBtn = this.elements.friendSearchResultsCloseBtn;
-            
-            closeBtn.addEventListener('click', () => {
-                this.closeFriendSearchPopup();
-            });
-            
-            closeBtn.addEventListener('mouseenter', () => {
-                closeBtn.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-                closeBtn.style.transform = 'scale(1.1)';
-                closeBtn.style.border = '1px solid #ff3333';
-            });
-            
-            closeBtn.addEventListener('mouseleave', () => {
-                closeBtn.style.backgroundColor = 'rgba(0, 0, 0, 0.3)';
-                closeBtn.style.transform = 'scale(1)';
-                closeBtn.style.border = '1px solid #444';
-            });
-        }
-
-        // Close when clicking outside with fade effect
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                this.closeFriendSearchPopup();
-            }
-        });
-
-        // ESC key to close
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && overlay.style.display === 'flex') {
-                this.closeFriendSearchPopup();
-            }
-        });
-    }
-
-    /**
-     * Closes the friend search results popup with a smooth fade-out animation
-     */
-    private closeFriendSearchPopup(): void {
-        if (this.elements.friendSearchResultsPopupOverlay) {
-            // Animate fade out
-            this.elements.friendSearchResultsPopupOverlay.style.transition = 'opacity 0.3s ease-in-out';
-            this.elements.friendSearchResultsPopupOverlay.style.opacity = '0';
-            
-            // Add a subtle transform animation to the popup
-            if (this.elements.friendSearchResultsPopup) {
-                this.elements.friendSearchResultsPopup.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-                this.elements.friendSearchResultsPopup.style.transform = 'translateY(10px)';
-                this.elements.friendSearchResultsPopup.style.opacity = '0';
-            }
-            
-            // Hide overlay after animation completes
-            setTimeout(() => {
-                if (this.elements.friendSearchResultsPopupOverlay) {
-                    this.elements.friendSearchResultsPopupOverlay.style.display = 'none';
-                    
-                    // Reset transform and opacity for next open
-                    if (this.elements.friendSearchResultsPopup) {
-                        this.elements.friendSearchResultsPopup.style.transform = '';
-                        this.elements.friendSearchResultsPopup.style.opacity = '1';
-                    }
-                }
-            }, 300);
-        }
-    }
-
+   
 
 
     // Cleanup method
     destroy(): void {
-          // ADD THIS LINE at the start
+        // Remove all event listeners first to prevent memory leaks
+        this.removeEventListeners();
+        
+        // Clean up socket handlers
         this.cleanupSocketHandlers();
+        
+        // Clear any pending timeouts
         if (this.chatReloadTimeout) {
             clearTimeout(this.chatReloadTimeout);
         }
         
+        // Disconnect from socket
         if (app.socketService) {
             if (this.currentChatId) {
                 app.socketService.emit('leaveRoom', this.currentChatId);
             }
             app.socketService.disconnect();
         }
+        
+        console.log('Chat: Destroyed and all resources cleaned up');
     }
 
 

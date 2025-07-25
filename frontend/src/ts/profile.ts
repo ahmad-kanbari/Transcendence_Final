@@ -2,10 +2,11 @@ import api from './api';
 import app from './app';
 import utils from './utils';
 import components from './components';
-import { VALIDATION_INPUTS } from './constants';
+import { CONFIG, VALIDATION_INPUTS } from './constants';
 import { baseURL } from './constants';
 import toastManager from './toastManager';
 import game from './game';
+import login from './login';
 // Interface for profile form elements
 interface ProfileForm {
   profileUsername?: HTMLElement | null;
@@ -252,13 +253,9 @@ showGameSessionModal(matchId: string): void {
       <div class="cyber-container">
         <h6 class="font-cyber text-cyber-blue text-lg mb-4">🎮 Session Overview</h6>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="cyber-card text-center">
-            <div class="text-2xl font-cyber text-cyber-blue">${sessionStats.duration}</div>
-            <div class="text-xs text-gray-400">Duration</div>
-          </div>
-          <div class="cyber-card text-center">
-            <div class="text-2xl font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
-            <div class="text-xs text-gray-400">Total Points</div>
+          <div class="cyber-card text-center grid-cols-4 col-span-4">
+            <div class="text-2xl font-cyber text-cyber-green">${Number.isNaN(sessionStats.totalPoints) ? `${0}` : sessionStats.totalPoints }</div>
+            <div class="text-xs text-gray-400">Total Pointss</div>
           </div>
           <div class="cyber-card text-center">
             <div class="text-2xl font-cyber text-cyber-pink">${sessionStats.longestRally}</div>
@@ -282,7 +279,7 @@ showGameSessionModal(matchId: string): void {
       <!-- Performance Metrics -->
       <div class="cyber-container">
         <h6 class="font-cyber text-cyber-pink text-lg mb-4">⚡ Performance Metrics</h6>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
           <div class="space-y-3">
             <div class="flex justify-between">
               <span>Scoring Efficiency: </span>
@@ -697,30 +694,44 @@ showDetailedStatsModal(): void {
     </div>
     
     <!-- Tournaments Card -->
-    <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
-      <div class="flex items-center mb-4">
-        <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
-        <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
-          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">${stats.tournamentsParticipated.size}</div>
+   
+          <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-blue rounded-lg p-6 shadow-lg hover:shadow-neon-blue transition-all duration-300">
+    <div class="flex items-center mb-4">
+      <div class="w-3 h-3 bg-cyber-blue rounded-full mr-3 animate-pulse"></div>
+      <h6 class="font-cyber text-cyber-blue text-lg font-bold animate-glow">🏆 TOURNAMENTS</h6>
+    </div>
+
+      <!-- STACKED VERTICAL LAYOUT -->
+      <div class="flex flex-col items-center gap-4">
+        <!-- Joined -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-blue shadow-neon-blue">
+          <div class="text-3xl font-cyber font-bold text-cyber-blue animate-glow">
+            ${stats.tournamentsParticipated.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">PARTICIPATED</div>
         </div>
-        <div class="text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
-          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">${stats.tournamentsWon.size}</div>
+
+        <!-- Won -->
+        <div class="w-full text-center p-4 bg-cyber-dark rounded-lg border border-cyber-green shadow-neon-green">
+          <div class="text-3xl font-cyber font-bold text-cyber-green animate-glow">
+            ${stats.tournamentsWon.size}
+          </div>
           <div class="text-sm font-cyber text-gray-300">WON</div>
         </div>
-      </div>
-      <div class="mt-4 text-center">
-        <div class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
-          <span class="text-cyber-dark font-cyber font-bold text-lg">
-            ${stats.tournamentsParticipated.size > 0 ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100) : 0}% WIN RATE
-          </span>
+
+        <!-- Win Rate -->
+        <div class="w-full text-center">
+          <div class="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyber-blue to-cyber-green rounded-md border border-cyber-blue shadow-neon-blue">
+            <span class="text-cyber-dark font-cyber font-bold text-lg">
+              ${stats.tournamentsParticipated.size > 0
+                ? Math.round((stats.tournamentsWon.size / stats.tournamentsParticipated.size) * 100)
+                : 0}% WIN RATE
+            </span>
+          </div>
         </div>
       </div>
     </div>
-    
+
     <!-- Scoring Card -->
     <div class="cyber-container bg-gradient-to-br from-cyber-darker to-cyber-dark border-2 border-cyber-green rounded-lg p-6 shadow-lg hover:shadow-neon-green transition-all duration-300">
       <div class="flex items-center mb-4">
@@ -860,13 +871,9 @@ showGameSessionPopup(matchId: string, buttonElement: HTMLElement): void {
   content.innerHTML = `
     <div class="space-y-3">
       <!-- Quick Stats -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-blue">
-          <div class="text-lg font-cyber text-cyber-blue">${sessionStats.duration}</div>
-          <div class="text-xs text-gray-400">Duration</div>
-        </div>
-        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-green">
-          <div class="text-lg font-cyber text-cyber-green">${sessionStats.totalPoints}</div>
+      <div class="grid grid-cols-1 gap-2">
+        <div class="text-center p-2 bg-cyber-dark rounded border border-cyber-green ">
+          <div class="text-lg font-cyber text-cyber-green">${Number.isNaN(sessionStats.totalPoints) ? `${0}` :sessionStats.totalPoints  }</div>
           <div class="text-xs text-gray-400">Total Points</div>
         </div>
       </div>
@@ -1185,18 +1192,45 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     }
     if (this.profileForm.profileAvatar) {
       // First check localStorage for cached profile picture
-      const cachedImage = this.getProfilePictureFromLocalStorage();
+      // const cachedImage = this.getProfilePictureFromLocalStorage();
       
-      if (cachedImage) {
-        this.profileForm.profileAvatar.src = cachedImage;
-        console.log('Using cached profile picture from localStorage');
-      } else if (user.profile_picture) {
+      // if (cachedImage) {
+      //   this.profileForm.profileAvatar.src = cachedImage;
+      //   console.log('Using cached profile picture from localStorage', cachedImage);
+      // } else if (user.profile_picture) {
         // Use server URL if no cached version
-        this.profileForm.profileAvatar.src = user.profile_picture;
-      } else {
-        // Fallback to default
-        this.profileForm.profileAvatar.src = app.getUserImg() || 'src/assets/icons/user.png';
-      }
+        console.log('Using profile picture from user data in populate data:', user.profile_picture);
+            const cleanPath = user.profile_picture?.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                   this.profileForm.profileAvatar!.src= 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                 this.profileForm.profileAvatar!.src= imageUrl;
+                 app.state.user!.profile_picture = user.profile_picture; // Update user state with new profile picture URL
+                // this.saveProfilePictureToLocalStorage(imageUrl);
+          
+                // if (this.profileForm.profileAvatar!.src) {
+                //    this.profileForm.profileAvatar!.src = imageUrl;
+                  login.updateUIAuthState();
+                // }
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                 this.profileForm.profileAvatar!.src = 'src/assets/icons/user.png';
+              });
+      // } else {
+      //   // Fallback to default
+      //   this.profileForm.profileAvatar.src = 'src/assets/icons/user.png';
+      // }
     }
     
     if (this.profileForm.displayNameField)
@@ -1277,19 +1311,48 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
 
         if (!res.ok) {
           toastManager.error(app.getUsername(), 'Failed to upload profile picture');
-          throw new Error('Failed to upload profile picture');}
+          throw new Error('Failed to upload profile picture');
+        }
 
         const data = await res.json();
         // Convert file to base64 and save to localStorage
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64String = event.target?.result as string;
-          this.saveProfilePictureToLocalStorage(base64String);
+     
+          console.log('Profile picture uploaded successfully:', data);
+           if (profileAvatar) {
+          // If profile_picture exists, fetch it through the API, otherwise use default
+          if (data){
+            app.state.user!.profile_picture = data.url; // Update user state with new profile picture URL
+            localStorage.setItem('user', JSON.stringify(app.state.user));
+            const cleanPath = data.url.replace(/^\//, ''); // Remove leading slash if present
+            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+            
+            console.log('Trying to fetch profile picture from:', apiUrl);
+            
+            fetch(apiUrl, { credentials: 'include' })
+              .then(async (res) => {
+                if (!res.ok) {
+                  console.error('Image not found, using default');
+                  profileAvatar.src = 'src/assets/icons/user.png';
+                  throw new Error('Image not found');
+                }
+                const blob = await res.blob();
+                const imageUrl = URL.createObjectURL(blob);
+                profileAvatar.src = imageUrl;
+                this.saveProfilePictureToLocalStorage(data.url);
           
-          if (profileAvatar) {
-            profileAvatar.src = base64String;
+                if (profileAvatar) {
+                  profileAvatar.src = imageUrl;
+                  login.updateUIAuthState();
+                }
+              })
+              .catch((e) => {
+                console.error('Failed to load profile picture, using default', e);
+                profileAvatar.src = 'src/assets/icons/user.png';
+              });
+          } else {
+            profileAvatar.src = 'src/assets/icons/user.png';
           }
-          
+          }
           // Update user state if available
           if (app.state.user) {
             app.state.user.profile_picture = data.url;
@@ -1298,16 +1361,16 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           // Update logged in user image if available
           let loggedInUserImg = document.getElementById('loggedInUserImg');
           if (loggedInUserImg) {
-            loggedInUserImg.setAttribute('src', base64String);
+            loggedInUserImg.setAttribute('src', data.url || 'src/assets/icons/user.png');
           }
-          let loggedInUsername = document.getElementById('loggedInUsername');
+       
           // if (loggedInUsername ) {
           //   loggedInUsername.textContent = app.state.user!.username || app.getUsername() || user.username || 'Unknown User';
         
           // }
-        };
-        reader.readAsDataURL(file);
+
         
+       
         // components.showToast('success', 'Success', 'Profile picture updated successfully');
         toastManager.success(app.getUsername(), 'Profile picture updated successfully');
       } catch (err) {
@@ -1331,20 +1394,27 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           );
 
           if (!res.ok) {
+            console.log('Failed to remove profile picture, response:', res);
             throw new Error('Failed to remove profile picture')
           };
 
           // Remove from localStorage
           this.removeProfilePictureFromLocalStorage();
-
+          console.log('Profile picture removed from localStorage');
           if (profileAvatar) {
             profileAvatar.src = 'src/assets/icons/user.png';
           }
 
           // Update user state if available
           if (app.state.user) {
-            app.state.user.profile_picture = 'src/assets/icons/user.svg';
+            app.state.user.profile_picture = 'src/assets/icons/user.png'; // Use consistent path
             localStorage.setItem('user', JSON.stringify(app.state.user));
+          }
+          
+          // Update logged in user image if available
+          let loggedInUserImg = document.getElementById('loggedInUserImg');
+          if (loggedInUserImg) {
+            loggedInUserImg.setAttribute('src', 'src/assets/icons/user.png');
           }
           
           // components.showToast('success', 'Success', 'Profile picture removed successfully');
@@ -1352,6 +1422,9 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
         } catch (err) {
           console.error('Error removing profile picture:', err);
           // components.showToast('error', 'Remove Error', 'Failed to remove profile picture');
+          if (profileAvatar) {
+            profileAvatar.src = 'src/assets/icons/user.png';
+          }
           toastManager.error(app.getUsername(), 'Failed to remove profile picture');
         }
       });
@@ -1394,6 +1467,12 @@ saveProfilePictureToLocalStorage(base64String: string): void {
       localStorage.removeItem('current_profile_picture_key');
       
       console.log('Profile picture removed from localStorage');
+      
+      // This method is sometimes called without UI updates, so let's ensure 
+      // our state is consistent when this happens outside the click handler
+      if (this.profileForm && this.profileForm.profileAvatar) {
+        this.profileForm.profileAvatar.src = 'src/assets/icons/user.png';
+      }
     } catch (error) {
       console.error('Failed to remove profile picture from localStorage:', error);
     }
@@ -2029,7 +2108,7 @@ async handleUsernameUpdate(): Promise<void> {
         
         if (result.success) {
             // components.showToast('success', 'Success', 'Username updated successfully');
-            toastManager.success(app.getUsername(), 'Username updated successfully');
+            toastManager.success(app.getUsername(), result.message || 'Username updated successfully');
             console.log("the new username in profile", newUsername);
           
             // Update local state
@@ -2045,7 +2124,7 @@ async handleUsernameUpdate(): Promise<void> {
             // console.log("the new username in game", app.getUsername());// Update username in game state
         } else {
             // components.showToast('error', 'Update Error', result.error || 'Failed to update username');
-            toastManager.error(app.getUsername(), result.error || 'Failed to update username');
+            toastManager.error(app.getUsername(), result.error || 'Failed to update username, user exists');
         }
     } catch (error: any) {
         // components.showToast('error', 'Update Error', 'An error occurred while updating username');

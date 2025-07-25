@@ -54,6 +54,10 @@ const start = async () => {
 		const db = connectDB("application");
 		console.log("Database connected");
 
+		// 1.5. Run migrations to ensure all tables exist
+		await db.migrate.latest();
+		console.log("Database migrations completed");
+
 		// 2. Initialize models
 		const friendModel = new Friend(db);
 		const userModel = new User(db);
@@ -212,6 +216,10 @@ const start = async () => {
 			console.log("Remote port:", socket.remotePort);
 		});
 
+		// fastify.register(fastifyStatic, {
+		// 	root: path.join(__dirname, "public"),
+		// 	prefix: "/",
+			// });
 		// 9. Display online users in the console at regular intervals
 		setInterval(() => {
 			console.log(onlineUsers);
@@ -222,6 +230,8 @@ const start = async () => {
 		setInterval(() => {
 			cleanUpTokensJob(tokenModel);
 		}, 5 * 60 * 1000);
+
+		
 	} catch (err) {
 		console.log(err.message);
 		process.exit(1);

@@ -366,32 +366,33 @@
                     <div class="hidden lg:flex items-center justify-center flex-grow">
                         <ul class="flex space-x-4">
                             <li>
-                                <a href="/" class="px-4 py-2 text-cyber-blue hover:text-cyber-pink transition-colors duration-300 flex items-center" id="homeNavBtn" data-i18n="navigation.home">Home</a>
+                                <a href="/" class="px-4 py-2 text-cyber-blue hover:text-cyber-pink flex items-center" id="homeNavBtn" data-i18n="navigation.home">Home</a>
                             </li>
                             <li>
-                                <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-center" id="gameNavBtn" data-i18n="navigation.game">Game</a>
+                                <a href="/game" class="px-4 py-2 text-cyber-green hover:text-cyber-pink flex items-center" id="gameNavBtn" data-i18n="navigation.game">Game</a>
                             </li>
                             <li>
-                                <a href="/chat" class="px-4 py-2 text-cyber-green hover:text-cyber-pink transition-colors duration-300 flex items-center" id="chatNavBtn" data-i18n="navigation.chat">Chat</a>
+                                <a href="/chat" class="px-4 py-2 text-cyber-green hover:text-cyber-pink  flex items-center" id="chatNavBtn" data-i18n="navigation.chat">Chat</a>
                             </li>
                             <li>
-                                <a href="/profile" class="px-4 py-2 text-cyber-purple hover:text-cyber-pink transition-colors duration-300 flex items-center" id="profilePageBtn" data-i18n="navigation.profile">Profile</a>
+                                <a href="/profile" class="px-4 py-2 text-cyber-purple hover:text-cyber-pink  flex items-center" id="profilePageBtn" data-i18n="navigation.profile">Profile</a>
                             </li>
                             <li>
-                                <a href="/login" class="px-4 py-2 text-cyber-yellow hover:text-cyber-pink transition-colors duration-300 flex items-center" id="loginNavBtn" data-i18n="navigation.login">Login</a>
+                                <a href="/login" class="px-4 py-2 text-cyber-yellow hover:text-cyber-pink  flex items-center" id="loginNavBtn" data-i18n="navigation.login">Login</a>
                             </li>
                           
                         </ul>
                     </div>
+                   
                      <div 
-                        class="notification-bell"
+                        class="notification-bell px-3"
                         id="bellBtn" 
                         role="button" 
                         tabindex="0"
                         aria-label="General notifications"
                     >🔔</div>
                     <div 
-                        class="notification-bell" 
+                        class="notification-bell px-3" 
                         id="mailboxBtn" 
                         role="button" 
                         tabindex="0"
@@ -411,9 +412,9 @@
                                 <img id="loggedInUserImg" class="rounded-full w-8 h-8 border border-cyber-blue shadow-neon-blue mr-2" src="src/assets/icons/user.png" alt="User">
                                 <span id="loggedInUsername" class="text-white"></span>
                             </div>
-                            <ul class="dropdown-menu hidden absolute right-0 mt-2 w-48 border border-cyber-blue bg-cyber-darker rounded-md shadow-neon-blue profile-dropdown-menu">
+                            <ul class="dropdown-menu hidden absolute right-0 mt-2 w-48 border border-cyber-blue rounded-md shadow-neon-blue profile-dropdown-menu">
                                 <li>
-                                    <a class="block text-cyber-blue hover:bg-cyber-blue hover:text-cyber-darker transition-all duration-300 flex items-center py-2 px-4" href="/profile" id="profileNavBtn">
+                                    <a class="block text-cyber-blue hover:bg-cyber-blue hover:text-cyber-darker t flex items-center py-2 px-4" href="/profile" id="profileNavBtn">
                                         <i class="bi bi-person-circle mr-2" aria-hidden="true"></i>
                                         <span data-i18n="navigation.profile">Profile</span>
                                     </a>
@@ -427,7 +428,7 @@
                             </ul>
                         </div>
                     </div>
-                    
+                    </div>
                     <!-- Mobile Menu Button -->
                     <button class="lg:hidden flex items-center px-3 py-2 border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink" id="mobileMenuButton" aria-label="Toggle navigation">
                         <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
@@ -469,7 +470,7 @@
                                 <span data-i18n="navigation.login">Login</span>
                             </a>
                         </li>
-                        <li>
+                        <li id="logoutNavBtnMobile">
                             <a href="#" class="flex items-center p-3 text-white hover:text-cyber-pink" id="logoutBtn">
                                 <i class="bi bi-box-arrow-right mr-2 text-cyber-pink"></i>
                                 <span data-i18n="navigation.logout">Logout</span>
@@ -542,18 +543,6 @@
             </div>
         </div>
         
-        <!-- Toast Notification -->
-        <!-- <div id="toastComponent" class="hidden fixed bottom-14 right-12 max-w-sm border-l-4 border-cyber-pink bg-cyber-darker bg-opacity-90 rounded-r shadow-neon-pink">
-            <div class="flex p-4">
-                <div class="flex-shrink-0 text-cyber-pink mr-4">
-                    <i class="bi bi-exclamation-triangle-fill text-2xl"></i>
-                </div>
-                <div>
-                    <p class="font-cyber text-cyber-pink text-lg" id="toastTitle"></p>
-                    <p class="text-white text-sm" id="toastMsg"></p>
-                </div>
-            </div>
-        </div> -->
 
         <!-- JavaScript -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -625,7 +614,7 @@
                 }
                 
                 // Accessibility Toggle for Mobile
-                const accessibilityToggle = document.getElementById('accessibilityToggle');
+                const accessibilityToggle  = document.getElementById('accessibilityToggle');
                 const accessibilityControls = document.getElementById('accessibilityControls');
                 
                 accessibilityToggle.addEventListener('click', function() {
