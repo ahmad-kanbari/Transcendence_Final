@@ -34,6 +34,7 @@ body.authenticated {
 }
 
 /* Enhanced Cyberpunk Background */
+
 /* body::before {
     content: '';
     position: fixed;
@@ -65,6 +66,7 @@ body::after {
     pointer-events: none;
     z-index: -1;
     animation: gridMove 20s linear infinite; */
+
 /* }   */
 
 /* @keyframes backgroundPulse {
@@ -103,12 +105,15 @@ body::after {
         transform: translateY(100vh) translateX(0);
         opacity: 0;
     }
+
     10% {
         opacity: 0.3;
     }
+
     90% {
         opacity: 0.3;
     }
+
     100% {
         transform: translateY(-10vh) translateX(100px);
         opacity: 0;
@@ -125,14 +130,14 @@ body::after {
 /* Enhanced Sidebar */
 .sidebar {
     width: 340px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 95%) 100%);
     border-right: 3px solid transparent;
     border-image: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple)) 1;
     padding: 25px;
     overflow-y: auto;
     box-shadow: 
-        5px 0 25px rgba(5, 217, 232, 0.15),
-        inset -1px 0 0 rgba(5, 217, 232, 0.1);
+        5px 0 25px rgb(5 217 232 / 15%),
+        inset -1px 0 0 rgb(5 217 232 / 10%);
     backdrop-filter: blur(10px);
     position: relative;
 
@@ -155,7 +160,7 @@ body::after {
 }
 
 .sidebar h2 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-blue);
     text-align: center;
     margin-bottom: 25px;
@@ -183,7 +188,7 @@ body::after {
 
 /* Enhanced Sections */
 .section {
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.9) 100%);
+    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgb(15 15 27 / 90%) 100%);
     border: 2px solid transparent;
     border-radius: 12px;
     padding: 20px;
@@ -198,28 +203,25 @@ body::after {
 .section::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     border-radius: 12px;
     padding: 2px;
     background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple), var(--cyber-pink));
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
-    -webkit-mask-composite: xor;
+    mask-composite: xor;
     opacity: 0.6;
 }
 
 .section:hover {
     transform: translateY(-2px);
     box-shadow: 
-        0 10px 30px rgba(5, 217, 232, 0.2),
-        0 0 0 1px rgba(5, 217, 232, 0.3);
+        0 10px 30px rgb(5 217 232 / 20%),
+        0 0 0 1px rgb(5 217 232 / 30%);
 }
 
 .section h3 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-green);
     font-size: 1.1rem;
     margin-bottom: 15px;
@@ -246,14 +248,14 @@ body::after {
 input[type="text"] {
     width: 100%;
     padding: 14px 18px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 95%) 100%);
     border: 2px solid var(--cyber-blue);
     border-radius: 25px;
     color: white;
     font-size: 14px;
     margin-bottom: 15px;
     transition: all 0.4s ease;
-    font-family: 'Roboto', sans-serif;
+    font-family: Roboto, sans-serif;
     backdrop-filter: blur(5px);
 }
 
@@ -261,14 +263,14 @@ input[type="text"]:focus {
     outline: none;
     border-color: var(--cyber-green);
     box-shadow: 
-        0 0 0 3px rgba(45, 226, 230, 0.2),
-        0 0 20px rgba(45, 226, 230, 0.3),
-        inset 0 0 20px rgba(45, 226, 230, 0.1);
+        0 0 0 3px rgb(45 226 230 / 20%),
+        0 0 20px rgb(45 226 230 / 30%),
+        inset 0 0 20px rgb(45 226 230 / 10%);
     transform: scale(1.02);
 }
 
 input[type="text"]::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgb(255 255 255 / 50%);
     font-style: italic;
 }
 
@@ -282,11 +284,11 @@ ul {
 li {
     padding: 12px 15px;
     margin: 8px 0;
-    /* background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.8) 100%); */
-    /* border: 1px solid var(--cyber-purple); */
-    /* border-radius: 8px; */
-    /* cursor: pointer; */
-    /* transition: all 0.3s ease; */
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 80%) 100%);
+    border: 1px solid var(--cyber-purple);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
     font-size: 14px;
     position: relative;
     overflow: hidden;
@@ -299,7 +301,7 @@ li::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    /* background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.2), transparent); */
+    background: linear-gradient(90deg, transparent, rgb(157 78 221 / 20%), transparent);
     transition: left 0.5s ease;
 }
 
@@ -307,12 +309,12 @@ li:hover::before {
     left: 100%;
 }
 
-/* li:hover {
-    background: linear-gradient(135deg, var(--cyber-purple) 0%, rgba(157, 78, 221, 0.8) 100%);
+li:hover {
+    background: linear-gradient(135deg, var(--cyber-purple) 0%, rgb(157 78 221 / 80%) 100%);
     color: white;
     box-shadow: 
-        0 5px 15px rgba(157, 78, 221, 0.4),
-        0 0 0 1px rgba(157, 78, 221, 0.6);
+        0 5px 15px rgb(157 78 221 / 40%),
+        0 0 0 1px rgb(157 78 221 / 60%);
     transform: translateX(5px);
 } */
 
@@ -322,14 +324,14 @@ li:hover::before {
     width: calc(100% - 30px);
     max-height: 250px;
     overflow-y: auto;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.98) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 98%) 100%);
     border: 2px solid var(--cyber-blue);
     border-radius: 12px;
     display: none;
     z-index: 1000;
     box-shadow: 
-        0 15px 35px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(5, 217, 232, 0.3);
+        0 15px 35px rgb(0 0 0 / 70%),
+        0 0 0 1px rgb(5 217 232 / 30%);
     backdrop-filter: blur(10px);
 }
 
@@ -344,14 +346,14 @@ li:hover::before {
 /* Enhanced Top Bar */
 .topbar {
     height: 70px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 95%) 100%);
     border-bottom: 3px solid transparent;
     border-image: linear-gradient(90deg, var(--cyber-blue), var(--cyber-pink)) 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 30px;
-    box-shadow: 0 5px 20px rgba(5, 217, 232, 0.15);
+    box-shadow: 0 5px 20px rgb(5 217 232 / 15%);
     backdrop-filter: blur(10px);
     position: relative;
 }
@@ -373,7 +375,7 @@ li:hover::before {
 }
 
 .topbar h1 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-blue);
     font-size: 1.8rem;
     font-weight: 700;
@@ -392,7 +394,7 @@ li:hover::before {
     border-radius: 25px;
     padding: 12px 20px;
     color: var(--cyber-darker);
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     font-weight: 600;
     font-size: 12px;
     text-transform: uppercase;
@@ -411,7 +413,7 @@ li:hover::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 20%), transparent);
     transition: left 0.5s ease;
 }
 
@@ -422,8 +424,8 @@ li:hover::before {
 .dashboard-toggle:hover {
     transform: translateY(-2px);
     box-shadow: 
-        0 8px 25px rgba(45, 226, 230, 0.4),
-        0 0 0 2px rgba(45, 226, 230, 0.3);
+        0 8px 25px rgb(45 226 230 / 40%),
+        0 0 0 2px rgb(45 226 230 / 30%);
 }
 
 /* Enhanced Notification Bells */
@@ -449,7 +451,7 @@ li:hover::before {
     background: linear-gradient(135deg, var(--cyber-blue) 0%, var(--cyber-green) 100%);
     box-shadow: 
         0 0 20px var(--cyber-blue),
-        0 8px 25px rgba(5, 217, 232, 0.4);
+        0 8px 25px rgb(5 217 232 / 40%);
     transform: translateY(-3px) scale(1.1);
 }
 
@@ -468,7 +470,7 @@ li:hover::before {
     justify-content: center;
     font-size: 11px;
     font-weight: bold;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     visibility: hidden;
     animation: notificationPulse 2s ease-in-out infinite;
 }
@@ -491,14 +493,14 @@ li:hover::before {
     width: 360px;
     max-height: 450px;
     overflow-y: auto;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.98) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 98%) 100%);
     border: 2px solid var(--cyber-blue);
     border-radius: 15px;
     padding: 20px;
     display: none;
     box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(5, 217, 232, 0.3);
+        0 20px 40px rgb(0 0 0 / 70%),
+        0 0 0 1px rgb(5 217 232 / 30%);
     z-index: 999;
     backdrop-filter: blur(15px);
     animation: slideDown 0.3s ease-out;
@@ -509,6 +511,7 @@ li:hover::before {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -521,15 +524,15 @@ li:hover::before {
 
 .notification {
     padding: 15px;
-    border-bottom: 1px solid rgba(5, 217, 232, 0.2);
+    border-bottom: 1px solid rgb(5 217 232 / 20%);
     margin-bottom: 12px;
     border-radius: 8px;
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.8) 100%);
+    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgb(15 15 27 / 80%) 100%);
     transition: all 0.3s ease;
 }
 
 .notification:hover {
-    background: linear-gradient(135deg, var(--cyber-blue) 0%, rgba(5, 217, 232, 0.2) 100%);
+    background: linear-gradient(135deg, var(--cyber-blue) 0%, rgb(5 217 232 / 20%) 100%);
     transform: translateX(5px);
 }
 
@@ -549,7 +552,7 @@ li:hover::before {
 /* Enhanced Chat List */
 #chatList {
     width: 300px;
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgb(15 15 27 / 95%) 100%);
     border-right: 3px solid transparent;
     border-image: linear-gradient(45deg, var(--cyber-purple), var(--cyber-pink)) 1;
     padding: 25px;
@@ -558,7 +561,7 @@ li:hover::before {
 }
 
 #chatList h3 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-purple);
     margin-bottom: 20px;
     text-align: center;
@@ -576,7 +579,7 @@ li:hover::before {
 
 .chat-row {
     padding: 15px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.9) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 90%) 100%);
     border: 2px solid var(--cyber-purple);
     border-radius: 10px;
     cursor: pointer;
@@ -592,7 +595,7 @@ li:hover::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgb(157 78 221 / 30%), transparent);
     transition: left 0.6s ease;
 }
 
@@ -601,8 +604,9 @@ li:hover::before {
     padding: 25px;
     overflow-y: auto;
     background: linear-gradient(to bottom, 
-        rgba(15, 15, 27, 0.9) 0%, 
-        rgba(7, 7, 24, 0.95) 100%);
+        rgb(15 15 27 / 90%) 0%, 
+        rgb(7 7 24 / 95%) 100%);
+
     /* position: relative; */
 }
 
@@ -612,17 +616,17 @@ li:hover::before {
 
 .chat-row:hover,
 .chat-row.active {
-    background: linear-gradient(135deg, var(--cyber-purple) 0%, rgba(157, 78, 221, 0.8) 100%);
+    background: linear-gradient(135deg, var(--cyber-purple) 0%, rgb(157 78 221 / 80%) 100%);
     box-shadow: 
-        0 8px 25px rgba(157, 78, 221, 0.4),
-        0 0 0 2px rgba(157, 78, 221, 0.6);
+        0 8px 25px rgb(157 78 221 / 40%),
+        0 0 0 2px rgb(157 78 221 / 60%);
     transform: translateX(8px);
 }
 
 /* Enhanced Start Chat Area */
 #startChatArea {
     padding: 20px;
-    border-bottom: 2px solid rgba(157, 78, 221, 0.3);
+    border-bottom: 2px solid rgb(157 78 221 / 30%);
     margin-bottom: 20px;
     position: relative;
 }
@@ -640,10 +644,7 @@ li:hover::before {
 .chatPanel::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: 
         radial-gradient(circle at 30% 70%, var(--cyber-green) 0%, transparent 50%),
         radial-gradient(circle at 70% 30%, var(--cyber-blue) 0%, transparent 50%);
@@ -653,13 +654,13 @@ li:hover::before {
 
 #chatHeader {
     height: 70px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 95%) 100%);
     border-bottom: 3px solid transparent;
     border-image: linear-gradient(90deg, var(--cyber-green), var(--cyber-blue)) 1;
     display: flex;
     align-items: center;
     padding: 0 25px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-green);
     font-weight: 600;
     font-size: 1.1rem;
@@ -670,10 +671,9 @@ li:hover::before {
 #messages {
     flex: 1;
     padding: 25px;
-    overflow-y: auto;
     background: linear-gradient(to bottom, 
-        rgba(15, 15, 27, 0.9) 0%, 
-        rgba(7, 7, 24, 0.95) 100%);
+        rgb(15 15 27 / 90%) 0%, 
+        rgb(7 7 24 / 95%) 100%);
     position: relative;
     overflow-y: auto;
 }
@@ -695,6 +695,7 @@ li:hover::before {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -706,7 +707,7 @@ li:hover::before {
     color: var(--cyber-darker);
     margin-left: auto;
     border-bottom-right-radius: 5px;
-    box-shadow: 0 5px 15px rgba(5, 217, 232, 0.3);
+    box-shadow: 0 5px 15px rgb(5 217 232 / 30%);
 }
 
 .message.received {
@@ -714,7 +715,7 @@ li:hover::before {
     color: white;
     margin-right: auto;
     border-bottom-left-radius: 5px;
-    box-shadow: 0 5px 15px rgba(157, 78, 221, 0.3);
+    box-shadow: 0 5px 15px rgb(157 78 221 / 30%);
 }
 
 /* Enhanced Message Input Area */
@@ -722,7 +723,7 @@ li:hover::before {
     display: flex;
     flex-direction: column; /* Stack vertically */
     padding: 25px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.95) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 95%) 100%);
     border-top: 3px solid transparent;
     border-image: linear-gradient(90deg, var(--cyber-green), var(--cyber-blue)) 1;
     gap: 15px;
@@ -732,7 +733,7 @@ li:hover::before {
 #messageInput {
     flex: 1;
     padding: 15px 25px;
-    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.9) 100%);
+    background: linear-gradient(135deg, var(--cyber-dark) 0%, rgb(15 15 27 / 90%) 100%);
     border: 2px solid var(--cyber-green);
     border-radius: 30px;
     color: white;
@@ -745,9 +746,9 @@ li:hover::before {
 #messageInput:focus {
     outline: none;
     box-shadow: 
-        0 0 0 3px rgba(45, 226, 230, 0.2),
-        0 0 25px rgba(45, 226, 230, 0.3),
-        inset 0 0 20px rgba(45, 226, 230, 0.1);
+        0 0 0 3px rgb(45 226 230 / 20%),
+        0 0 25px rgb(45 226 230 / 30%),
+        inset 0 0 20px rgb(45 226 230 / 10%);
     border-color: var(--cyber-blue);
 }
 
@@ -757,7 +758,7 @@ li:hover::before {
     color: var(--cyber-darker);
     border: none;
     border-radius: 30px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -775,7 +776,7 @@ li:hover::before {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 30%), transparent);
     transition: left 0.5s ease;
 }
 
@@ -786,8 +787,8 @@ li:hover::before {
 #sendBtn:hover {
     background: linear-gradient(135deg, var(--cyber-blue) 0%, var(--cyber-purple) 100%);
     box-shadow: 
-        0 8px 25px rgba(45, 226, 230, 0.4),
-        0 0 0 2px rgba(45, 226, 230, 0.3);
+        0 8px 25px rgb(45 226 230 / 40%),
+        0 0 0 2px rgb(45 226 230 / 30%);
     transform: translateY(-2px);
 }
 
@@ -803,12 +804,12 @@ li:hover::before {
     left: 30px;
     top: 30px;
     width: 320px;
-    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgba(7, 7, 24, 0.98) 100%);
+    background: linear-gradient(135deg, var(--cyber-darker) 0%, rgb(7 7 24 / 98%) 100%);
     border: 2px solid var(--cyber-blue);
     border-radius: 12px;
     box-shadow: 
-        0 15px 40px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(5, 217, 232, 0.3);
+        0 15px 40px rgb(0 0 0 / 70%),
+        0 0 0 1px rgb(5 217 232 / 30%);
     padding: 20px;
     z-index: 10000;
     opacity: 0;
@@ -825,7 +826,7 @@ li:hover::before {
 }
 
 .toast-notification .header {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     font-weight: bold;
     margin-bottom: 10px;
     font-size: 15px;
@@ -854,17 +855,17 @@ li:hover::before {
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
     border-radius: 6px;
-    box-shadow: 0 0 10px rgba(5, 217, 232, 0.5);
+    box-shadow: 0 0 10px rgb(5 217 232 / 50%);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(45deg, var(--cyber-green), var(--cyber-blue));
-    box-shadow: 0 0 15px rgba(45, 226, 230, 0.7);
+    box-shadow: 0 0 15px rgb(45 226 230 / 70%);
 }
 
 /* Accessibility - High Contrast Mode */
 body.high-contrast {
-    background: #000000;
+    background: #000;
 }
 
 .high-contrast .sidebar,
@@ -872,14 +873,14 @@ body.high-contrast {
 .high-contrast .section,
 .high-contrast .chat-row,
 .high-contrast input {
-    background: #000000 !important;
-    border-color: #ffffff !important;
-    color: #ffffff !important;
+    background: #000 !important;
+    border-color: #fff !important;
+    color: #fff !important;
 }
 
 .high-contrast .notification-bell:hover {
-    background: #ffffff !important;
-    color: #000000 !important;
+    background: #fff !important;
+    color: #000 !important;
 }
 
 /* Text Size Adjustments */
@@ -905,7 +906,7 @@ body.rtl {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
     .sidebar {
         width: 300px;
     }
@@ -915,7 +916,7 @@ body.rtl {
     }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
     .sidebar {
         width: 280px;
     }
@@ -1005,11 +1006,8 @@ li:focus {
 .dashboard-view {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.9);
+    inset: 0;
+    background: rgb(0 0 0 / 90%);
     backdrop-filter: blur(10px);
     z-index: 2000;
     padding: 30px;
@@ -1027,6 +1025,7 @@ li:focus {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -1051,11 +1050,11 @@ li:focus {
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(5, 217, 232, 0.3);
+    box-shadow: 0 15px 30px rgb(5 217 232 / 30%);
 }
 
 .stat-card h3 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: Orbitron, sans-serif;
     color: var(--cyber-blue);
     margin-bottom: 15px;
     text-transform: uppercase;
