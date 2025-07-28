@@ -83,7 +83,7 @@ class NotificationManager {
         this.startSocketHealthCheck();
     }
 
-    private retryInitialization(attempts: number = 0): void {
+    retryInitialization(attempts: number = 0): void {
         const maxAttempts = 10;
         const delay = 200 + (attempts * 100); // Progressive delay
         
@@ -183,7 +183,7 @@ class NotificationManager {
                 // Load and render message notifications
                 try {
                     const page = 1;
-                    const limit = 5;
+                    const limit = 8;
                     const notifications = await api.getNotifications('messages', page, limit);
                     if (this.elements.messageNotifications) {
                         this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
@@ -340,17 +340,12 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                 pages.showPage('chat');
             
                        // Wait for chat page to initialize, then join room
-                // setTimeout(async () => {
+  
                     // await
                     await chat.loadChats();
                     // await
                      await chat.forceJoinRoom(chatId);
-                // }, 50);
-
-                //    setTimeout(async () => {
-                //     await chat.loadChats();
-                //     await chat.forceJoinRoom(chatId);
-                // }, 100);
+             
                 
                     await api.fetchWithAutoRefresh(
                     `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
@@ -772,6 +767,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 		const notifications = await res.json();
             this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
             if (this.elements.mailboxBtn) {
+                console.log('Setting mailbox notification count:', this.mailboxNotificationCount);
                 this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
             }
         } catch (error) {
@@ -779,7 +775,8 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
     }
 
-    private async initializeNotifications(): Promise<void> {
+    async initializeNotifications(): Promise<void> {
+        console.log('NotificationManager: Initializing notifications');
         await Promise.all([
             this.initializeNotificationCounter(),
             this.initializeMailboxNotificationCounter()
