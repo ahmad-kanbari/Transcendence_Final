@@ -1181,14 +1181,15 @@ private addSearchButtons(): void {
             console.log(`Loading messages from join room function`);
             this.clearMessages(); // Clear messages before loading new ones
             toastManager.info(app.getUsername(), 'Loading messages...');
+            toastManager.info(app.getUsername(), `Loaded  messages from chat ${chatId}`);
             setTimeout(async () => {
                 const messages = await api.getChatMessages(chatId.toString());
 
-                messages.forEach((message: any) => {
-                    // toastManager.info(app.getUsername(), `Loading message from chat ${message}`);
-                    this.appendMessage(message);
-                });
-                toastManager.info(app.getUsername(), `Loaded ${messages.length} messages from chat ${chatId}`);
+                // Process messages sequentially to maintain order
+                for (const message of messages) {
+                    await this.appendMessage(message);
+                }
+                
                 // Update header
                 if (this.elements.chatHeader) {
                     this.elements.chatHeader.textContent = `Chat Active with ${this.currentChatWithUsername || 'Unknown User'}`;
@@ -1347,23 +1348,20 @@ private addSearchButtons(): void {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
     messageDiv.setAttribute('data-sender-id', message.sender_id);
-    setTimeout(async () => {
-        
-   
-    let sender =  await api.getUserById(message.sender_id);
-    messageDiv.setAttribute('data-sender-name', sender.username || 'Unknown User');
     
+    // let sender = await api.getUserById(message.sender_id);
+    // let senderJson = await sender.json();
+    // messageDiv.setAttribute('data-sender-name', senderJson.username || 'Unknown User');
     const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     // Enhanced message with clickable username (only for received messages)
-    const senderName = sender.username || 'Unknown';
+    // const senderName = senderJson.username || 'Unknown';
     const isOwnMessage = message.sender_id === this.currentUserId;
     
     messageDiv.innerHTML = `
         ${!isOwnMessage ? `
             <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
                 <span class="clickable-username" 
-                
                       style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
                       onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
                 </span>
@@ -1372,10 +1370,9 @@ private addSearchButtons(): void {
         <div class="message-content">${message.content}</div>
         <div class="message-time" style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
     `;
-
+    
     this.elements.messageBox!.appendChild(messageDiv);
     this.elements.messageBox!.scrollTop = this.elements.messageBox!.scrollHeight;
-     }, 500);
 }
 
     clearMessages(): void {

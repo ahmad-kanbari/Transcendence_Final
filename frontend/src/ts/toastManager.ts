@@ -79,7 +79,7 @@ export class ToastManager {
             .toast-notification .message {
                 font-size: 13px;
                 line-height: 1.4;
-                opacity: 0.9;
+            
                 overflow-wrap: break-word;
                 word-break: break-word;
                 overflow: hidden;
