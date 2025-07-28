@@ -230,7 +230,7 @@ class NotificationManager {
             if (this.elements.bellBtn) {
                 this.elements.bellBtn.setAttribute('data-count', '0');
             }
-            
+            // this.initializeNotificationCounter();
         } catch (error) {
             console.error('Error opening general notifications:', error);
             
@@ -358,7 +358,8 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                 // // Update mailbox notification count
                 // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
                 // this.updateMailboxNotificationCount();
-                notificationManager.decrementMailboxCount();
+                notificationManager.initializeMailboxNotificationCounter();
+                // notificationManager.decrementMailboxCount();
                 return;
        
                 // return;
@@ -547,7 +548,8 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 chat.appendMessage(data);
         //         // return; // Ignore messages not in current chat
             }else {
-                notificationManager.incrementMailboxCount();
+                // notificationManager.incrementMailboxCount();
+                notificationManager.initializeMailboxNotificationCounter();
             }
             // chat.debouncedReloadChats(); // Use debounced reload
             setTimeout(async () : Promise<void> => {  
@@ -718,9 +720,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             }
 
             // Increment notification count and update badge
-            this.notificationCount++;
-            this.updateBellBadge();
-            
+            // this.notificationCount++;
+            // this.updateBellBadge();
+            this.initializeNotificationCounter();
             console.log(`NotificationManager: Notification added successfully, count: ${this.notificationCount}`);
         } catch (error) {
             console.error('NotificationManager: Error adding notification:', error);
@@ -755,7 +757,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     private async initializeMailboxNotificationCounter(): Promise<void> {
         try {
             const page = 1;
-            const limit = 5;
+            const limit = 7;
             // const notifications = await api.getNotifications('messages', page, limit);
             const res = await api.fetchWithAutoRefresh(
 			`${this.baseURL}/notifications/messages?page=${page}&limit=${limit}`,
@@ -765,7 +767,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 		if (!res.ok) throw new Error("Failed to fetch mailbox notifications");
 
 		const notifications = await res.json();
+        console.log('Mailbox notifications:', notifications);
             this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
+            console.log('Mailbox notification count:', this.mailboxNotificationCount);
             if (this.elements.mailboxBtn) {
                 console.log('Setting mailbox notification count:', this.mailboxNotificationCount);
                 this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
