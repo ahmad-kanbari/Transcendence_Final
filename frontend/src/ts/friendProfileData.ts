@@ -1279,7 +1279,7 @@ class FriendProfile {
                         const opponentScore = isFriendPlayer1 ? match.player2_score : match.player1_score;
                         
                         friendWon = friendScore > opponentScore;
-                        opponent = isFriendPlayer1 ? match.player2_name : match.player1_name;
+                        opponent = isFriendPlayer1 ? match.player2_name : match.player2_name;
                         score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
                     }
                     
