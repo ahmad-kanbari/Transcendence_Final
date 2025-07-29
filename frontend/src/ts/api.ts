@@ -297,30 +297,13 @@ class API {
  
     async getCurrentUser(retryCount: number = 0): Promise<ApiResponse<UserData>> {
       try {
-          const response = await fetch(ENDPOINTS.user.showUser, {
+          const response = await this.fetchWithAutoRefresh(ENDPOINTS.user.showUser, {
               method: 'GET',
               credentials: 'include',
               headers: {
                   'Content-Type': 'application/json'
               }
           });
-
-          if (response.status === 401 && retryCount < 1) {
-              const refreshResult = await this.refreshToken();
-              
-              if (refreshResult.success) {
-                  return await this.getCurrentUser(retryCount + 1);
-              } else {
-                  console.error('Token refresh failed:', refreshResult.error);
-                  utils.cleanUp(); 
-                  return { 
-                      success: false, 
-                      error: 'Authentication expired. Please log in again.',
-                      authExpired: true 
-                  };
-              }
-          }
-          
           if (!response.ok) {
               throw new Error(`Failed to fetch current user: ${response.status}`);
           }
