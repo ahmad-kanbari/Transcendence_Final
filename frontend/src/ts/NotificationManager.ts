@@ -344,21 +344,21 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                     // await
                     await chat.loadChats();
                     // await
-                     await chat.forceJoinRoom(chatId);
+                    await chat.forceJoinRoom(chatId);
              
                 
-                    await api.fetchWithAutoRefresh(
-                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
-                    {
-                        method: 'PATCH',
-                        credentials: 'include',
-                    }
-                );
+                    // await api.fetchWithAutoRefresh(
+                    // `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+                    // {
+                    //     method: 'PATCH',
+                    //     credentials: 'include',
+                    // }
+                // );
                 
                 // // Update mailbox notification count
                 // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
                 // this.updateMailboxNotificationCount();
-                notificationManager.initializeMailboxNotificationCounter();
+                // notificationManager.initializeMailboxNotificationCounter();
                 // notificationManager.decrementMailboxCount();
                 return;
        
@@ -370,24 +370,25 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
             await chat.forceJoinRoom(chatId);
             
             // Mark this specific chat's messages as read
-            try {
-                await api.fetchWithAutoRefresh(
-                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
-                    {
-                        method: 'PATCH',
-                        credentials: 'include',
-                    }
-                );
+            // try {
+            //     await api.fetchWithAutoRefresh(
+            //         `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+            //         {
+            //             method: 'PATCH',
+            //             credentials: 'include',
+            //         }
+            //     );
                 
-                // // Update mailbox notification count
-                // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
-                // this.updateMailboxNotificationCount();
-                notificationManager.decrementMailboxCount();
+            //     // // Update mailbox notification count
+            //     // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+            //     // this.updateMailboxNotificationCount();
+            //     // notificationManager.decrementMailboxCount();
+            //     notificationManager.initializeMailboxNotificationCounter();
 
                 
-            } catch (error) {
-                console.error('Error marking messages as read:', error);
-            }
+            // } catch (error) {
+            //     console.error('Error marking messages as read:', error);
+            // }
             
             // components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
             // toastManager.success(app.getUsername(), 'Opened chat from notification');
@@ -754,7 +755,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
     }
 
-    private async initializeMailboxNotificationCounter(): Promise<void> {
+    async initializeMailboxNotificationCounter(): Promise<void> {
         try {
             const page = 1;
             const limit = 7;
