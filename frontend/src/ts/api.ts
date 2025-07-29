@@ -304,19 +304,6 @@ class API {
                   'Content-Type': 'application/json'
               }
           });
-
-          if (response.status === 401 && retryCount < 1) {
-             
-                  console.error(`Token refresh failed: Response status ${response.status}`);
-                  utils.cleanUp(); 
-                  return { 
-                      success: false, 
-                      error: 'Authentication expired. Please log in again.',
-                      authExpired: true 
-                  };
-            
-          }
-          
           if (!response.ok) {
               throw new Error(`Failed to fetch current user: ${response.status}`);
           }
