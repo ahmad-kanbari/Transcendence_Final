@@ -93,14 +93,18 @@ class App {
     
     try {
       // this.resetAppContainer();
-      
+      let deviceId = localStorage.getItem("deviceId");
+      if (!deviceId) {
+        deviceId = login.generateDeviceId();
+        localStorage.setItem("deviceId", deviceId);
+      }
       components.showSpinner();
       components.init(this.appContainer);
 
       // Initialize socket before restoring auth state
       // This ensures the socket is ready when authentication is verified
       this.initializeSocket();
-      
+  
       pages.init(this.appContainer);
       await pages.loadAllPages();
       
@@ -108,10 +112,9 @@ class App {
       register.init();
 
     
-    //   twoFA.init();
-      profile.init();
+          profile.init();
       chat.init();
-      // friends.init();
+    
       friendProfile.init(); 
       this.registerRoutes();
       
