@@ -7,6 +7,7 @@ import register from './register';
 import components from './components';
 import { baseURL, CONFIG } from './constants';
 import toastManager from './toastManager';
+import NotificationManager from './NotificationManager';
 
 // Define interface for the login form elements
 interface LoginForm {
@@ -599,7 +600,7 @@ show2FAModal(): void {
         });
       }
     }
-    
+    NotificationManager.initializeNotifications();
     toastManager.success(app.getUsername(), 'You have been logged in successfully.');
     console.log('Login successful:', userData);
     router.navigate('/');

@@ -83,7 +83,7 @@ class NotificationManager {
         this.startSocketHealthCheck();
     }
 
-    private retryInitialization(attempts: number = 0): void {
+    retryInitialization(attempts: number = 0): void {
         const maxAttempts = 10;
         const delay = 200 + (attempts * 100); // Progressive delay
         
@@ -183,7 +183,7 @@ class NotificationManager {
                 // Load and render message notifications
                 try {
                     const page = 1;
-                    const limit = 5;
+                    const limit = 8;
                     const notifications = await api.getNotifications('messages', page, limit);
                     if (this.elements.messageNotifications) {
                         this.renderNotificationList(this.elements.messageNotifications, notifications, 'messages');
@@ -230,7 +230,7 @@ class NotificationManager {
             if (this.elements.bellBtn) {
                 this.elements.bellBtn.setAttribute('data-count', '0');
             }
-            
+            // this.initializeNotificationCounter();
         } catch (error) {
             console.error('Error opening general notifications:', error);
             
@@ -340,30 +340,26 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
                 pages.showPage('chat');
             
                        // Wait for chat page to initialize, then join room
-                // setTimeout(async () => {
+  
                     // await
                     await chat.loadChats();
                     // await
-                     await chat.forceJoinRoom(chatId);
-                // }, 50);
-
-                //    setTimeout(async () => {
-                //     await chat.loadChats();
-                //     await chat.forceJoinRoom(chatId);
-                // }, 100);
+                    await chat.forceJoinRoom(chatId);
+             
                 
-                    await api.fetchWithAutoRefresh(
-                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
-                    {
-                        method: 'PATCH',
-                        credentials: 'include',
-                    }
-                );
+                    // await api.fetchWithAutoRefresh(
+                    // `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+                    // {
+                    //     method: 'PATCH',
+                    //     credentials: 'include',
+                    // }
+                // );
                 
                 // // Update mailbox notification count
                 // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
                 // this.updateMailboxNotificationCount();
-                notificationManager.decrementMailboxCount();
+                // notificationManager.initializeMailboxNotificationCounter();
+                // notificationManager.decrementMailboxCount();
                 return;
        
                 // return;
@@ -374,24 +370,25 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
             await chat.forceJoinRoom(chatId);
             
             // Mark this specific chat's messages as read
-            try {
-                await api.fetchWithAutoRefresh(
-                    `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
-                    {
-                        method: 'PATCH',
-                        credentials: 'include',
-                    }
-                );
+            // try {
+            //     await api.fetchWithAutoRefresh(
+            //         `${this.baseURL}/notifications/messages/by-chat/${chatId}`,
+            //         {
+            //             method: 'PATCH',
+            //             credentials: 'include',
+            //         }
+            //     );
                 
-                // // Update mailbox notification count
-                // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
-                // this.updateMailboxNotificationCount();
-                notificationManager.decrementMailboxCount();
+            //     // // Update mailbox notification count
+            //     // this.mailboxNotificationCount = Math.max(0, this.mailboxNotificationCount - 1);
+            //     // this.updateMailboxNotificationCount();
+            //     // notificationManager.decrementMailboxCount();
+            //     notificationManager.initializeMailboxNotificationCounter();
 
                 
-            } catch (error) {
-                console.error('Error marking messages as read:', error);
-            }
+            // } catch (error) {
+            //     console.error('Error marking messages as read:', error);
+            // }
             
             // components.showToast('success', 'Chat Opened', 'Opened chat from notification', 2000);
             // toastManager.success(app.getUsername(), 'Opened chat from notification');
@@ -552,7 +549,8 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
                 chat.appendMessage(data);
         //         // return; // Ignore messages not in current chat
             }else {
-                notificationManager.incrementMailboxCount();
+                // notificationManager.incrementMailboxCount();
+                notificationManager.initializeMailboxNotificationCounter();
             }
             // chat.debouncedReloadChats(); // Use debounced reload
             setTimeout(async () : Promise<void> => {  
@@ -723,9 +721,9 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             }
 
             // Increment notification count and update badge
-            this.notificationCount++;
-            this.updateBellBadge();
-            
+            // this.notificationCount++;
+            // this.updateBellBadge();
+            this.initializeNotificationCounter();
             console.log(`NotificationManager: Notification added successfully, count: ${this.notificationCount}`);
         } catch (error) {
             console.error('NotificationManager: Error adding notification:', error);
@@ -757,10 +755,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
     }
 
-    private async initializeMailboxNotificationCounter(): Promise<void> {
+    async initializeMailboxNotificationCounter(): Promise<void> {
         try {
             const page = 1;
-            const limit = 5;
+            const limit = 7;
             // const notifications = await api.getNotifications('messages', page, limit);
             const res = await api.fetchWithAutoRefresh(
 			`${this.baseURL}/notifications/messages?page=${page}&limit=${limit}`,
@@ -770,8 +768,11 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 		if (!res.ok) throw new Error("Failed to fetch mailbox notifications");
 
 		const notifications = await res.json();
+        console.log('Mailbox notifications:', notifications);
             this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
+            console.log('Mailbox notification count:', this.mailboxNotificationCount);
             if (this.elements.mailboxBtn) {
+                console.log('Setting mailbox notification count:', this.mailboxNotificationCount);
                 this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
             }
         } catch (error) {
@@ -779,7 +780,8 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
     }
 
-    private async initializeNotifications(): Promise<void> {
+    async initializeNotifications(): Promise<void> {
+        console.log('NotificationManager: Initializing notifications');
         await Promise.all([
             this.initializeNotificationCounter(),
             this.initializeMailboxNotificationCounter()

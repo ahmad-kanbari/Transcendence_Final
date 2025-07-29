@@ -1201,10 +1201,10 @@ private addSearchButtons(): void {
                         credentials: "include",
                     });
 
-                    notificationManager.updateMailboxCount(0); // Reset mailbox count
-                    if (this.elements.mailboxBtn) {
-                        this.elements.mailboxBtn.setAttribute('data-count', '0');
-                    }
+                    notificationManager.initializeMailboxNotificationCounter(); // Reset mailbox count
+                    // if (this.elements.mailboxBtn) {
+                    //     this.elements.mailboxBtn.setAttribute('data-count', '0');
+                    // }
                 } else {
                     console.log('No mailbox notifications to mark as read');
                 }
