@@ -307,7 +307,7 @@ class API {
 
           if (response.status === 401 && retryCount < 1) {
              
-                  console.error('Token refresh failed:');
+                  console.error(`Token refresh failed: Response status ${response.status}`);
                   utils.cleanUp(); 
                   return { 
                       success: false, 
