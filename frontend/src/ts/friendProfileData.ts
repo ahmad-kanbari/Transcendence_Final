@@ -1261,23 +1261,25 @@ class FriendProfile {
                     let friendWon = false;
                     let opponent = '';
                     let score = '';
+                    let  friendName = '';
                     
                     if (match.match_type === 'multiplayer') {
                         const friendTeam = match.teams?.find((team: any) => 
-                            team.players?.some((player: any) => player.player_name === this.friendData!.username)
+                            team.players?.some((player: any) => player.user_id === this.friendData!.id)
                         );
+                        friendName  = friendTeam?.name || 'Friend Team';
                         const opponentTeam = match.teams?.find((team: any) => team.id !== friendTeam?.id);
                         
                         if (friendTeam && opponentTeam) {
                             friendWon = friendTeam.score > opponentTeam.score;
-                            opponent = opponentTeam.name || 'Team';
+                            opponent = opponentTeam.name || 'OP_Team';
                             score = `${friendTeam.score} - ${opponentTeam.score}`;
                         }
                     } else {
-                        const isFriendPlayer1 = match.player1_name === this.friendData!.username;
+                        const isFriendPlayer1 = match.player1_id === this.friendData!.id ? true : false;
                         const friendScore = isFriendPlayer1 ? match.player1_score : match.player2_score;
                         const opponentScore = isFriendPlayer1 ? match.player2_score : match.player1_score;
-                        
+                        friendName = match.player1_name
                         friendWon = friendScore > opponentScore;
                         opponent = isFriendPlayer1 ? match.player2_name : match.player2_name;
                         score = `${match.player1_score || 0} - ${match.player2_score || 0}`;
@@ -1298,7 +1300,7 @@ class FriendProfile {
                     tr.innerHTML = `
                         <td class="px-4 py-3 text-sm">${new Date(match.created_at).toLocaleDateString()}</td>
                         <td class="px-4 py-3">${matchType}</td>
-                        <td class="px-4 py-3">${match.player1_name}</td>
+                        <td class="px-4 py-3">${ friendName }</td>
                         <td class="px-4 py-3">${opponent}</td>
                         <td class="px-4 py-3">${score}</td>
                         <td class="px-4 py-3">${result}</td>
