@@ -83,14 +83,48 @@ class API {
     }
   }
 
+  /*
+    Parallel Execution: Uses Promise.all() for concurrent fetching rather than sequential loading
+      Type Safety Concerns: Multiple type assertions (as string, as PageFetchResult[], as HTMLElement) suggest potential type mismatches
+      Error Propagation: Fail-fast approach where any single failure causes complete method failure
+      Memory Efficiency: Loads all pages into memory at once for fast subsequent access
+      Data Transformation: Converts from array format to dictionary format for easier page lookup by name
+  */
+
   async fetchAllPages(): Promise<PagesCollection> {
     try {
+
+      /* 
+          Object.entries(PAGES) - Converts the PAGES object into an array of [key, value] pairs (e.g., [['home', '/src/pages/home.html'], ['login', '/src/pages/login.html']])
+          .map(([name, url]) => ...) - Destructures each entry into name (page identifier) and url (file path), then transforms each entry
+          const promises = - Creates an array of Promise objects for parallel execution
+
+
+          this.fetchHtml(url as string, false) - Calls the fetchHtml method to retrieve HTML content from the URL
+          url as string - Type assertion ensuring TypeScript treats url as a string (suggests PAGES values might have mixed types)
+          false - Second parameter tells fetchHtml to return the entire container div rather than just the first child element
+          .then(element => ({ name, element })) - When the HTML fetch completes, wraps the result in an object containing both the page name and the fetched element
+          The result is a Promise that resolves to { name: string, element: HTMLElement | ChildNode | null }
+      ``` Line 90: Closes the map function call - at this point, promises is an array of Promise objects, each representing a page fetch operation.
+      */
       const promises = Object.entries(PAGES).map(([name, url]) => 
         this.fetchHtml(url as string, false).then(element => ({ name, element }))
       );
       
+      /*
+          Promise.all(promises) - Executes all page fetch operations simultaneously and waits for ALL to complete
+          await - Pauses execution until all promises resolve (or any one rejects)
+          as PageFetchResult[] - Type assertion casting the result to an array of PageFetchResult objects
+          If any single fetch fails, the entire Promise.all will reject and throw an error
+      */
       const results = await Promise.all(promises) as PageFetchResult[];
-      
+      /* 
+        Line 94: Initializes an empty object that will store the final page collection, explicitly typed as PagesCollection interface.
+        Line 95: Iterates through each PageFetchResult object in the results array, where each result contains { name: string, element: HTMLElement }.
+        pages[result.name] - Uses the page name as a key in the pages object (e.g., pages['home'], pages['login'])
+result.element as HTMLElement - Type assertion forcing the element to be treated as HTMLElement (potentially unsafe if element is actually ChildNode or null)
+This creates a dictionary structure: { 'home': HTMLElement, 'login': HTMLElement, ... }
+      */
       const pages: PagesCollection = {};
       results.forEach(result => {
         pages[result.name] = result.element as HTMLElement;
