@@ -1308,8 +1308,9 @@ private addSearchButtons(): void {
      async sendMessage(): Promise<void> {
         if (!this.elements.messageInput || !this.currentChatId) return;
 
-        const content = this.elements.messageInput.value.trim();
+        let content = this.elements.messageInput.value.trim();
         if (!content) return;
+        content = content.replace(/<[^>]*>/g, '');
 
         // Check if trying to send message to blocked user
         // if (this.currentChatWithUsername) {
@@ -1342,38 +1343,47 @@ private addSearchButtons(): void {
         }
     }
 
- async appendMessage(message: any): Promise<void> {
-    if (!this.elements.messageBox) return;
-    console.log(`Appending message: ${JSON.stringify(message)}`);
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
-    messageDiv.setAttribute('data-sender-id', message.sender_id);
+    async appendMessage(message: any): Promise<void> {
+        if (!this.elements.messageBox) return;
+        // console.log(Appending message: ${JSON.stringify(message)});
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${message.sender_id === this.currentUserId ? 'sent' : 'received'}`;
+        messageDiv.setAttribute('data-sender-id', message.sender_id);
+        setTimeout(async () => {
+            
     
-    // let sender = await api.getUserById(message.sender_id);
-    // let senderJson = await sender.json();
-    // messageDiv.setAttribute('data-sender-name', senderJson.username || 'Unknown User');
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    
-    // Enhanced message with clickable username (only for received messages)
-    // const senderName = senderJson.username || 'Unknown';
-    const isOwnMessage = message.sender_id === this.currentUserId;
-    
-    messageDiv.innerHTML = `
-        ${!isOwnMessage ? `
-            <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
-                <span class="clickable-username" 
-                      style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
-                      onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
-                </span>
-            </div>
-        ` : ''}
-        <div class="message-content">${message.content}</div>
-        <div class="message-time" style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
-    `;
-    
-    this.elements.messageBox!.appendChild(messageDiv);
-    this.elements.messageBox!.scrollTop = this.elements.messageBox!.scrollHeight;
-}
+        let sender =  await api.getUserById(message.sender_id);
+        messageDiv.setAttribute('data-sender-name', sender.username || 'Unknown User');
+        
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Enhanced message with clickable username (only for received messages)
+        const senderName = sender.username || 'Unknown';
+        const isOwnMessage = message.sender_id === this.currentUserId;
+        
+        messageDiv.innerHTML = `
+            ${!isOwnMessage ? `
+                <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
+                    <span class="clickable-username" 
+                        style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
+                        onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
+                    </span>
+                </div>
+            ` : ''}
+            <div class="message-content"><p></p></div>
+            <div class="message-time" style="font-size: 11px; opacity: 0.7; margin-top: 5px;">${time}</div>
+        `;
+
+        // Set message content safely using innerText to prevent XSS
+        const pTag = messageDiv.querySelector('.message-content p');
+        if (pTag) {
+            (pTag as HTMLElement).innerText = message.content;
+        }
+
+        this.elements.messageBox!.appendChild(messageDiv);
+        this.elements.messageBox!.scrollTop = this.elements.messageBox!.scrollHeight;
+        }, 500);
+    }
 
     clearMessages(): void {
         if (this.elements.messageBox) {
