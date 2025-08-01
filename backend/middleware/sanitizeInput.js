@@ -7,10 +7,14 @@ function sanitizeObject(obj) {
 		const value = obj[key];
 
 		if (typeof value === "string") {
-			// Sanitize string values - strip ALL HTML by default
+			// Sanitize string values - strip ALL HTML tags but keep their content
 			obj[key] = sanitizeHtml(value, {
 				allowedTags: [], // No HTML tags allowed
 				allowedAttributes: {}, // No attributes allowed
+				nonTextTags: [], // Empty array means no tags are treated as non-text
+				textFilter: function (text) {
+					return text; // Keep the text content as is but strip the tags
+				},
 			});
 		} else if (typeof value === "object" && value !== null) {
 			// Recursively sanitize nested objects and arrays
