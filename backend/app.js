@@ -22,6 +22,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
+const { sanitizeInputMiddleware } = require("./middleware/sanitizeInput");
 
 const User = require("./models/User");
 const Token = require("./models/Token");
@@ -47,6 +48,7 @@ const {
 	handleSocketSetup,
 	onlineUsers,
 } = require("./sockets/mainSocketSetupHandler");
+const sanitizeSocketData = require("./middleware/sanitizeSocketData");
 
 const start = async () => {
 	try {
@@ -133,6 +135,9 @@ const start = async () => {
 		});
 		fastify.register(require("./plugins/authentication"));
 
+		// 3.5. Register global XSS prevention middleware
+		fastify.addHook('preValidation', sanitizeInputMiddleware);
+
 		// 4. Set up Socket.io
 		const io = socketIo(fastify.server, {
 			cors: {
@@ -146,6 +151,10 @@ const start = async () => {
 				credentials: true,
 			},
 		}); // Attach Socket.io to Fastify's server instance
+		
+		// Apply XSS protection to all socket connections
+		io.use(sanitizeSocketData);
+		
 		fastify.decorate("io", io);
 		handleSocketSetup(fastify, friendModel);
 
