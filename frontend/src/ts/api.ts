@@ -358,7 +358,7 @@ class API {
         credentials: 'include',
         headers: this.prepareHeaders(),
         body: JSON.stringify({ 
-          username: useranme 
+          username: username 
         })
       });
       const message = await response.json();
