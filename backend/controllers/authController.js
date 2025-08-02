@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const CustomError = require("../errors");
 const speakeasy = require("speakeasy"); // for generating and verifying TOTP codes
 const QRCode = require("qrcode"); // to generate QR codes for 2FA setup
+const { generateCSRFToken } = require("../middleware/csrfProtection");
 
 /*
 	INSTRUCTIONS FOR FRONT-END:
@@ -46,6 +47,16 @@ const attachCookiesToReply = (fastify, reply, user, refreshTokenId) => {
 		httpOnly: true, // Must match plugin config
 		signed: true, // Must match plugin config
 		expires: new Date(Date.now() + 15 * 60 * 1000), // When the browser deletes the cookie, set it up to match JWT expiration above
+	});
+
+	// Set CSRF token cookie for authenticated users
+	const csrfToken = generateCSRFToken();
+	reply.setCookie("csrfToken", csrfToken, {
+		path: "/",
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "lax",
+		httpOnly: false, // Must be false so frontend can read it
+		expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
 	});
 };
 
@@ -250,6 +261,11 @@ module.exports = (userModel, tokenModel, fastify) => ({
 		reply.setCookie("refreshToken", "logout", {
 			path: "/api/v1/auth/refresh",
 			httpOnly: true,
+			expires: new Date(Date.now()),
+		});
+		reply.setCookie("csrfToken", "logout", {
+			path: "/",
+			httpOnly: false,
 			expires: new Date(Date.now()),
 		});
 
