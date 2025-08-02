@@ -60,21 +60,17 @@ class NotificationManager {
 
     init(): void {
         if (this.initialized) return;
-        
-        console.log('NotificationManager: Starting initialization...');
+
         this.retryInitialization();
         
         // Setup global event listener to handle app state changes
         document.addEventListener('appStateChanged', () => {
-            console.log('NotificationManager: App state changed, reinitializing socket handlers');
             this.reinitializeSocketHandlers();
         });
         
         // Listen for socket connection events
         document.addEventListener('socketConnected', (event: any) => {
-            console.log(`NotificationManager: Socket connected event received, socket ID: ${event.detail.socketId}`);
             if (this.initialized) {
-                console.log('NotificationManager: Reinitializing socket handlers after socket connection');
                 this.reinitializeSocketHandlers();
             }
         });
@@ -92,7 +88,6 @@ class NotificationManager {
             
             // Check if essential elements are found
             if (this.elements.bellBtn && this.elements.mailboxBtn) {
-                console.log('NotificationManager: Elements found, setting up...');
                 this.setupNotificationEventListeners();
                 this.setupSocketHandlers();
                 this.initializeNotifications();
