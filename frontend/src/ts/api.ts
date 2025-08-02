@@ -344,9 +344,9 @@ class API {
     }
   }
 
-  async updateUserUsername(useranme: string): Promise<ApiResponse> {
+  async updateUserUsername(username: string): Promise<ApiResponse> {
     try {
-      console.log('updating user username to:', useranme);
+      console.log('updating user username to:', username);
       
       // Validate CSRF token for state-changing request
       if (!this.validateCSRFForStateChange('PATCH')) {
