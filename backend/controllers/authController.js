@@ -56,7 +56,7 @@ const attachCookiesToReply = (fastify, reply, user, refreshTokenId) => {
 		secure: process.env.NODE_ENV === "production",
 		sameSite: "lax",
 		httpOnly: false, // Must be false so frontend can read it
-		expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+		expires: new Date(Date.now() + 15 * 60 * 1000),
 	});
 };
 
