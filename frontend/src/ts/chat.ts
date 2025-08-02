@@ -1360,11 +1360,7 @@ private addSearchButtons(): void {
         messageDiv.innerHTML = `
             ${!isOwnMessage ? `
                 <div class="message-header" style="font-size: 10px; opacity: 0.7; margin-bottom: 2px;">
-                    <span class="clickable-username" 
-                          style="color: var(--cyber-blue); cursor: pointer; text-decoration: underline;" 
-                          onclick="ChatNavigationHelper.navigateToFriendProfile('${message.sender_id}')">
-                          ${senderName}
-                    </span>
+              
                 </div>
             ` : ''}
             <div class="message-content"><p></p></div>
