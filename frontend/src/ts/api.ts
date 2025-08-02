@@ -48,13 +48,6 @@ class CSRFManager {
   }
 
   /**
-   * Check if user is authenticated (has access token)
-   */
-  isAuthenticated(): boolean {
-    return document.cookie.includes('accessToken=');
-  }
-
-  /**
    * Debug method to log CSRF token status
    */
   debugTokenStatus(): void {
@@ -62,8 +55,7 @@ class CSRFManager {
     console.log('CSRF Token Status:', {
       hasToken: !!token,
       tokenLength: token?.length || 0,
-      tokenPreview: token ? `${token.substring(0, 8)}...` : 'N/A',
-      isAuthenticated: this.isAuthenticated()
+      tokenPreview: token ? `${token.substring(0, 8)}...` : 'N/A'
     });
   }
 }
@@ -134,12 +126,8 @@ class API {
       ...headers
     };
     
-    // Add CSRF token for authenticated users
-    if (csrfManager.isAuthenticated()) {
-      return csrfManager.addCSRFHeader(baseHeaders);
-    }
-    
-    return baseHeaders;
+    // Always add CSRF token if available (no need to check authentication)
+    return csrfManager.addCSRFHeader(baseHeaders);
   }
 
   /**
@@ -148,7 +136,7 @@ class API {
   private validateCSRFForStateChange(method: string): boolean {
     const stateMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     
-    if (stateMethods.includes(method.toUpperCase()) && csrfManager.isAuthenticated()) {
+    if (stateMethods.includes(method.toUpperCase())) {
       if (!csrfManager.hasCSRFToken()) {
         console.warn(`CSRF token missing for ${method} request`);
         toastManager.error(app.getUsername(), 'Security token missing. Please refresh the page.');
