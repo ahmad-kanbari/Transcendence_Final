@@ -95,7 +95,9 @@ class App {
       // this.resetAppContainer();
       let deviceId = localStorage.getItem("deviceId");
       if (!deviceId) {
-        deviceId = login.generateDeviceId();
+   
+        deviceId = crypto.randomUUID();  // Might be throwing
+
         localStorage.setItem("deviceId", deviceId);
       }
       components.showSpinner();
