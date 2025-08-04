@@ -179,10 +179,17 @@ class Login {
     
     // Initialize device ID
     this.deviceId = localStorage.getItem("deviceId");
-    if (!this.deviceId) {
-      this.deviceId = this.generateDeviceId();
-      localStorage.setItem("deviceId", this.deviceId);
+    try {
+      if (!this.deviceId) {
+ 
+        this.deviceId = crypto.randomUUID();  // Might be throwing
+   
+        localStorage.setItem("deviceId", this.deviceId);
+      }
+    } catch (e) {
+      console.error("Error generating deviceId:", e);
     }
+    
     
     if (this.loginForm.loginGoogleLink)
       this.loginForm.loginGoogleLink.onclick = this.handleGoogleLoginBtnClick.bind(this);
