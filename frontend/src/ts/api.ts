@@ -4,6 +4,63 @@ import app, { User } from './app';
 import { baseURL } from './constants';
 import { CONFIG } from './constants';
 import toastManager from './toastManager';
+
+/**
+ * CSRF Token utility class
+ */
+class CSRFManager {
+  /**
+   * Get CSRF token from cookie
+   */
+  getCSRFToken(): string | null {
+    const name = 'csrfToken=';
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Add CSRF token to request headers
+   */
+  addCSRFHeader(headers: Record<string, string> = {}): Record<string, string> {
+    const csrfToken = this.getCSRFToken();
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+    return headers;
+  }
+
+  /**
+   * Check if CSRF token is available
+   */
+  hasCSRFToken(): boolean {
+    return this.getCSRFToken() !== null;
+  }
+
+  /**
+   * Debug method to log CSRF token status
+   */
+  debugTokenStatus(): void {
+    const token = this.getCSRFToken();
+    console.log('CSRF Token Status:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token ? `${token.substring(0, 8)}...` : 'N/A'
+    });
+  }
+}
+
+const csrfManager = new CSRFManager();
 // Define interfaces for API responses and data
 interface ApiResponse<T = any> {
   success: boolean;
@@ -60,6 +117,43 @@ interface MatchData {
 
 
 class API {
+  /**
+   * Helper method to prepare headers with CSRF token for state-changing requests
+   */
+  private prepareHeaders(headers: Record<string, string> = {}): Record<string, string> {
+    const baseHeaders = {
+      'Content-Type': 'application/json',
+      ...headers
+    };
+    
+    // Always add CSRF token if available (no need to check authentication)
+    return csrfManager.addCSRFHeader(baseHeaders);
+  }
+
+  /**
+   * Validate CSRF token before making state-changing requests
+   */
+  private validateCSRFForStateChange(method: string): boolean {
+    const stateMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+    
+    if (stateMethods.includes(method.toUpperCase())) {
+      if (!csrfManager.hasCSRFToken()) {
+        console.warn(`CSRF token missing for ${method} request`);
+        toastManager.error(app.getUsername(), 'Security token missing. Please refresh the page.');
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  /**
+   * Get CSRF manager instance for external use
+   */
+  getCSRFManager(): CSRFManager {
+    return csrfManager;
+  }
+
   generateDeviceId() {
     return crypto.randomUUID();
   }
@@ -160,12 +254,16 @@ class API {
   async logout(): Promise<ApiResponse> {
     try {
       console.log('Logging out from API');
+      
+      // Validate CSRF token for state-changing request
+      if (!this.validateCSRFForStateChange('POST')) {
+        return { success: false, error: 'CSRF validation failed' };
+      }
+
       await fetch(ENDPOINTS.auth.logout, {
         method: 'POST',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: this.prepareHeaders(),
         body: JSON.stringify({ deviceId: localStorage.getItem("deviceId") })
       });
 
@@ -182,12 +280,16 @@ class API {
    async updateUserPassword(newPassword:string, currentPassword: string): Promise<ApiResponse> {
     try {
       console.log('updating user password');
+      
+      // Validate CSRF token for state-changing request
+      if (!this.validateCSRFForStateChange('PATCH')) {
+        return { success: false, error: 'CSRF validation failed' };
+      }
+
       let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: this.prepareHeaders(),
         body: JSON.stringify({ 
           newPassword: newPassword, 
           currentPassword: currentPassword
@@ -212,12 +314,16 @@ class API {
      async updateUserEmail(userEmail:string): Promise<ApiResponse> {
     try {
       console.log('updating user email');
+      
+      // Validate CSRF token for state-changing request
+      if (!this.validateCSRFForStateChange('PATCH')) {
+        return { success: false, error: 'CSRF validation failed' };
+      }
+
       let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: this.prepareHeaders(),
         body: JSON.stringify({ 
           email: userEmail,
         })
@@ -238,17 +344,21 @@ class API {
     }
   }
 
-  async updateUserUsername(useranme: string): Promise<ApiResponse> {
+  async updateUserUsername(username: string): Promise<ApiResponse> {
     try {
-      console.log('updating user username to:', useranme);
+      console.log('updating user username to:', username);
+      
+      // Validate CSRF token for state-changing request
+      if (!this.validateCSRFForStateChange('PATCH')) {
+        return { success: false, error: 'CSRF validation failed' };
+      }
+
       let response = await this.fetchWithAutoRefresh(ENDPOINTS.user.updateUser, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: this.prepareHeaders(),
         body: JSON.stringify({ 
-          username: useranme 
+          username: username 
         })
       });
       const message = await response.json();
@@ -1048,7 +1158,8 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
 	}
 
 	const addDeviceIdToBody = (opts : any) => {
-		const headers = { ...opts.headers, "Content-Type": "application/json" };
+		// Use prepareHeaders to include CSRF token
+		const headers = this.prepareHeaders(opts.headers || {});
 		const originalBody = opts.body ? JSON.parse(opts.body) : {};
 		const body = JSON.stringify({ ...originalBody, deviceId });
 		return { ...opts, headers, body };
@@ -1057,6 +1168,9 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
   let finalOptions = { ...options, credentials: 'include' as RequestCredentials };
   if (finalOptions.method && finalOptions.method.toUpperCase() !== "GET") {
     finalOptions = addDeviceIdToBody(finalOptions);
+  } else {
+    // For GET requests, just ensure headers are properly set
+    finalOptions.headers = this.prepareHeaders(finalOptions.headers as Record<string, string>);
   }
 
   let res = await fetch(url, finalOptions);
@@ -1065,7 +1179,7 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
 		const refreshRes = await fetch(`${baseURL}/auth/refresh`, {
 			method: "POST",
 			credentials: "include",
-			headers: { "Content-Type": "application/json" },
+			headers: this.prepareHeaders(),
 			body: JSON.stringify({ deviceId }),
 		});
 
@@ -1073,6 +1187,8 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
       let retryOptions = { ...options, credentials: 'include' as RequestCredentials };
       if (retryOptions.method && retryOptions.method.toUpperCase() !== "GET") {
         retryOptions = addDeviceIdToBody(retryOptions);
+      } else {
+        retryOptions.headers = this.prepareHeaders(retryOptions.headers as Record<string, string>);
       }
       res = await fetch(url, retryOptions);
 		}
@@ -1113,9 +1229,14 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
     }
 
     async sendMessage(chatId : string, content : any) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('POST')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/messages`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.prepareHeaders(),
             body: JSON.stringify({ chatId, content })
         });
     }
@@ -1129,20 +1250,38 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
     }
 
     async markNotificationsAsOpened(type = 'others') {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('PATCH')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/${type}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: this.prepareHeaders()
         });
     }
 
     async markNotificationAsRead(notificationId : string) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('PATCH')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/others/${notificationId}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: this.prepareHeaders()
         });
     }
 
     async markChatNotificationsAsRead(chatId : string) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('PATCH')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/notifications/messages/by-chat/${chatId}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            headers: this.prepareHeaders()
         });
     }
 
@@ -1159,24 +1298,40 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
     }
 
     async sendFriendRequest(friendId : string) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('POST')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.prepareHeaders(),
             body: JSON.stringify({ friendId })
         });
     }
 
     async updateFriendship(friendshipId : string, action : string) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('PATCH')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships/${friendshipId}`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: this.prepareHeaders(),
             body: JSON.stringify({ action })
         });
     }
 
     async deleteFriendship(friendshipId : string) {
+        // Validate CSRF token for state-changing request
+        if (!this.validateCSRFForStateChange('DELETE')) {
+            throw new Error('CSRF validation failed');
+        }
+
         return await this.fetchWithAutoRefresh(`${CONFIG.baseURL}/friendships/${friendshipId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: this.prepareHeaders()
         });
     }
     /**
@@ -1285,4 +1440,4 @@ async createMultiplayerMatch(matchData: {
 const api = new API();
 
 export default api;
-export { ApiResponse}
+export { ApiResponse, CSRFManager, csrfManager }

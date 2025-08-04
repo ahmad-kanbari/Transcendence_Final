@@ -23,6 +23,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const { sanitizeInputMiddleware } = require("./middleware/sanitizeInput");
+const { csrfProtectionMiddleware } = require("./middleware/csrfProtection");
 
 const User = require("./models/User");
 const Token = require("./models/Token");
@@ -137,6 +138,9 @@ const start = async () => {
 
 		// 3.5. Register global XSS prevention middleware
 		fastify.addHook('preValidation', sanitizeInputMiddleware);
+
+		// 3.6. Register CSRF protection hook
+		fastify.addHook("preHandler", csrfProtectionMiddleware);
 
 		// 4. Set up Socket.io
 		const io = socketIo(fastify.server, {
