@@ -1965,7 +1965,7 @@ createMultiplayerMatchData(
 
         } else if (this.currentTournamentMatch == 3) {
             // Final match - announce based on stored tournamentArr winners
-            const winner1 = this.getWinnerName(this.tournamentArr[0]);
+            let winner1 = this.getWinnerName(this.tournamentArr[0]);
             const winner2 = this.getWinnerName(this.tournamentArr[1]);
             document.getElementById('tournamentAnnouncement')!.textContent =
                 `Final: ${winner1} vs ${winner2}`;
@@ -1977,8 +1977,10 @@ createMultiplayerMatchData(
             this.player2Name!.textContent = winner2;
             //check if the first winner is the authenicated user
             let player1ID : number | null;
-            if (winner1 === this.userName) {
+            if (winner1 === this.tournamentPlayers[0]) {
+                console.log("user won");
                 player1ID = this.userId ?? null; // Use authenticated user ID
+                winner1 = this.userName || "player1";
             }else {
                 player1ID = null; // Placeholder for AI or random player ID
             }
