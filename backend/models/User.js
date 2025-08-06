@@ -309,7 +309,7 @@ class User {
 
 			if (currentUser.google_id) {
 				throw new CustomError.UnauthorizedError(
-					"Users authenticated via google cannot access this route"
+					"Google-authenticated users cannot update their password"
 				);
 			}
 			const isPasswordValid = await this.comparePassword(
