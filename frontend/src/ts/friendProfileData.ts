@@ -1149,23 +1149,30 @@ class FriendProfile {
         <div class="w-3 h-3 bg-cyber-pink rounded-full mr-3 animate-pulse"></div>
         <h6 class="font-cyber text-cyber-pink text-lg font-bold animate-glow">🔥 STREAK DATA</h6>
       </div>
-      <div class="grid grid-cols-2 gap-3">
+      
+      <!-- Streak Cards: Vertically stacked with equal spacing -->
+      <div class="flex flex-col gap-4">
+        
         <div class="text-center p-4 bg-gradient-to-br from-cyber-green to-green-600 rounded-lg border border-cyber-green shadow-neon-green">
           <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.currentWinStreak}</div>
           <div class="text-sm font-cyber text-gray-100">CURRENT WIN</div>
         </div>
+
         <div class="text-center p-4 bg-gradient-to-br from-cyber-blue to-blue-600 rounded-lg border border-cyber-blue shadow-neon-blue">
           <div class="text-3xl font-cyber font-bold text-white animate-glow">${stats.longestWinStreak}</div>
           <div class="text-sm font-cyber text-gray-100">LONGEST WIN</div>
         </div>
+
         <div class="text-center p-4 bg-gradient-to-br from-cyber-pink to-red-600 rounded-lg border border-cyber-pink shadow-neon-pink">
           <div class="text-3xl font-cyber font-bold text-white">${stats.currentLossStreak}</div>
           <div class="text-sm font-cyber text-gray-100">CURRENT LOSS</div>
         </div>
+
         <div class="text-center p-4 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg border border-purple-400">
           <div class="text-3xl font-cyber font-bold text-white">${stats.longestLossStreak}</div>
           <div class="text-sm font-cyber text-gray-100">LONGEST LOSS</div>
         </div>
+
       </div>
     </div>
     
