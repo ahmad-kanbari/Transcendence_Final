@@ -1,45 +1,45 @@
-version: '3.8'
+networks:
+  cyberpong-network:
+    name: cyberpong-network
 
 services:
   backend:
     build:
-      context: ./backend
-    container_name: transcendence-backend
-    restart: unless-stopped
+      context: ./srcs/backend
+    container_name: backend
+    image: backend-image
     volumes:
       - ./backend/db:/app/db
     env_file:
       - .env
     networks:
-      - app-network
+      - cyberpong-network
 
   frontend:
     build:
-      context: ./frontend
-    container_name: transcendence-frontend
+      context: ./srcs/frontend
+    container_name: frontend
+    image: frontend-image
     depends_on:
       - backend
     env_file:
       - .env
     networks:
-      - app-network
+      - cyberpong-network
 
   nginx:
-    image: nginx:alpine
-    container_name: transcendence-nginx
-    restart: unless-stopped
+    build: 
+      context: ./srcs/nginx
+    container_name: nginx
+    image: nginx-image
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - "443:443"
     depends_on:
       - backend
       - frontend
+    volumes:
+      ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     env_file:
       - .env
     networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
+      - cyberpong-network

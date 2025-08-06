@@ -1,0 +1,26 @@
+Backend Dockerfile
+========================================================================================================================
+The two COPY commands in your Dockerfile serve different purposes and follow a Docker best practice for optimizing build 
+times:
+
+First COPY: COPY package*.json ./
+
+    Copies only the package.json and package-lock.json files
+    This allows Docker to cache the dependencies installation step
+
+Second COPY: COPY . .
+
+    Copies the rest of your application code (all files in the build context)
+    This happens after npm install has completed
+
+Why This Two-Step Approach?
+    This pattern takes advantage of Docker's layer caching system:
+
+    If your package.json files don't change between builds, Docker will use the cached npm install layer
+    Only when you change dependencies will Docker need to re-run npm install
+    Your application code (which changes frequently) is copied in a separate layer
+    If you combined these into a single COPY command, any change to your application code would trigger a full reinstallation 
+    of all dependencies, making builds much slower.
+
+This is a standard optimization pattern for Node.js applications in Docker that significantly improves build time efficiency, 
+especially during development when you're frequently rebuilding your container with code changes.
