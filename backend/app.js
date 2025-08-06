@@ -39,6 +39,7 @@ const fastifyJwt = require("@fastify/jwt");
 const fastifyStatic = require("@fastify/static");
 const oauthPlugin = require("@fastify/oauth2");
 const multipart = require("@fastify/multipart");
+const helmet = require('@fastify/helmet');
 
 // jobs
 const cleanUpTokensJob = require("./jobs/cleanUpTokensJob");
@@ -134,6 +135,10 @@ const start = async () => {
 				files: 1, // Max one file upload at a time
 			},
 		});
+		fastify.register(helmet, {
+			contentSecurityPolicy: false
+		});
+
 		fastify.register(require("./plugins/authentication"));
 
 		// 3.5. Register global XSS prevention middleware
@@ -214,6 +219,13 @@ const start = async () => {
 			userModel,
 			prefix: "/api/v1/tournaments",
 		});
+
+
+		// fastify.addHook('onRequest', (req, reply, done) => {
+		// 	console.log('Host:', req.headers.host);        // usually "localhost:3000"
+		// 	console.log('Origin:', req.headers.origin);    // usually undefined
+		// 	done();
+		//   });
 
 		// 7. Start server with dual-stack support
 		const address = await fastify.listen({
