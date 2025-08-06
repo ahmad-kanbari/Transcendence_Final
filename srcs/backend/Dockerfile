@@ -13,4 +13,4 @@ RUN mkdir -p db
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
