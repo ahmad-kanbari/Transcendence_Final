@@ -182,12 +182,13 @@ body.high-contrast .paddle-disabled {
 }
 
 /* Text Size Adjustments */
+/* 
 body.text-size-small {
-  font-size: 0.85rem;
+  font-size: 1.0rem;
 }
 
 body.text-size-medium {
-  font-size: 1rem;
+  font-size: 1.2rem;
 }
 
 body.text-size-large {
@@ -195,7 +196,7 @@ body.text-size-large {
 }
 
 /* Font scaling for different text sizes */
-body.text-size-large h1 { font-size: 2.5rem; }
+/*body.text-size-large h1 { font-size: 2.5rem; }
 body.text-size-large h2 { font-size: 2rem; }
 body.text-size-large h3 { font-size: 1.75rem; }
 body.text-size-large h4 { font-size: 1.5rem; }
@@ -206,7 +207,66 @@ body.text-size-large div,
 body.text-size-large span,
 body.text-size-large button,
 body.text-size-large input,
-body.text-size-large select { font-size: 1.2rem; }
+body.text-size-large select { font-size: 1.2rem; } */
+
+/* Base font sizes on body */
+body.text-size-small {
+  font-size: 1rem;
+}
+body.text-size-medium {
+  font-size: 1.35rem;
+}
+body.text-size-large {
+  font-size: 1.5rem;
+}
+
+/* Font scaling for headings */
+body.text-size-small h1 { font-size: 1.5rem; }
+body.text-size-small h2 { font-size: 1.25rem; }
+body.text-size-small h3 { font-size: 1.1rem; }
+body.text-size-small h4 { font-size: 1rem; }
+body.text-size-small h5 { font-size: 0.95rem; }
+
+body.text-size-medium h1 { font-size: 2rem; }
+body.text-size-medium h2 { font-size: 1.5rem; }
+body.text-size-medium h3 { font-size: 1.25rem; }
+body.text-size-medium h4 { font-size: 1.1rem; }
+body.text-size-medium h5 { font-size: 1rem; }
+
+body.text-size-large h1 { font-size: 2.5rem; }
+body.text-size-large h2 { font-size: 2rem; }
+body.text-size-large h3 { font-size: 1.75rem; }
+body.text-size-large h4 { font-size: 1.5rem; }
+body.text-size-large h5 { font-size: 1.25rem; }
+
+/* Font scaling for common elements */
+body.text-size-small p,
+body.text-size-small div,
+body.text-size-small span,
+body.text-size-small button,
+body.text-size-small input,
+body.text-size-small select {
+  font-size: 1rem;
+}
+
+body.text-size-medium p,
+body.text-size-medium div,
+body.text-size-medium span,
+body.text-size-medium button,
+body.text-size-medium input,
+body.text-size-medium select {
+  font-size: 1.2rem;
+}
+
+body.text-size-large p,
+body.text-size-large div,
+body.text-size-large span,
+body.text-size-large button,
+body.text-size-large input,
+body.text-size-large select {
+  font-size: 1.4rem;
+}
+
 
 /* Larger touch targets for better accessibility */
 body.text-size-large .nav-link,
