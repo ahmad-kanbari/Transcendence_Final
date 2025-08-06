@@ -307,6 +307,11 @@ class User {
 				);
 			}
 
+			if (currentUser.google_id) {
+				throw new CustomError.UnauthorizedError(
+					"Users authenticated via google cannot access this route"
+				);
+			}
 			const isPasswordValid = await this.comparePassword(
 				currentPassword,
 				currentUser.password
