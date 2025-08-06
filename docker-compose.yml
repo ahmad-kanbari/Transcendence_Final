@@ -1,3 +1,19 @@
+volumes:
+  database-vol:
+    name: database
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USER}/data/database
+
+  ssl-certs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/${USER}/data/ssl-certs
+
 networks:
   cyberpong-network:
     name: cyberpong-network
@@ -9,7 +25,7 @@ services:
     container_name: backend
     image: backend-image
     volumes:
-      - ./backend/db:/app/db
+      - database-vol:/app/db
     env_file:
       - .env
     networks:
@@ -38,7 +54,7 @@ services:
       - backend
       - frontend
     volumes:
-      ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ssl-certs:/etc/ssl
     env_file:
       - .env
     networks:
