@@ -8,7 +8,7 @@ RESET = \033[0m
 COMPOSE_FILE = docker-compose.yml
 
 # Data directory path
-DATA_PATH = /home/$(USER)/data
+DATA_PATH = /Users/$(USER)/data
 
 # Target names
 all: setup build up
@@ -19,7 +19,6 @@ setup:
 	@mkdir -p $(DATA_PATH)
 	@mkdir -p $(DATA_PATH)/ssl-certs
 	@mkdir -p $(DATA_PATH)/database
-	@chmod -R 777 $(DATA_PATH)
 	@printf "$(GREEN)Setup complete!$(RESET)\n"
 
 # Build the Docker images
@@ -47,7 +46,7 @@ clean: down
 fclean: clean
 	@printf "$(RED)Warning: Next step will delete all your SSL certificates and database data!$(RESET)\n"
 	@read -p "Do you wish to proceed? (yes/no): " choice && [ "$$choice" = "yes" ] && \
-		printf "$(RED)Removing data directories...$(RESET)\n" && sudo rm -rf $(DATA_PATH) || \
+		printf "$(RED)Removing data directories...$(RESET)\n" && rm -rf $(DATA_PATH) || \
 		printf "$(YELLOW)Aborted. No files were removed.$(RESET)\n"
 
 # Restart all services

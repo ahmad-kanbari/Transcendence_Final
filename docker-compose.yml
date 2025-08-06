@@ -5,14 +5,14 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /home/${USER}/data/database
+      device: /Users/${USER}/data/database
 
   ssl-certs:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /home/${USER}/data/ssl-certs
+      device: /Users/${USER}/data/ssl-certs
 
 networks:
   cyberpong-network:
