@@ -1,6 +1,6 @@
 {
   "general": {
-    "appName": "Ping Pong",
+    "appName": " Ping Pong",
     "loading": "Yükleniyor...",
     "error": "Hata",
     "success": "Başarılı",
@@ -163,8 +163,8 @@
     "goHome": "Ana Sayfaya Git"
   },
   "home": {
-    "welcome": "Hoş Geldiniz",
-    "to": "-e",
+    "welcome": "Hoş Geldiniz ",
+    "to": "-e ",
     "description1": "Klasik Pong oyununu bir",
     "description2": "dokunuşla deneyimleyin! Arkadaşlarınıza meydan okuyun veya bu efsanevi arcade deneyiminde yapay zekaya karşı oynayın.",
     "playNow": "ŞİMDİ OYNA",

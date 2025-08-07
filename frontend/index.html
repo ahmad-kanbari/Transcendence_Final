@@ -383,21 +383,22 @@
                           
                         </ul>
                     </div>
-                   
-                     <div 
-                        class="notification-bell px-3"
-                        id="bellBtn" 
-                        role="button" 
-                        tabindex="0"
-                        aria-label="General notifications"
-                    >🔔</div>
-                    <div 
-                        class="notification-bell px-3" 
-                        id="mailboxBtn" 
-                        role="button" 
-                        tabindex="0"
-                        aria-label="Message notifications"
-                    >📬</div>
+                   <div class="flex flex-row">
+                        <div 
+                            class="notification-bell px-3"
+                            id="bellBtn" 
+                            role="button" 
+                            tabindex="0"
+                            aria-label="General notifications"
+                        >🔔</div>
+                        <div 
+                            class="notification-bell px-3" f
+                            id="mailboxBtn" 
+                            role="button" 
+                            tabindex="0"
+                            aria-label="Message notifications"
+                        >📬</div>
+                    </div>
                                 <!-- Notification Dropdowns -->
                 <div id="generalNotifications" role="region" aria-label="General notifications" style="display: none;">
                     <em>No notifications yet.</em>
@@ -430,8 +431,8 @@
                     </div>
                     </div>
                     <!-- Mobile Menu Button -->
-                    <button class="lg:hidden flex items-center justify-center px-3 py-2 min-w-[40px] min-h-[40px] border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink mobile-menu-btn" id="mobileMenuButton" aria-label="Toggle navigation">
-                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" style="pointer-events: none;">
+                    <button class="lg:hidden flex items-center justify-center px-3 py-2 min-w-full min-h-[40px] border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink mobile-menu-btn" id="mobileMenuButton" aria-label="Toggle navigation">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" style="pointer-events: none;">
                             <path d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"></path>
                         </svg>
                     </button>

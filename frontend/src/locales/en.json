@@ -1,6 +1,6 @@
 {
   "general": {
-    "appName": "Ping Pong",
+    "appName": " Ping Pong",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -165,8 +165,8 @@
     "goHome": "Go Home"
   },
   "home": {
-    "welcome": "Welcome",
-    "to": "to",
+    "welcome": "Welcome ",
+    "to": "to ",
     "description1": "Experience the classic Pong game with a",
     "description2": "twist! Challenge your friends or play against AI in this legendary arcade experience.",
     "playNow": "PLAY NOW",
