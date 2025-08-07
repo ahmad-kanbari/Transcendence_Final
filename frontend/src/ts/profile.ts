@@ -585,7 +585,7 @@ showDetailedStatsModal(): void {
         <h6 class="font-cyber text-cyber-blue text-xl font-bold animate-glow">📊 PERFORMANCE ANALYTICS</h6>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
         <!-- Win/Loss Pie Chart -->
         <div class="cyber-card">
           <h6 class="font-cyber text-cyber-green text-center mb-4">Win/Loss Distribution</h6>
