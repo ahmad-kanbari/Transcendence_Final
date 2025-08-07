@@ -120,6 +120,7 @@ class Utils {
     localStorage.removeItem('userMatchHistory'); 
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('current_profile_picture_key');
     
     this.access_token = null;
   }

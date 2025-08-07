@@ -158,7 +158,7 @@ class Profile {
       // } else {
       //   // Loading current user's profile
         smalluserData = await authRes.json();
-        console.log('Current user data in the profile: ', smalluserData.user.user);
+        // console.log('Current user data in the profile: ', smalluserData.user.user);
         smalluserData = smalluserData.user.user;
       // }
 
@@ -172,14 +172,14 @@ class Profile {
         return;
       }
       this.user = userFullData.data;
-      console.log('Full user data:in porfile', userFullData);
+      // console.log('Full user data:in porfile', userFullData);
       // Fetch user's match history and tournaments
       const [matchHistory] = await Promise.all([
         this.fetchUserMatchHistory(this.user.id),
         // this.fetchUserTournamentHistory(userFullData.data['id'] || userData.id)
       ]);
       localStorage.setItem('userMatchHistory', JSON.stringify(matchHistory));
-      console.log('Match history:', matchHistory);
+      // console.log('Match history:', matchHistory);
       // console.log('Tournament history:', tournamentHistory);
       this.populateProfileData(userFullData, matchHistory);
       
@@ -1094,7 +1094,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
   };
 
   const currentUser = app.getUsername();
-  console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
+  // console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
   // Process matches based on your API structure
   matchHistory.forEach(match => {
     // Skip cancelled matches
@@ -1156,7 +1156,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     
     const user = userData.data || app.state.user;
         
-    console.log('populate with userData:', userData.data, "app user data: ", app.state.user);
+    // console.log('populate with userData:', userData.data, "app user data: ", app.state.user);
 
     if (!user) {
       console.warn('No user data found, cannot populate profile data');
@@ -1220,6 +1220,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
                    this.profileForm.profileAvatar!.src= 'src/assets/icons/user.png';
                   throw new Error('Image not found');
                 }
+          
                 const blob = await res.blob();
                 const imageUrl = URL.createObjectURL(blob);
                  this.profileForm.profileAvatar!.src= imageUrl;
@@ -1242,7 +1243,10 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     }
     
     if (this.profileForm.displayNameField)
+    {
+      console.log('Setting display name field value:', user.username, 'another way : ', app.getUsername());
       this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
+    }
     
     // if (this.profileForm.emailField)
     //   console.log('Setting email field value:', app.state.user!.email,'another way : ', app.getEmail());
@@ -1299,7 +1303,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 1 * 1024 * 1024) { // 1MB limit
         // components.showToast('error', 'File Too Large', 'Please select an image smaller than 5MB');
         toastManager.error(app.getUsername(), 'File Too Large , Please select an image smaller than 5MB');
         return;
@@ -1308,11 +1312,15 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       formData.append('file', file);
 
       try {
+        if (!api.validateCSRFForStateChange('PATCH')) {
+          return { success: false, error: 'CSRF validation failed' };
+      }
         const res = await this.fetchWithAutoRefresh(
           `${this.baseURL}/users/uploads/profile-picture`,
           {
             method: 'POST',
             credentials: 'include',
+            headers: api.prepareHeaders(formData),
             body: formData,
           }
         );
@@ -1331,6 +1339,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           if (data){
             app.state.user!.profile_picture = data.url; // Update user state with new profile picture URL
             localStorage.setItem('user', JSON.stringify(app.state.user));
+            localStorage.setItem('current_profile_picture_key', data.url);
             const cleanPath = data.url.replace(/^\//, ''); // Remove leading slash if present
             const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
             
@@ -1398,6 +1407,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
             {
               method: 'DELETE',
               credentials: 'include',
+              headers: api.prepareHeaders('DELETE')
             }
           );
 
@@ -1523,7 +1533,7 @@ saveProfilePictureToLocalStorage(base64String: string): void {
   }
   
   update2FAUI(userData?: any): void {
-    console.log('Updating 2FA UI with userData:', userData, "app user data: ", app.state.user);
+    // console.log('Updating 2FA UI with userData:', userData, "app user data: ", app.state.user);
     const user = userData || app.state.user;
     const is2FAEnabled = user?.two_factor_enabled || user?.two_factor_enabled|| app.get2FAState() || false;
     console.log('2FA Enabled:', is2FAEnabled);

@@ -268,7 +268,7 @@ class FriendProfile {
   };
 
   const currentUser = app.getUsername();
-  console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
+  // console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
   // Process matches based on your API structure
   matchHistory.forEach(match => {
     // Skip cancelled matches

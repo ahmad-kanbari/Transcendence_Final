@@ -757,6 +757,7 @@ class App {
     this.state.isAuthenticated = false;
     localStorage.removeItem('user');
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('current_profile_picture_key');
     utils.deleteCookie('accessToken');
     utils.cleanUp();  
   }
@@ -833,65 +834,65 @@ class App {
     return this.state.user;
   }
 
-  async getUserImg(): Promise<any> {
-    console.log('getUserImg called');
-      // First check localStorage for cached profile picture
-      const cachedImage = profile.getProfilePictureFromLocalStorage();
+  // async getUserImg(): Promise<any> {
+  //   console.log('getUserImg called');
+  //     // First check localStorage for cached profile picture
+  //     const cachedImage = profile.getProfilePictureFromLocalStorage();
       
-      if (cachedImage) {
-        console.log('Using cached profile picture in navbar from localStorage');
-        return cachedImage;
-      } else if (this.state.user && this.state.user.profile_picture) {
-        // Use server URL if no cached version
+  //     if (cachedImage) {
+  //       console.log('Using cached profile picture in navbar from localStorage');
+  //       return cachedImage;
+  //     } else if (this.state.user && this.state.user.profile_picture) {
+  //       // Use server URL if no cached version
 
-            const cleanPath = this.state.user.profile_picture!.replace(/^\//, ''); // Remove leading slash if present
-            const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+  //           const cleanPath = this.state.user.profile_picture!.replace(/^\//, ''); // Remove leading slash if present
+  //           const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
             
-            console.log('Trying to fetch profile picture from:', apiUrl);
+  //           console.log('Trying to fetch profile picture from:', apiUrl);
             
-            fetch(apiUrl, { credentials: 'include' })
-              .then(async (res) => {
-                if (!res.ok) {
-                  console.error('Image not found, using default');
-                  // profileAvatar.src = 'src/assets/icons/user.png';
-                  throw new Error('Image not found');
-                }
-                const blob = await res.blob();
-                const imageUrl = URL.createObjectURL(blob);
-                // profileAvatar.src = imageUrl;
-                profile.saveProfilePictureToLocalStorage(apiUrl);
+  //           fetch(apiUrl, { credentials: 'include' })
+  //             .then(async (res) => {
+  //               if (!res.ok) {
+  //                 console.error('Image not found, using default');
+  //                 // profileAvatar.src = 'src/assets/icons/user.png';
+  //                 throw new Error('Image not found');
+  //               }
+  //               const blob = await res.blob();
+  //               const imageUrl = URL.createObjectURL(blob);
+  //               // profileAvatar.src = imageUrl;
+  //               profile.saveProfilePictureToLocalStorage(apiUrl);
           
-                // if (profileAvatar) {
-                //   profileAvatar.src = imageUrl;
-                //   login.updateUIAuthState();
-                // }
-                return imageUrl;
-              })
-              .catch((e) => {
-                console.error('Failed to load profile picture, using default', e);
-                // profileAvatar.src = 'src/assets/icons/user.png';
-                return 'src/assets/icons/user.png';
-              });
-          } else {
-            return 'src/assets/icons/user.png';
-          }
-      } 
+  //               // if (profileAvatar) {
+  //               //   profileAvatar.src = imageUrl;
+  //               //   login.updateUIAuthState();
+  //               // }
+  //               return imageUrl;
+  //             })
+  //             .catch((e) => {
+  //               console.error('Failed to load profile picture, using default', e);
+  //               // profileAvatar.src = 'src/assets/icons/user.png';
+  //               return 'src/assets/icons/user.png';
+  //             });
+  //         } else {
+  //           return 'src/assets/icons/user.png';
+  //         }
+  //     } 
     
   
 
   getUsername(): string {
         let usernameFromLocalStorage = localStorage.getItem('user') || null ;
-        console.log('Username from localStorage:', usernameFromLocalStorage);
+        // console.log('Username from localStorage:', usernameFromLocalStorage);
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                console.log('Parsed user object:', userObj);
-                this.userName = userObj['user']?.['username'] ;
+                // console.log('Parsed user object:', userObj);
+                this.userName = userObj?.username || userObj['user']?.['username'] ;
                 console.log('User name set to:', this.userName);
                 // this.userName = app.getUsername();
-                this.userId = Number(userObj.user.id) ??  null;
-                console.log('User ID set to:', this.userId);
-                this.userEmail = userObj['user']?.['email'];
+                this.userId = Number(userObj.id) ??  null;
+                // console.log('User ID set to:', this.userId);
+                this.userEmail =userObj.email || userObj['user']?.['email'];
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
@@ -906,13 +907,13 @@ class App {
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                console.log('Parsed user object:', userObj);
-                this.userName = userObj['user']?.['username'] ;
-                console.log('User name set to:', this.userName);
-                // this.userName = app.getUsername();
-                this.userId = Number(userObj.user.id) ??  null;
+                // console.log('Parsed user object:', userObj);
+                this.userName = userObj.username || userObj['user']?.['username'] ;
+                // console.log('User name set to:', this.userName);
+                this.userName = app.getUsername();
+                this.userId = Number(userObj.id) ??  null;
                 console.log('User ID set to:', this.userId);
-                this.userEmail = userObj['user']?.['email'];
+                this.userEmail =userObj.email || userObj['user']?.['email'];
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
