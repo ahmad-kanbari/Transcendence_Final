@@ -78,13 +78,16 @@ class AccessibilityService {
     // Small text button
     const smallTextBtn = document.createElement('button');
     smallTextBtn.id = 'smallTextBtn';
+    smallTextBtn.type = 'button';
     smallTextBtn.textContent = 'A';
     smallTextBtn.style.fontSize = '0.8rem';
     smallTextBtn.setAttribute('aria-label', 'Small Text');
     smallTextBtn.setAttribute('data-i18n-attr', 'aria-label:accessibility.textSizeSmall');
     if (this.options.textSize === 'small') smallTextBtn.classList.add('active');
     
-    smallTextBtn.addEventListener('click', () => {
+    smallTextBtn.addEventListener('click', (event) => {
+      // event.preventDefault();
+      // event.stopPropagation();
       this.setTextSize('small');
       this.updateTextSizeButtons(smallTextBtn);
     });
@@ -92,13 +95,16 @@ class AccessibilityService {
     // Medium text button
     const mediumTextBtn = document.createElement('button');
     mediumTextBtn.id = 'mediumTextBtn';
+    mediumTextBtn.type = 'button';
     mediumTextBtn.textContent = 'A';
     mediumTextBtn.style.fontSize = '1rem';
     mediumTextBtn.setAttribute('aria-label', 'Medium Text');
     mediumTextBtn.setAttribute('data-i18n-attr', 'aria-label:accessibility.textSizeMedium');
     if (this.options.textSize === 'medium') mediumTextBtn.classList.add('active');
     
-    mediumTextBtn.addEventListener('click', () => {
+    mediumTextBtn.addEventListener('click', (event) => {
+      // event.preventDefault();
+      // event.stopPropagation();
       this.setTextSize('medium');
       this.updateTextSizeButtons(mediumTextBtn);
     });
@@ -106,13 +112,16 @@ class AccessibilityService {
     // Large text button
     const largeTextBtn = document.createElement('button');
     largeTextBtn.id = 'largeTextBtn';
+    largeTextBtn.type = 'button';
     largeTextBtn.textContent = 'A';
     largeTextBtn.style.fontSize = '1.2rem';
     largeTextBtn.setAttribute('aria-label', 'Large Text');
     largeTextBtn.setAttribute('data-i18n-attr', 'aria-label:accessibility.textSizeLarge');
     if (this.options.textSize === 'large') largeTextBtn.classList.add('active');
     
-    largeTextBtn.addEventListener('click', () => {
+    largeTextBtn.addEventListener('click', (event) => {
+      // event.preventDefault();
+      // event.stopPropagation();
       this.setTextSize('large');
       this.updateTextSizeButtons(largeTextBtn);
     });
