@@ -245,7 +245,8 @@ body.text-size-small div,
 body.text-size-small span,
 body.text-size-small button,
 body.text-size-small input,
-body.text-size-small select {
+body.text-size-small select,
+body.text-size-small li {
   font-size: 1rem;
 }
 
@@ -254,7 +255,8 @@ body.text-size-medium div,
 body.text-size-medium span,
 body.text-size-medium button,
 body.text-size-medium input,
-body.text-size-medium select {
+body.text-size-medium select
+body.text-size-medium li {
   font-size: 1.2rem;
 }
 
@@ -263,7 +265,8 @@ body.text-size-large div,
 body.text-size-large span,
 body.text-size-large button,
 body.text-size-large input,
-body.text-size-large select {
+body.text-size-large select,
+body.text-size-large li  {
   font-size: 1.4rem;
 }
 
