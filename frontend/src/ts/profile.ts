@@ -1316,7 +1316,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           {
             method: 'POST',
             credentials: 'include',
-             headers: api.prepareHeaders(formData),
+            headers: api.prepareHeaders(formData),
             body: formData,
           }
         );
@@ -1403,6 +1403,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
             {
               method: 'DELETE',
               credentials: 'include',
+              headers: api.prepareHeaders('DELETE')
             }
           );
 

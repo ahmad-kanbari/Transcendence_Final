@@ -125,9 +125,10 @@ class API {
 
   // Only set Content-Type if body is not FormData
     if (!(body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
+      if (body != 'DELETE')
+        headers['Content-Type'] = 'application/json';
     }
-
+  
     const csrfToken = csrfManager.getCSRFToken?.();
     if (csrfToken) {
       headers['X-CSRF-Token'] = csrfToken;
