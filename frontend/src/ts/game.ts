@@ -191,16 +191,18 @@ class PongGame {
     init(userName: string, submitMatchFn: Function, submitTournamentFn: Function): void {
           // store callbacks for submitting results
         let usernameFromLocalStorage = localStorage.getItem('user') || null ;
-        // console.log('Username from localStorage:', usernameFromLocalStorage);
+        console.log('Username from localStorage:', usernameFromLocalStorage);
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                // console.log('Parsed user object:', userObj);
+                console.log('Parsed user object:', userObj);
                 this.userName = userObj['user']?.['username'] ?? app.getUsername(); null;
                 // console.log('User name set to:', this.userName);
                 // this.userName = app.getUsername();
-                this.userId = Number(userObj.user.id) ??  null;
-                // console.log('User ID set to:', this.userId);
+                const userId = userObj.user?.id || userObj.id;
+                // console.log()
+                this.userId = Number(userId) ??  null;
+                console.log('int the game User ID set to:', this.userId);
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
@@ -762,7 +764,7 @@ async startGame(): Promise<void> {
     // Initialize base match object
     this.matchObj = {
         matchId: null,
-        player1_id: Number(userData.user?.id) || 0,
+        player1_id: Number(userData.user?.id) || this.userId || 0,
         player2_id: null,
         player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER_1',
         player2_name: this.player2Name!.textContent || 'PLAYER_2',

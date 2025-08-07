@@ -207,9 +207,9 @@ class Login {
 
     // Setup 2FA form
     if (this.loginForm.twoFactorForm) {
-      console.log('Setting up 2FA form, form element found:', this.loginForm.twoFactorForm);
-      console.log('2FA submit button found:', this.loginForm.twoFactorSubmitBtn);
-      console.log('2FA code input found:', this.loginForm.twoFactorCodeInput);
+      // console.log('Setting up 2FA form, form element found:', this.loginForm.twoFactorForm);
+      // console.log('2FA submit button found:', this.loginForm.twoFactorSubmitBtn);
+      // console.log('2FA code input found:', this.loginForm.twoFactorCodeInput);
 
       this.loginForm.twoFactorForm.addEventListener('submit',(e)=>{ 
         console.log('2FA form submitted');
@@ -582,13 +582,13 @@ show2FAModal(): void {
     
     // Force socket reconnection after successful login to ensure cookies are sent
     if (app.socketService) {
-      console.log('Forcing socket reconnection after login...');
+      // console.log('Forcing socket reconnection after login...');
       app.socketService.disconnect();
       app.socketService.connect();
       
       // Wait for socket connection before navigating
       if (!app.socketService.connected) {
-        console.log('Waiting for socket connection after login...');
+        // console.log('Waiting for socket connection after login...');
         await new Promise<void>((resolve) => {
           const connectTimeout = setTimeout(() => {
             console.log('Socket connection timeout after login');
@@ -651,124 +651,104 @@ show2FAModal(): void {
     const loggedInEmail = document.getElementById('loggedInEmail');
     
     if (app.state?.user) {
-      if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'none';
-      if (loginBtn) loginBtn.style.display = 'none';
-      if( loginBtnHome) {
-      
-        loginBtnHome.style.display = 'none';
+        if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'none';
+        if (loginBtn) loginBtn.style.display = 'none';
+        if( loginBtnHome) {
         
-      };
-      if (loginDropdown) loginDropdown.style.display = 'block';
-      if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
-      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'block';
-      
-    
-        
-        // if (loggedInUserImg) {
+          loginBtnHome.style.display = 'none';
           
-        //   loggedInUserImg.src = app.getUserImg();
-        //   loggedInUserImg.style.display = 'block';
-        // } else if (loggedInUserImg) {
-        //   loggedInUserImg.style.display = 'none';
-        console.log('Logged in user image element found:', loggedInUserImg);
-        // }
-        if (loggedInUserImg) {
-          //  console.log('Logged in user image element found2:', loggedInUserImg);
-          // // Priority order: localStorage cache > server URL > default image
-          // const cachedImage = this.getProfilePictureFromLocalStorage();
-          // const serverImage = await app.getUserImg();
-          // console.log('Server image URL:', serverImage);
-          // const imageToUse =  serverImage || 'src/assets/icons/user.png';
-          // console.log('Using profile image:', imageToUse);
-          // if (imageToUse) {
-          //   console.log('Setting profile image from cache or server:', imageToUse);
-          // loggedInUserImg.src = imageToUse;
-          //   const profilePathFromlocalStorage = localStorage.getItem('current_profile_picture_key') || 'src/assets/icons/user.png';
-          //  const cleanPath = app.state?.user.profile_picture?.replace(/^\/+/, '');
-          //   const profilePath = profilePathFromlocalStorage || cleanPath;
-          //     const apiUrl = `${CONFIG.baseURLWithoutApi}/${profilePath}`;
-                        
-          //               console.log('Trying to fetch profile picture from:', apiUrl);
-                        
-          //               fetch(apiUrl, { credentials: 'include' })
-          //                 .then(async (res) => {
-          //                   if (!res.ok) {
-          //                     console.error('Image not found, using default');
-          //                     loggedInUserImg.src = 'src/assets/icons/user.png';
-          //                     throw new Error('Image not found');
-          //                   }
-          //                   const blob = await res.blob();
-          //                   const imageUrl = URL.createObjectURL(blob);
-          //                   loggedInUserImg.src = imageUrl;
-          //                 })
-          //                 .catch((e) => {
-          //                   console.error('Failed to load profile picture, using default', e);
-          //                   loggedInUserImg.src = 'src/assets/icons/user.png';
-          //                 });
-
-             
-            // If profile_picture exists, fetch it through the API, otherwise use default
-
-               const storedUser = localStorage.getItem('user');
-              const storedAuth = localStorage.getItem('isAuthenticated');
-      
-      if (storedUser) {
-      
-          let user = JSON.parse(storedUser);
-          // let isAuthenticated = storedAuth === 'true';
-            if (user.profile_picture) {
-              console.log('user profile picture found:', user.profile_picture);
-              // console.log('Base URL:', this.baseURL);
-              
-              // The backend serves static files from the root path via fastifyStatic
-              // We need to use the backend server URL which is running on port 3000
-              const cleanPath = user.profile_picture.replace(/^\/+/, '');
-              const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
-              
-              console.log('Trying to fetch profile picture from:', apiUrl);
-              
-              fetch(apiUrl, { credentials: 'include' })
-                .then(async (res) => {
-                  if (!res.ok) {
-                    console.error('Image not found, using default');
-                    loggedInUserImg.src = 'src/assets/icons/user.png';
-                    throw new Error('Image not found');
-                  }
-                  const blob = await res.blob();
-                  const imageUrl = URL.createObjectURL(blob);
-                  loggedInUserImg.src = imageUrl;
-                })
-                .catch((e) => {
-                  console.error('Failed to load profile picture, using default', e);
-                  loggedInUserImg.src = 'src/assets/icons/user.png';
-                });
-            } else {
-                loggedInUserImg.src = 'src/assets/icons/user.png';
-            }
+        };
+        if (loginDropdown) loginDropdown.style.display = 'block';
+        if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'none';
+        if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'block';
         
-                loggedInUserImg.style.display = 'block';
-                } else {
-                  loggedInUserImg!.style.display = 'none';
-                }
+      
+          
+          // if (loggedInUserImg) {
             
+          //   loggedInUserImg.src = app.getUserImg();
+          //   loggedInUserImg.style.display = 'block';
+          // } else if (loggedInUserImg) {
+          //   loggedInUserImg.style.display = 'none';
+          // console.log('Logged in user image element found:', loggedInUserImg);
+          // console.log("app state user",app.state.user);
+          // }
+          if (loggedInUserImg) {
+              // If profile_picture exists, fetch it through the API, otherwise use default
+                const storedUser = localStorage.getItem('user');
+                // const storedAuth = localStorage.getItem('isAuthenticated');
+                let user: any ;
+                if (storedUser) {
+                
+                    let userSimpleJson = JSON.parse(storedUser);
+                    // console.log("USER JSON: ", userSimpleJson);
+                    const userId = userSimpleJson?.user?.id || userSimpleJson?.id;
+                    const userJson =  await api.getUserById((userId as string));
 
-      // } else {
-      //   if (app.getEmail() && loggedInEmail) {
-      //     loggedInEmail.textContent = app.getEmail();
-      //     loggedInEmail.style.display = 'inline';
-      //   } else if (loggedInEmail) {
-      //     loggedInEmail.style.display = 'none';
-      //   }
-}
-    } else {
-      if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
-      if (loginBtn) loginBtn.style.display = 'block';
-      if (loginDropdown) loginDropdown.style.display = 'none';
-      if (loginBtnHome) {
-        loginBtnHome.style.display = 'block';
-      }
-      if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
-      if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'none';
+                   if (userJson.success){
+                      // console.log('User data fetched successfully:', userJson.data);
+                      user = userJson.data;
+                      app.state.user = user; // Update app state ;with fetched user data
+                      // localStorage.setItem('user', JSON.stringify(user))
+                   } else {
+                      console.log('Failed to fetch user data in update UI AUTH:', userJson.error);
+                   }
+
+                    // let isAuthenticated = storedAuth === 'true';
+                    if (user.profile_picture) {
+                        // console.log('user profile picture found:', user.profile_picture);
+                        // console.log('Base URL:', this.baseURL);
+                        
+                        // The backend serves static files from the root path via fastifyStatic
+                        // We need to use the backend server URL which is running on port 3000
+                        const cleanPath = user.profile_picture.replace(/^\/+/, '');
+                        const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
+                        
+                        // console.log('Trying to fetch profile picture from:', apiUrl);
+                        
+                        fetch(apiUrl, { credentials: 'include' })
+                          .then(async (res) => {
+                            if (!res.ok) {
+                              console.error('Image not found, using default');
+                              loggedInUserImg.src = 'src/assets/icons/user.png';
+                              throw new Error('Image not found');
+                            }
+                            const blob = await res.blob();
+                            const imageUrl = URL.createObjectURL(blob);
+                            loggedInUserImg.src = imageUrl;
+                          })
+                          .catch((e) => {
+                            console.error('Failed to load profile picture, using default', e);
+                            loggedInUserImg.src = 'src/assets/icons/user.png';
+                          });
+                      } else {
+                          loggedInUserImg.src = 'src/assets/icons/user.png';
+                      }
+                  
+                          loggedInUserImg.style.display = 'block';
+                          } else {
+                            loggedInUserImg!.style.display = 'none';
+                          }
+                      
+
+                // } else {
+                //   if (app.getEmail() && loggedInEmail) {
+                //     loggedInEmail.textContent = app.getEmail();
+                //     loggedInEmail.style.display = 'inline';
+                //   } else if (loggedInEmail) {
+                //     loggedInEmail.style.display = 'none';
+                //   }
+        }
+      } 
+      else {
+          if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
+          if (loginBtn) loginBtn.style.display = 'block';
+          if (loginDropdown) loginDropdown.style.display = 'none';
+          if (loginBtnHome) {
+            loginBtnHome.style.display = 'block';
+          }
+          if(loginNavBtnMobile) loginNavBtnMobile.style.display = 'block';
+          if (logoutNavBtnMobile) logoutNavBtnMobile.style.display = 'none';
     }
   }
 

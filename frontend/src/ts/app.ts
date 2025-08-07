@@ -886,13 +886,13 @@ class App {
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                console.log('Parsed user object:', userObj);
-                this.userName = userObj['user']?.['username'] ;
+                // console.log('Parsed user object:', userObj);
+                this.userName = userObj?.username || userObj['user']?.['username'] ;
                 console.log('User name set to:', this.userName);
                 // this.userName = app.getUsername();
-                this.userId = Number(userObj.user.id) ??  null;
-                console.log('User ID set to:', this.userId);
-                this.userEmail = userObj['user']?.['email'];
+                this.userId = Number(userObj.id) ??  null;
+                // console.log('User ID set to:', this.userId);
+                this.userEmail =userObj.email || userObj['user']?.['email'];
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
@@ -907,13 +907,13 @@ class App {
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                console.log('Parsed user object:', userObj);
-                this.userName = userObj['user']?.['username'] ;
-                console.log('User name set to:', this.userName);
-                // this.userName = app.getUsername();
-                this.userId = Number(userObj.user.id) ??  null;
+                // console.log('Parsed user object:', userObj);
+                this.userName = userObj.username || userObj['user']?.['username'] ;
+                // console.log('User name set to:', this.userName);
+                this.userName = app.getUsername();
+                this.userId = Number(userObj.id) ??  null;
                 console.log('User ID set to:', this.userId);
-                this.userEmail = userObj['user']?.['email'];
+                this.userEmail =userObj.email || userObj['user']?.['email'];
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
