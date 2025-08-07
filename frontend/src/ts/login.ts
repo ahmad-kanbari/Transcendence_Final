@@ -675,7 +675,7 @@ show2FAModal(): void {
         if (loggedInUserImg) {
           //  console.log('Logged in user image element found2:', loggedInUserImg);
           // // Priority order: localStorage cache > server URL > default image
-          // // const cachedImage = this.getProfilePictureFromLocalStorage();
+          // const cachedImage = this.getProfilePictureFromLocalStorage();
           // const serverImage = await app.getUserImg();
           // console.log('Server image URL:', serverImage);
           // const imageToUse =  serverImage || 'src/assets/icons/user.png';
@@ -683,27 +683,69 @@ show2FAModal(): void {
           // if (imageToUse) {
           //   console.log('Setting profile image from cache or server:', imageToUse);
           // loggedInUserImg.src = imageToUse;
+          //   const profilePathFromlocalStorage = localStorage.getItem('current_profile_picture_key') || 'src/assets/icons/user.png';
+          //  const cleanPath = app.state?.user.profile_picture?.replace(/^\/+/, '');
+          //   const profilePath = profilePathFromlocalStorage || cleanPath;
+          //     const apiUrl = `${CONFIG.baseURLWithoutApi}/${profilePath}`;
+                        
+          //               console.log('Trying to fetch profile picture from:', apiUrl);
+                        
+          //               fetch(apiUrl, { credentials: 'include' })
+          //                 .then(async (res) => {
+          //                   if (!res.ok) {
+          //                     console.error('Image not found, using default');
+          //                     loggedInUserImg.src = 'src/assets/icons/user.png';
+          //                     throw new Error('Image not found');
+          //                   }
+          //                   const blob = await res.blob();
+          //                   const imageUrl = URL.createObjectURL(blob);
+          //                   loggedInUserImg.src = imageUrl;
+          //                 })
+          //                 .catch((e) => {
+          //                   console.error('Failed to load profile picture, using default', e);
+          //                   loggedInUserImg.src = 'src/assets/icons/user.png';
+          //                 });
 
-           const cleanPath = app.state?.user.profile_picture?.replace(/^\/+/, '');
+             
+            // If profile_picture exists, fetch it through the API, otherwise use default
+
+               const storedUser = localStorage.getItem('user');
+              const storedAuth = localStorage.getItem('isAuthenticated');
+      
+      if (storedUser) {
+      
+          let user = JSON.parse(storedUser);
+          // let isAuthenticated = storedAuth === 'true';
+            if (user.profile_picture) {
+              console.log('user profile picture found:', user.profile_picture);
+              // console.log('Base URL:', this.baseURL);
+              
+              // The backend serves static files from the root path via fastifyStatic
+              // We need to use the backend server URL which is running on port 3000
+              const cleanPath = user.profile_picture.replace(/^\/+/, '');
               const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
-                        
-                        console.log('Trying to fetch profile picture from:', apiUrl);
-                        
-                        fetch(apiUrl, { credentials: 'include' })
-                          .then(async (res) => {
-                            if (!res.ok) {
-                              console.error('Image not found, using default');
-                              loggedInUserImg.src = 'src/assets/icons/user.png';
-                              throw new Error('Image not found');
-                            }
-                            const blob = await res.blob();
-                            const imageUrl = URL.createObjectURL(blob);
-                            loggedInUserImg.src = imageUrl;
-                          })
-                          .catch((e) => {
-                            console.error('Failed to load profile picture, using default', e);
-                            loggedInUserImg.src = 'src/assets/icons/user.png';
-                          });
+              
+              console.log('Trying to fetch profile picture from:', apiUrl);
+              
+              fetch(apiUrl, { credentials: 'include' })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    console.error('Image not found, using default');
+                    loggedInUserImg.src = 'src/assets/icons/user.png';
+                    throw new Error('Image not found');
+                  }
+                  const blob = await res.blob();
+                  const imageUrl = URL.createObjectURL(blob);
+                  loggedInUserImg.src = imageUrl;
+                })
+                .catch((e) => {
+                  console.error('Failed to load profile picture, using default', e);
+                  loggedInUserImg.src = 'src/assets/icons/user.png';
+                });
+            } else {
+                loggedInUserImg.src = 'src/assets/icons/user.png';
+            }
+        
                 loggedInUserImg.style.display = 'block';
                 } else {
                   loggedInUserImg!.style.display = 'none';
@@ -717,7 +759,7 @@ show2FAModal(): void {
       //   } else if (loggedInEmail) {
       //     loggedInEmail.style.display = 'none';
       //   }
-      
+}
     } else {
       if (loginNavBtn?.parentElement) loginNavBtn.parentElement.style.display = 'block';
       if (loginBtn) loginBtn.style.display = 'block';

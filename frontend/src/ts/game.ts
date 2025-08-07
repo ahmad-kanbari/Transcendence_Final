@@ -191,22 +191,22 @@ class PongGame {
     init(userName: string, submitMatchFn: Function, submitTournamentFn: Function): void {
           // store callbacks for submitting results
         let usernameFromLocalStorage = localStorage.getItem('user') || null ;
-        console.log('Username from localStorage:', usernameFromLocalStorage);
+        // console.log('Username from localStorage:', usernameFromLocalStorage);
         if (usernameFromLocalStorage != null) {
             try {
                 const userObj = JSON.parse(usernameFromLocalStorage);
-                console.log('Parsed user object:', userObj);
+                // console.log('Parsed user object:', userObj);
                 this.userName = userObj['user']?.['username'] ?? app.getUsername(); null;
-                console.log('User name set to:', this.userName);
+                // console.log('User name set to:', this.userName);
                 // this.userName = app.getUsername();
                 this.userId = Number(userObj.user.id) ??  null;
-                console.log('User ID set to:', this.userId);
+                // console.log('User ID set to:', this.userId);
             } catch (e) {
                 console.error('Failed to parse user from localStorage:', e);
                 this.userName = null;
             }
         }
-        console.log('Game page initialized with user:', this.userName);
+        // console.log('Game page initialized with user:', this.userName);
         this.submitMatch = submitMatchFn;
         this.submitTournament = submitTournamentFn;
         this.waitForGameElements();
@@ -424,7 +424,7 @@ class PongGame {
             if (this.isSettingUpNextMatch) return;
             
             document.getElementById('winScreen')!.style.display = 'none';
-            console.log("Next match button clicked, current tournament match before incrementing:", this.currentTournamentMatch);
+            // console.log("Next match button clicked, current tournament match before incrementing:", this.currentTournamentMatch);
             this.setupNextTournamentMatch();
             this.isSettingUpNextMatch = true;
         },);
@@ -608,7 +608,7 @@ class PongGame {
         if (startText) startText.style.display = 'none';
         
         // Reset player names to defaults when returning to menu
-        console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
+        // console.log('Resetting player names to defaults alist player name', this.aliasUsernamePlayer1);
         this.player1Name!.textContent =  this.aliasUsernamePlayer1 || this.userName || 'PLAYER_1';
         this.player2Name!.textContent =  this.matchObj.player2_name || 'PLAYER_2'
         
@@ -757,8 +757,8 @@ async startGame(): Promise<void> {
     const storedUser = localStorage.getItem('user');
     const userData = JSON.parse(storedUser ?? '{}');
     
-    console.log("userData in game before creating match:", userData);
-    console.log("Player 2", this.player2Name!.textContent);
+    // console.log("userData in game before creating match:", userData);
+    // console.log("Player 2", this.player2Name!.textContent);
     // Initialize base match object
     this.matchObj = {
         matchId: null,
@@ -776,12 +776,12 @@ async startGame(): Promise<void> {
     // Submit single match if not in tournament
     if (!this.isTournamentMode && !this.isMultiplayerMode) {
         if (this.matchObj ) {
-            console.log("Submitting match data to backend:", this.matchObj);
+            // console.log("Submitting match data to backend:", this.matchObj);
             const response = await api.createMatch(this.matchObj);
-            console.log("Match created successfully:", response);
+            // console.log("Match created successfully:", response);
             if (response.success) {
                 this.matchObj.matchId = response.data.id;
-                console.log("Match created successfully: with ID", this.matchObj.matchId);
+                // console.log("Match created successfully: with ID", this.matchObj.matchId);
             }else{
                 console.error("Error creating match:", response.message);
             }
@@ -797,7 +797,7 @@ async startGame(): Promise<void> {
             this.player2Name!.textContent || 'Team_B',
             ['Player_2', 'Player_3', 'Player_4']
         );
-        console.log("Multiplayer mode detected, preparing match data for backend submission", multiplayerMatchData);
+        // console.log("Multiplayer mode detected, preparing match data for backend submission", multiplayerMatchData);
         const response = await api.createMultiplayerMatch({
           team1_name: this.matchObj.player1_name,
         team2_name:  this.matchObj.player2_name,
@@ -826,7 +826,7 @@ async startGame(): Promise<void> {
     match_type: "multiplayer"
   }
         );
-        console.log("Multiplayer match data from the response:", response);
+        // console.log("Multiplayer match data from the response:", response);
         if (response.success) {
         console.log("Multiplayer match created successfully:", response);
     }

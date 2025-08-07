@@ -120,20 +120,27 @@ class API {
   /**
    * Helper method to prepare headers with CSRF token for state-changing requests
    */
-  private prepareHeaders(headers: Record<string, string> = {}): Record<string, string> {
-    const baseHeaders = {
-      'Content-Type': 'application/json',
-      ...headers
-    };
-    
-    // Always add CSRF token if available (no need to check authentication)
-    return csrfManager.addCSRFHeader(baseHeaders);
+  prepareHeaders(body?: any) {
+    const headers: Record<string, string> = {};
+
+  // Only set Content-Type if body is not FormData
+    if (!(body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const csrfToken = csrfManager.getCSRFToken?.();
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    return headers;
   }
+
 
   /**
    * Validate CSRF token before making state-changing requests
    */
-  private validateCSRFForStateChange(method: string): boolean {
+  validateCSRFForStateChange(method: string): boolean {
     const stateMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
     
     if (stateMethods.includes(method.toUpperCase())) {
@@ -199,7 +206,7 @@ class API {
 
   async login(loginData: LoginData): Promise<ApiResponse> {
     try {
-      console.log('entering the api',ENDPOINTS.auth.login, loginData);
+      // console.log('entering the api',ENDPOINTS.auth.login, loginData);
       const response = await fetch(ENDPOINTS.auth.login, {
         method: 'POST',
         headers: {
@@ -209,7 +216,7 @@ class API {
       });
 
       const result = await response.json();
-      console.log('Loggin result: in apis', result);
+      // console.log('Loggin result: in apis', result);
       if (!response.ok) {
         return { success: false, error: result.error || 'Login failed' };
       }
@@ -229,7 +236,7 @@ class API {
 
   async register(registerData: RegisterData): Promise<ApiResponse> {
     try {
-      console.log('entering the api',ENDPOINTS.auth.register, registerData);
+      // console.log('entering the api',ENDPOINTS.auth.register, registerData);
       const response = await fetch(ENDPOINTS.auth.register, {
         method: 'POST',
         headers: {
@@ -253,7 +260,7 @@ class API {
 
   async logout(): Promise<ApiResponse> {
     try {
-      console.log('Logging out from API');
+      // console.log('Logging out from API');
       
       // Validate CSRF token for state-changing request
       if (!this.validateCSRFForStateChange('POST')) {
@@ -279,7 +286,7 @@ class API {
 
    async updateUserPassword(newPassword:string, currentPassword: string): Promise<ApiResponse> {
     try {
-      console.log('updating user password');
+      // console.log('updating user password');
       
       // Validate CSRF token for state-changing request
       if (!this.validateCSRFForStateChange('PATCH')) {
@@ -298,11 +305,11 @@ class API {
       const message = await response.json();
       // console.log('message in updateUserUsername:', message.error);
       if (message.message){
-        console.log('Update user password message:', message);
+        // console.log('Update user password message:', message);
         return { success: true , response: message.message };
 
       }else {
-        console.log('error in username',message.error);
+        // console.log('error in username',message.error);
         return { success: false, error: message.error || 'Failed to update password ' };
       }
     } catch (error: any) {  
@@ -313,7 +320,7 @@ class API {
 
      async updateUserEmail(userEmail:string): Promise<ApiResponse> {
     try {
-      console.log('updating user email');
+      // console.log('updating user email');
       
       // Validate CSRF token for state-changing request
       if (!this.validateCSRFForStateChange('PATCH')) {
@@ -346,7 +353,7 @@ class API {
 
   async updateUserUsername(username: string): Promise<ApiResponse> {
     try {
-      console.log('updating user username to:', username);
+      // console.log('updating user username to:', username);
       
       // Validate CSRF token for state-changing request
       if (!this.validateCSRFForStateChange('PATCH')) {
@@ -364,11 +371,11 @@ class API {
       const message = await response.json();
       // console.log('message in updateUserUsername:', message.error);
       if (message.message){
-        console.log('Update user username message:', message);
+        // console.log('Update user username message:', message);
         return { success: true , response: message.message };
 
       }else {
-        console.log('error in username',message.error);
+        // console.log('error in username',message.error);
         return { success: false, error: message.error || 'Failed to update username - it is already exists' };
       }
     } catch (error: any) {  
@@ -384,11 +391,11 @@ class API {
         deviceId = api.generateDeviceId();
         localStorage.setItem("deviceId", deviceId);
       }
-      console.log('Device ID:', deviceId);
+      // console.log('Device ID:', deviceId);
   
       // Create JSON and base64 encode it
       const state = encodeURIComponent(btoa(JSON.stringify({ deviceId })));
-      console.log('State:', state);
+      // console.log('State:', state);
       const authUrl = `${baseURL}/auth/google/login?state=${state}`;
 
     
@@ -887,7 +894,7 @@ class API {
       
         })
       });
-      console.log('Creating tournament and response is', response);
+      // console.log('Creating tournament and response is', response);
 
       const data = await response.json();
       if (!response.ok) {
@@ -1151,7 +1158,7 @@ class API {
   
 
 async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
-  console.log('Fetching URL:', url, 'with options:', options);
+  // console.log('Fe/tching URL:', url, 'with options:', options);
 	const deviceId = localStorage.getItem("deviceId");
 	if (!deviceId) {
 		throw new Error("Missing deviceId in localStorage. Ensure it's set during login.");
@@ -1205,7 +1212,7 @@ async fetchWithAutoRefresh(url: string, options: RequestInit = {}) {
   //   }
 
     async searchUsers(query : any, page = 1, limit = 5) {
-      console.log('searching users with query:', query, 'page:', page, 'limit:', limit);
+      // console.log('searching users with query:', query, 'page:', page, 'limit:', limit);
         const res = await this.fetchWithAutoRefresh(
             `${CONFIG.baseURL}/users?search=${query}&page=${page}&limit=${limit}`
         );
@@ -1384,7 +1391,7 @@ async createMultiplayerMatch(matchData: {
     //     error: 'Each team must have exactly 2 players' 
     //   };
     // }
-    console.log('Creating multiplayer match with data:', matchData);
+    // console.log('Creating multiplayer match with data:', matchData);
     const response = await this.fetchWithAutoRefresh(ENDPOINTS.game.create_match, {
       method: 'POST',
       credentials: 'include',
@@ -1393,7 +1400,7 @@ async createMultiplayerMatch(matchData: {
       },
       body: JSON.stringify(matchData)
     });
-    console.log('createMultiplayerMatch response:', response);
+    // console.log('createMultiplayerMatch response:', response);
     // Handle authentication errors with retry
     if (response.status === 401 && retryCount < 1) {
       const refreshResult = await this.refreshToken();

@@ -1299,7 +1299,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 1 * 1024 * 1024) { // 1MB limit
         // components.showToast('error', 'File Too Large', 'Please select an image smaller than 5MB');
         toastManager.error(app.getUsername(), 'File Too Large , Please select an image smaller than 5MB');
         return;
@@ -1308,11 +1308,15 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
       formData.append('file', file);
 
       try {
+        if (!api.validateCSRFForStateChange('PATCH')) {
+          return { success: false, error: 'CSRF validation failed' };
+      }
         const res = await this.fetchWithAutoRefresh(
           `${this.baseURL}/users/uploads/profile-picture`,
           {
             method: 'POST',
             credentials: 'include',
+             headers: api.prepareHeaders(formData),
             body: formData,
           }
         );
@@ -1331,6 +1335,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
           if (data){
             app.state.user!.profile_picture = data.url; // Update user state with new profile picture URL
             localStorage.setItem('user', JSON.stringify(app.state.user));
+            localStorage.setItem('current_profile_picture_key', data.url);
             const cleanPath = data.url.replace(/^\//, ''); // Remove leading slash if present
             const apiUrl = `${CONFIG.baseURLWithoutApi}/${cleanPath}`;
             

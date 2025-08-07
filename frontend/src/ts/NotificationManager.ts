@@ -41,18 +41,18 @@ class NotificationManager {
     private startSocketHealthCheck(): void {
         setInterval(() => {
             if (!app.socketService) {
-                console.warn('NotificationManager: Socket service not available during health check');
+                // console.warn('NotificationManager: Socket service not available during health check');
                 return;
             }
             
             if (!app.socketService.connected && app.state && app.state.isAuthenticated) {
-                console.log('NotificationManager: Socket disconnected but user authenticated, attempting to reconnect');
+                // console.log('NotificationManager: Socket disconnected but user authenticated, attempting to reconnect');
                 app.socketService.connect();
             }
             
             // If connected but event handlers might be missing, reinitialize them
             if (app.socketService.connected && this.initialized) {
-                console.log('NotificationManager: Socket health check - ensuring event handlers are attached');
+                // console.log('NotificationManager: Socket health check - ensuring event handlers are attached');
                 this.reinitializeSocketHandlers();
             }
         }, 2000); // Check every 30 seconds
@@ -92,9 +92,9 @@ class NotificationManager {
                 this.setupSocketHandlers();
                 this.initializeNotifications();
                 this.initialized = true;
-                console.log('NotificationManager: Successfully initialized');
+                // console.log('NotificationManager: Successfully initialized');
             } else if (attempts < maxAttempts) {
-                console.log(`NotificationManager: Elements not found, retrying... (${attempts + 1}/${maxAttempts})`);
+                // console.log(`NotificationManager: Elements not found, retrying... (${attempts + 1}/${maxAttempts})`);
                 this.retryInitialization(attempts + 1);
             } else {
                 console.warn('NotificationManager: Failed to find required elements after maximum attempts');
@@ -359,7 +359,7 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
        
                 // return;
             }
-            console.log('Already on chat page, loading chat with ID:', chatId);
+            // console.log('Already on chat page, loading chat with ID:', chatId);
             // If already on chat page, load chats and join the specific chat
             await chat.loadChats();
             await chat.forceJoinRoom(chatId);
@@ -449,7 +449,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     public removeSocketHandlers(): void {
         if (!app.socketService) return;
         
-        console.log('NotificationManager: Removing socket event handlers');
+        // console.log('NotificationManager: Removing socket event handlers');
         app.socketService.off('newMessage');
         app.socketService.off('messageReceivedInform');
         app.socketService.off('friendRequestInform');
@@ -459,7 +459,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     
     // Public method to reinitialize socket handlers after reconnection
     public reinitializeSocketHandlers(): void {
-        console.log('NotificationManager: Reinitializing socket handlers');
+        // console.log('NotificationManager: Reinitializing socket handlers');
         
         if (!app.socketService) {
             console.log('NotificationManager: Socket service not available, cannot reinitialize handlers');
@@ -467,10 +467,10 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
         
         if (!app.socketService.connected) {
-            console.log('NotificationManager: Socket not connected, will reinitialize when connected');
+            // console.log('NotificationManager: Socket not connected, will reinitialize when connected');
             // Set up a one-time listener for connection
             app.socketService.once('connect', () => {
-                console.log('NotificationManager: Socket reconnected, now setting up handlers');
+                // console.log('NotificationManager: Socket reconnected, now setting up handlers');
                 if (this.initialized) {
                     this.setupSocketHandlers();
                 }
@@ -479,7 +479,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         }
         
         if (this.initialized) {
-            console.log(`NotificationManager: Setting up socket handlers for socket ${app.socketService.id}`);
+            // console.log(`NotificationManager: Setting up socket handlers for socket ${app.socketService.id}`);
             this.setupSocketHandlers();
         } else {
             console.log('NotificationManager: Not initialized, skipping handler reinitialization');
@@ -489,15 +489,15 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     private setupSocketHandlers(): void {
     
         if (!app.socketService) {
-            console.log('NotificationManager: Socket service not available, skipping setup');
+            // console.log('NotificationManager: Socket service not available, skipping setup');
             return;
         }
-        console.log("NotificationManager: Setting up socket handlers with socket:", app.socketService.id);
+        // console.log("NotificationManager: Setting up socket handlers with socket:", app.socketService.id);
         
         // Remove any existing event listeners before adding new ones to prevent duplicates
         this.removeSocketHandlers();
         
-        console.log('NotificationManager: Attaching newMessage handler');
+        // console.log('NotificationManager: Attaching newMessage handler');
         app.socketService.on('newMessage', (message: any) => {
             console.log("NotificationManager: newMessage event received", message);
             //when you send new message it will emit into two sockets to sender and reciver
@@ -579,7 +579,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 
 
         // Handle friend requests - Add more robust error handling and debugging
-        console.log('NotificationManager: Attaching friendRequestInform handler');
+        // console.log('NotificationManager: Attaching friendRequestInform handler');
         app.socketService.on('friendRequestInform', (data: any) => {
             try {
                 console.log('NotificationManager: Received friendRequestInform event:', data);
@@ -605,7 +605,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             }
         });
 
-        console.log('NotificationManager: Attaching friendRequestAccept handler');
+        // console.log('NotificationManager: Attaching friendRequestAccept handler');
         app.socketService.on('friendRequestAccept', (data: any) => {
             try {
                 console.log('NotificationManager: Received friendRequestAccept event:', data);
@@ -632,7 +632,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
         });
 
         // Optimized userStatusChange handler with grace period for offline status
-        console.log('NotificationManager: Attaching userStatusChange handler');
+        // console.log('NotificationManager: Attaching userStatusChange handler');
         app.socketService.on("userStatusChange", (data: any) => {
             console.log("Status change event received:", data);
             
@@ -673,7 +673,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     }
     // ===== NOTIFICATION SYSTEM =====
     private addNotification(message: string): void {
-        console.log(`NotificationManager: Adding notification with message: "${message}"`);
+        // console.log(`NotificationManager: Adding notification with message: "${message}"`);
         
         if (!this.elements.generalNotifications) {
             console.warn('NotificationManager: Cannot add notification - generalNotifications element not found');
@@ -727,7 +727,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 
     private async initializeNotificationCounter(): Promise<void> {
         try {
-             console.log('NotificationManager initialized in the console');
+            //  console.log('NotificationManager initialized in the console');
             const page = 1;
             const limit = 10;
             // const notifications = await api.getNotifications('others', page, limit);
@@ -763,11 +763,11 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
 		if (!res.ok) throw new Error("Failed to fetch mailbox notifications");
 
 		const notifications = await res.json();
-        console.log('Mailbox notifications:', notifications);
+        // console.log('Mailbox notifications:', notifications);
             this.mailboxNotificationCount = notifications.filter((n: any) => n.is_read === 0).length;
             console.log('Mailbox notification count:', this.mailboxNotificationCount);
             if (this.elements.mailboxBtn) {
-                console.log('Setting mailbox notification count:', this.mailboxNotificationCount);
+                // console.log('Setting mailbox notification count:', this.mailboxNotificationCount);
                 this.elements.mailboxBtn.setAttribute("data-count", this.mailboxNotificationCount.toString());
             }
         } catch (error) {
@@ -776,7 +776,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
     }
 
     async initializeNotifications(): Promise<void> {
-        console.log('NotificationManager: Initializing notifications');
+        // console.log('NotificationManager: Initializing notifications');
         await Promise.all([
             this.initializeNotificationCounter(),
             this.initializeMailboxNotificationCounter()
@@ -909,7 +909,7 @@ private applyUserStatusChange(data: any): void {
                 const storedUserId = chatRowElement.dataset.participantId;
                 
                 if (storedUserId === data.userId.toString()) {
-                    console.log(`Updating chat row status for user ${data.userId}`);
+                    // console.log(`Updating chat row status for user ${data.userId}`);
                     
                     // Update the status indicator directly
                     const statusColor = data.isOnline ? '#2DE2E6' : '#666';
@@ -934,7 +934,7 @@ private applyUserStatusChange(data: any): void {
     // Instead of always reloading, only reload chat list very infrequently since we're doing targeted updates
     // This significantly reduces the number of API calls and DOM rebuilds
     if (data.isOnline || data.isDelayedOffline) {
-        console.log(`Scheduling infrequent chat list refresh for user ${data.userId} status change to ${data.isOnline ? 'online' : 'offline'} ${data.isDelayedOffline ? '(after grace period)' : ''}`);
+        // console.log(`Scheduling infrequent chat list refresh for user ${data.userId} status change to ${data.isOnline ? 'online' : 'offline'} ${data.isDelayedOffline ? '(after grace period)' : ''}`);
         
         // Use a much longer delay since we're doing targeted updates above
         if (this.chatListUpdateTimeout) {
@@ -943,7 +943,7 @@ private applyUserStatusChange(data: any): void {
         
         this.chatListUpdateTimeout = setTimeout(async () => {
             // Only do a full reload occasionally to catch any missed updates
-            console.log('Performing periodic chat list refresh to sync any missed changes');
+            // console.log('Performing periodic chat list refresh to sync any missed changes');
             await chat.loadChats();
             this.chatListUpdateTimeout = null;
         }, 10000); // Wait 10 seconds and debounce - much less frequent since we have targeted updates
@@ -967,7 +967,7 @@ private applyUserStatusChange(data: any): void {
 
     // Public method to test if socket handlers are working correctly
     public testSocketHandlers(): void {
-        console.log('NotificationManager: Testing socket handlers');
+        // console.log('NotificationManager: Testing socket handlers');
         
         if (!app.socketService) {
             console.error('NotificationManager: Socket service not available, cannot test handlers');
@@ -994,7 +994,7 @@ private applyUserStatusChange(data: any): void {
         
         // If any handlers are missing, reinitialize
         if (!hasNewMessageHandler || !hasFriendRequestInformHandler || !hasFriendRequestAcceptHandler) {
-            console.log('NotificationManager: Some handlers missing, reinitializing');
+            // console.log('NotificationManager: Some handlers missing, reinitializing');
             this.reinitializeSocketHandlers();
             toastManager.warning('Socket Test', 'Some handlers were missing, reinitialized');
         } else {
