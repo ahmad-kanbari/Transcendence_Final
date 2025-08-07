@@ -255,7 +255,7 @@ body.text-size-medium div,
 body.text-size-medium span,
 body.text-size-medium button,
 body.text-size-medium input,
-body.text-size-medium select
+body.text-size-medium select,
 body.text-size-medium li {
   font-size: 1.2rem;
 }

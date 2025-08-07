@@ -507,9 +507,9 @@
             </button>
             <div class="text-size-controls">
                 <span class="sr-only" data-i18n="accessibility.textSize">Text Size</span>
-                <button id="smallTextBtn" style="font-size: 0.8rem;" aria-label="Small Text" data-i18n-attr="aria-label:accessibility.textSizeSmall">A</button>
-                <button id="mediumTextBtn" style="font-size: 1rem;" aria-label="Medium Text" data-i18n-attr="aria-label:accessibility.textSizeMedium" class="active">A</button>
-                <button id="largeTextBtn" style="font-size: 1.5rem;" aria-label="Large Text" data-i18n-attr="aria-label:accessibility.textSizeLarge">A</button>
+                <button type="button" id="smallTextBtn" style="font-size: 0.8rem;" aria-label="Small Text" data-i18n-attr="aria-label:accessibility.textSizeSmall">A</button>
+                <button type="button" id="mediumTextBtn" style="font-size: 1rem;" aria-label="Medium Text" data-i18n-attr="aria-label:accessibility.textSizeMedium" class="active">A</button>
+                <button type="button" id="largeTextBtn" style="font-size: 1.5rem;" aria-label="Large Text" data-i18n-attr="aria-label:accessibility.textSizeLarge">A</button>
             </div>
          
            
@@ -805,21 +805,27 @@
                 const mediumTextBtn = document.getElementById('mediumTextBtn');
                 const largeTextBtn = document.getElementById('largeTextBtn');
                 
-                smallTextBtn.addEventListener('click', function() {
+                smallTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'small';
                     updateTextSizeButtons(smallTextBtn);
                     applyAccessibilitySettings();
                     saveAccessibilitySettings();
                 });
                 
-                mediumTextBtn.addEventListener('click', function() {
+                mediumTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'medium';
                     updateTextSizeButtons(mediumTextBtn);
                     applyAccessibilitySettings();
                     saveAccessibilitySettings();
                 });
                 
-                largeTextBtn.addEventListener('click', function() {
+                largeTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'large';
                     updateTextSizeButtons(largeTextBtn);
                     applyAccessibilitySettings();
