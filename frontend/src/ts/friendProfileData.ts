@@ -6,7 +6,7 @@ import toastManager from './toastManager';
 import router from './router';
 import chat from './chat';
 import profile from './profile';
-import { t } from './localization';
+// import { t } from './localization';
 
 interface FriendProfileData {
     id: number;

@@ -1,5 +1,5 @@
 import { TOAST_TYPES } from "./constants";
-import localization, { t } from "./localization";
+// import localization, { t } from "./localization";
 
 class Components {
 
@@ -82,12 +82,12 @@ class Components {
         }
         
         // If title or message start with '@', treat them as translation keys
-        const finalTitle = title.startsWith('@') ? t(title.slice(1)) : title;
-        const finalMessage = message.startsWith('@') ? t(message.slice(1)) : message;
+        // const finalTitle = title.startsWith('@') ? t(title.slice(1)) : title;
+        // const finalMessage = message.startsWith('@') ? t(message.slice(1)) : message;
       
         // this.toastIcon!.className = `bi ${iconClass} toast-icon`;
-        this.toastTitle!.textContent = finalTitle;
-        this.toastMessage!.textContent = finalMessage;
+        // this.toastTitle!.textContent = finalTitle;
+        // this.toastMessage!.textContent = finalMessage;
         this.toastComponent.classList.remove('d-none');
         
         this.toastComponent.classList.add('show');
