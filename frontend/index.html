@@ -129,7 +129,7 @@
                 position: absolute;
                 left: 0;
                 right: 0;
-                top: 64px;
+                top: 90px;
                 z-index: 49;
             }
             
@@ -430,8 +430,8 @@
                     </div>
                     </div>
                     <!-- Mobile Menu Button -->
-                    <button class="lg:hidden flex items-center px-3 py-2 min-w-[40px] min-h-[40px] border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink" id="mobileMenuButton" aria-label="Toggle navigation">
-                        <svg class="w-4 h-4 fill-current block" viewBox="0 0 24 24">
+                    <button class="lg:hidden flex items-center justify-center px-3 py-2 min-w-[40px] min-h-[40px] border border-cyber-blue rounded text-cyber-blue hover:text-cyber-pink hover:border-cyber-pink mobile-menu-btn" id="mobileMenuButton" aria-label="Toggle navigation">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24" style="pointer-events: none;">
                             <path d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"></path>
                         </svg>
                     </button>
@@ -439,7 +439,7 @@
                 </div>
                 
                 <!-- Mobile Navigation Menu - Hidden by default -->
-                <div class="hidden mt-2 pt-10 lg:hidden w-full" id="navbarNav">
+                <div class="hidden mt-4 pt-2 lg:hidden w-full" id="navbarNav">
                     <ul class="bg-cyber-darker bg-opacity-90 w-full rounded-md border border-cyber-blue p-4 shadow-neon-blue flex flex-col">
                         <li>
                             <a href="/" class="flex items-center p-3 border-b border-cyber-blue text-white hover:text-cyber-blue" id="homeNavBtnMobile">
@@ -1017,6 +1017,25 @@
         button:focus, input:focus, [tabindex]:focus {
             outline: 2px solid #05D9E8;
             outline-offset: 2px;
+        }
+
+        /* Fix for mobile menu button - override generic button styles */
+        .mobile-menu-btn {
+            width: auto !important;
+            padding: 12px !important;
+            background: transparent !important;
+            color: #05D9E8 !important;
+            font-weight: normal !important;
+            text-transform: none !important;
+            letter-spacing: normal !important;
+            font-family: inherit !important;
+        }
+        
+        .mobile-menu-btn:hover {
+            background: transparent !important;
+            color: #FF2A6D !important;
+            box-shadow: none !important;
+            transform: none !important;
         }
 
         .connection-status {
