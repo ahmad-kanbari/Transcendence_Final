@@ -1021,6 +1021,17 @@ private addSearchButtons(): void {
                                 align-self: flex-end;
                                 transition: all 0.2s ease;
                             "><i class="bi bi-person-circle mr-1"></i>Profile</button>
+                                    <button class="invite-link-btn" style="
+                                padding: 2px 8px;
+                                background: var(--cyber-green);
+                                color: white;
+                                border: none;
+                                border-radius: 3px;
+                                cursor: pointer;
+                                font-size: 10px;
+                                align-self: flex-end;
+                                transition: all 0.2s ease;
+                            "> <i class="bi bi-person-plus mr-1"></i>Invite</button>
                         </div>
                     `;
 
@@ -1050,6 +1061,47 @@ private addSearchButtons(): void {
                             e.preventDefault();
                             ChatNavigationHelper.navigateToFriendProfile(user.id.toString());
                            
+                        });
+                    }
+
+                           // Add hover effects to profile button
+                    const inviteBtn = chatRow.querySelector('.invite-link-btn');
+                    if (inviteBtn) {
+                        inviteBtn.addEventListener('mouseenter', () => {
+                            (profileBtn as HTMLElement).style.transform = 'translateY(-2px)';
+                            (profileBtn as HTMLElement).style.boxShadow = '0 4px 8px rgba(0, 255, 0, 0.3)';
+                            (profileBtn as HTMLElement).style.background = 'var(--cyber-purple)';
+                        });
+                        
+                        inviteBtn.addEventListener('mouseleave', () => {
+                            (profileBtn as HTMLElement).style.transform = 'translateY(0)';
+                            (profileBtn as HTMLElement).style.boxShadow = 'none';
+                            (profileBtn as HTMLElement).style.background = 'var(--cyber-green)';
+                        });
+                        
+                        // Add click event to send game invite
+                        inviteBtn.addEventListener('click',  async (e) => {
+                            e.stopPropagation(); // Prevent the chatRow click event
+                            e.preventDefault();
+                            
+                            try {
+                                // Only select chat if it's not already selected
+                                if (this.currentChatId !== chat_id) {
+                                    await this.selectChatFromList(chat_id, user);
+                                    // Wait a bit for the room to be joined before sending message
+                                    // await new Promise(resolve => setTimeout(resolve, 200));
+                                }
+                                
+                                // Send the invite message
+                                await this.sendMessage(`Let's Play PING Pong!`);
+                                toastManager.info(app.getUsername(), `Game invite sent to ${user.username}!`);
+                                this.debouncedReloadChats(); // Reload chats to update UI
+                                
+                                // No need to call debouncedReloadChats here as sendMessage already handles chat updates
+                            } catch (error) {
+                                console.error('Error sending game invite:', error);
+                                toastManager.error(app.getUsername(), `Failed to send invite to ${user.username}`);
+                            }
                         });
                     }
 
@@ -1181,7 +1233,7 @@ private addSearchButtons(): void {
             console.log(`Loading messages from join room function`);
             this.clearMessages(); // Clear messages before loading new ones
             toastManager.info(app.getUsername(), 'Loading messages...');
-            toastManager.info(app.getUsername(), `Loaded  messages from chat ${chatId}`);
+            // toastManager.info(app.getUsername(), `Loaded  messages from chat ${chatId}`);
             setTimeout(async () => {
                 const messages = await api.getChatMessages(chatId.toString());
 
@@ -1305,9 +1357,11 @@ private addSearchButtons(): void {
         }
     }
 }
-     async sendMessage(): Promise<void> {
+     async sendMessage(message?: string ): Promise<void> {
         if (!this.elements.messageInput || !this.currentChatId) return;
-
+        if (message) {
+            this.elements.messageInput.value = message;
+        }
         let content = this.elements.messageInput.value.trim();
         if (!content) return;
         content = content.replace(/<[^>]*>/g, '');
