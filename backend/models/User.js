@@ -307,6 +307,11 @@ class User {
 				);
 			}
 
+			if (currentUser.google_id) {
+				throw new CustomError.UnauthorizedError(
+					"Google-authenticated users cannot update their password"
+				);
+			}
 			const isPasswordValid = await this.comparePassword(
 				currentPassword,
 				currentUser.password
