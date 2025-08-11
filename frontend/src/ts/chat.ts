@@ -966,7 +966,7 @@ private addSearchButtons(): void {
             if (chats.length === 0) {
                 const noChatsMsg = document.createElement('div');
                 noChatsMsg.setAttribute('data-i18n', 'chat.noChats');
-                // noChatsMsg.textContent = 'No chats yet.';
+                noChatsMsg.textContent = 'No chats yet.';
                 noChatsMsg.textContent = localization.getTranslation('chat.noChats');
                 noChatsMsg.style.cssText = 'text-align: center; color: #999; padding: 20px;';
                 this.elements.chatRows.appendChild(noChatsMsg);
@@ -1970,7 +1970,7 @@ async handleFriendSearch(): Promise<void> {
                 await this.loadFriendsList(),
                 
       
-            localization.updatePageContent()
+            // localization.updatePageContent()
             this.updateDashboardStats();
         } catch (error) {
             console.error('Error loading friend data:', error);
@@ -3068,7 +3068,7 @@ private showPopup(user: any): void {
             const li = document.createElement('li');
             li.setAttribute('data-i18n', 'chat.noBlockedUsers');
             li.style.cssText = 'color: #999; padding: 8px; text-align: center; font-style: italic; background: none;';
-            // li.textContent = 'No blocked users';
+            li.textContent = 'No blocked users';
             li.textContent = localization.getTranslation('chat.noBlockedUsers');
             this.elements.blockedUsersList.appendChild(li);
             return;

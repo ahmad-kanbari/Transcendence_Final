@@ -12,7 +12,7 @@ import profile from './profile';
 import register from './register';
 import components from './components';
 import localization, { t } from './localization';
-import accessibility from './accessibility';
+// import accessibility from './accessibility';
 import { ApiResponse } from './api';
 import chat from './chat';
 import notificationManager from './NotificationManager';
@@ -1230,7 +1230,7 @@ const app = new App();
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     // Initialize accessibility features
-    accessibility.enhanceKeyboardNavigation();
+    // accessibility.enhanceKeyboardNavigation();
     
     // Initialize the application
     await app.init();

@@ -73,7 +73,7 @@
     "logoutWarning": "لقد تم تسجيل خروجك، ولكن كانت هناك مشكلة مع الخادم."
   },
   "accessibility": {
-    "highContrast": "وضع التباين العالي",
+    "highContrast": "  التباين العالي ",
     "textSize": "حجم النص",
     "textSizeSmall": "صغير",
     "textSizeMedium": "متوسط",

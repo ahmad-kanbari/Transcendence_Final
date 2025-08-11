@@ -253,7 +253,7 @@
             /* Collapsed version of accessibility controls for mobile */
             .accessibility-toggle {
                 position: fixed;
-                bottom: 16px;
+                bottom: 30px;
                 right: 16px;
                 width: 50px;
                 height: 50px;
@@ -504,14 +504,14 @@
                     <li><button class="lang-option w-full text-left px-3 py-2 hover:bg-cyber-blue hover:text-cyber-darker" data-lang="tr">Türkçe</button></li>
                 </ul>
             </div>
-            <button id="highContrastToggle" aria-pressed="false" data-i18n="accessibility.highContrast" class="w-full">
-                <i class="bi bi-circle-half mr-2"></i> <span class="hidden sm:inline">Contrast</span>
+            <button id="highContrastToggle" aria-pressed="false"  class="w-full">
+                <i class="bi bi-circle-half mr-2"></i> <span class="hidden sm:inline" data-i18n="accessibility.highContrast">Contrast</span>
             </button>
             <div class="text-size-controls">
                 <span class="sr-only" data-i18n="accessibility.textSize">Text Size</span>
-                <button id="smallTextBtn" style="font-size: 0.8rem;" aria-label="Small Text" data-i18n-attr="aria-label:accessibility.textSizeSmall">A</button>
-                <button id="mediumTextBtn" style="font-size: 1rem;" aria-label="Medium Text" data-i18n-attr="aria-label:accessibility.textSizeMedium" class="active">A</button>
-                <button id="largeTextBtn" style="font-size: 1.5rem;" aria-label="Large Text" data-i18n-attr="aria-label:accessibility.textSizeLarge">A</button>
+                <button type="button" id="smallTextBtn" style="font-size: 0.8rem;" aria-label="Small Text" data-i18n-attr="aria-label:accessibility.textSizeSmall">A</button>
+                <button type="button" id="mediumTextBtn" style="font-size: 1rem;" aria-label="Medium Text" data-i18n-attr="aria-label:accessibility.textSizeMedium" class="active">A</button>
+                <button type="button" id="largeTextBtn" style="font-size: 1.5rem;" aria-label="Large Text" data-i18n-attr="aria-label:accessibility.textSizeLarge">A</button>
             </div>
          
            
@@ -807,21 +807,27 @@
                 const mediumTextBtn = document.getElementById('mediumTextBtn');
                 const largeTextBtn = document.getElementById('largeTextBtn');
                 
-                smallTextBtn.addEventListener('click', function() {
+                smallTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'small';
                     updateTextSizeButtons(smallTextBtn);
                     applyAccessibilitySettings();
                     saveAccessibilitySettings();
                 });
                 
-                mediumTextBtn.addEventListener('click', function() {
+                mediumTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'medium';
                     updateTextSizeButtons(mediumTextBtn);
                     applyAccessibilitySettings();
                     saveAccessibilitySettings();
                 });
                 
-                largeTextBtn.addEventListener('click', function() {
+                largeTextBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Defensive
+                    e.stopPropagation();
                     accessibilityOptions.textSize = 'large';
                     updateTextSizeButtons(largeTextBtn);
                     applyAccessibilitySettings();

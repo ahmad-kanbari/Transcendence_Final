@@ -3,7 +3,7 @@ import utils from './utils';
 import components from './components';
 import { AVAILABLE_PAGES } from './constants';
 import localization, { t } from './localization';
-import accessibility from './accessibility';
+// import accessibility from './accessibility';
 import toastManager from './toastManager';
 import app from './app';
 
@@ -107,7 +107,7 @@ class Pages {
       this.applyLocalizationToPage();
       
       // Enhance accessibility for the new page content
-      accessibility.enhanceKeyboardNavigation();
+      // accessibility.enhanceKeyboardNavigation();
       
       document.dispatchEvent(new CustomEvent('pageShown', { 
         detail: { page: pageName } 
