@@ -71,7 +71,7 @@
     "logoutWarning": "You have been logged out, but there was an issue with the server."
   },
   "accessibility": {
-    "highContrast": "High Contrast Mode",
+    "highContrast": "Contrast",
     "textSize": "Text Size",
     "textSizeSmall": "Small",
     "textSizeMedium": "Medium",

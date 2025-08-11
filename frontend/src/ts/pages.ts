@@ -2,7 +2,7 @@ import api from './api';
 import utils from './utils';
 import components from './components';
 import { AVAILABLE_PAGES } from './constants';
-// import localization, { t } from './localization';
+import localization, { t } from './localization';
 // import accessibility from './accessibility';
 import toastManager from './toastManager';
 import app from './app';
@@ -147,8 +147,8 @@ class Pages {
     // Let the localization service handle the translation by triggering an event
     document.dispatchEvent(new CustomEvent('languageChanged', {
       detail: { 
-        // language: localization.currentLanguage, 
-        // isRTL: localization.isRTL 
+        language: localization.currentLanguage, 
+        isRTL: localization.isRTL 
       }
     }));
   }

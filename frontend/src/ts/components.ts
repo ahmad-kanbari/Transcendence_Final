@@ -1,5 +1,5 @@
 import { TOAST_TYPES } from "./constants";
-// import localization, { t } from "./localization";
+import localization, { t } from "./localization";
 
 class Components {
 

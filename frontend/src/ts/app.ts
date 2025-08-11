@@ -11,7 +11,7 @@ import router from './router';
 import profile from './profile';
 import register from './register';
 import components from './components';
-// import localization, { t } from './localization';
+import localization, { t } from './localization';
 // import accessibility from './accessibility';
 import { ApiResponse } from './api';
 import chat from './chat';
@@ -139,7 +139,7 @@ class App {
       
 
       // Force initialization
-      // localization.updatePageContent();
+      localization.updatePageContent();
       document.dispatchEvent(new CustomEvent('appInitialized', {
         detail: { app: this }
       }));
@@ -1238,8 +1238,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Apply localization to the page after initialization
     document.dispatchEvent(new CustomEvent('languageChanged', {
       detail: { 
-        // language: localization.currentLanguage, 
-        // isRTL: localization.isRTL 
+        language: localization.currentLanguage, 
+        isRTL: localization.isRTL 
       }
     }));
 
