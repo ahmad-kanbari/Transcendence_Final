@@ -1,6 +1,12 @@
-<div class="chat-page">
+<div class="chat-page pt-10">
     <!-- Skip to content link for accessibility -->
     <a href="#main-content" class="skip-to-content" data-i18n="chat.skipToContent" style="position: absolute; top: -50px; left: 0; padding: 8px 16px; background: var(--cyber-blue); color: var(--cyber-darker); z-index: 9999; transition: top 0.3s;">Skip to content</a>
+
+
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 
     <!-- Floating Particles -->
     <div class="particles" id="particles"></div>
@@ -93,10 +99,10 @@
     </div>
 
     <!-- Dashboard Stats View -->
-    <div class="dashboard-view" id="dashboardView">
-        <!-- <button class="close-dashboard" id="closeDashboard">&times;</button>
+    <!-- <div class="dashboard-view" id="dashboardView">
+         <button class="close-dashboard" id="closeDashboard">&times;</button>
         <h2 style="font-family: 'Orbitron', sans-serif; color: var(--cyber-blue); text-align: center; margin-bottom: 30px; font-size: 2rem; text-transform: uppercase; letter-spacing: 2px;">Dashboard Overview</h2> -->
-                
+<!--                 
         <div class="dashboard-stats">
             <div class="stat-card">
                 <h3 data-i18n="chat.totalFriends">Total Friends</h3>
@@ -115,7 +121,7 @@
                 <div class="stat-number" id="onlineFriends">0</div>
             </div>
         </div>
-    </div>
+    </div>  -->
 
     <div class="dashboard-container" id="main-content">
         <!-- Friends Management Sidebar -->
@@ -206,12 +212,18 @@
                         <i class="bi bi-graph-up"></i><span data-i18n="chat.dashboard">Dashboard</span>
                     </button>
                 </div> -->
+                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+                        <i class="bi bi-list"></i>
+                    <span data-i18n="chat.friends">Friends</span>
+                </button>
             </div>
                   
             <!-- Chat Container -->
             <div class="chat-container">
+                    <!-- Mobile Sidebar Toggle Button -->
+   
                 <!-- Chat List -->
-                <div id="chatList" class="sidebar">
+                <div id="chatList" class="chat-sidebar">
                     <div id="startChatArea">
                         <input
                             type="text"

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Sidebar Overlay Test</title>
+    <style>
+        /* Import the chat.css styles */
+        @import url("../frontend/src/css/chat.css");
+        
+        body {
+            margin: 0;
+            background: #0a0a0a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .test-container {
+            padding: 20px;
+        }
+        
+        .test-button {
+            background: #00f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Mobile Sidebar Overlay Test</h1>
+        <p>Resize your browser to mobile width (below 768px) and test the sidebar overlay functionality.</p>
+        
+        <div class="dashboard-container">
+            <!-- Sidebar Overlay for Mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+            
+            <!-- Friends Management Sidebar -->
+            <div class="sidebar">
+                <h2>Friend Management</h2>
+                <div class="section">
+                    <h3>Test Sidebar Content</h3>
+                    <p>This sidebar should overlay on top of the main content on mobile.</p>
+                    <button class="test-button" onclick="closeSidebar()">Close Sidebar</button>
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="main">
+                <!-- Top Bar -->
+                <div class="topbar">
+                    <h1>Cyber Chat</h1>
+                    <button class="mobile-sidebar-toggle" onclick="toggleSidebar()">
+                        <span>☰ Friends</span>
+                    </button>
+                </div>
+                      
+                <!-- Chat Container -->
+                <div class="chat-container">
+                    <div class="test-content" style="padding: 20px; background: #333; margin: 20px; border-radius: 10px;">
+                        <h2>Main Content Area</h2>
+                        <p>This is the main content. On mobile, the sidebar should overlay on top of this content when the Friends button is clicked.</p>
+                        <button class="test-button" onclick="toggleSidebar()">Toggle Sidebar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('mobile-open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        }
+        
+        function openSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.add('mobile-open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Close sidebar when clicking overlay
+        document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+        
+        // Close sidebar on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+    </script>
+</body>
+</html>

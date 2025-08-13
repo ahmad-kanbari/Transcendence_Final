@@ -1,82 +1,3 @@
-/* :root {
-    --cyber-pink: #FF2A6D;
-    --cyber-blue: #05D9E8;
-    --cyber-purple: #9D4EDD;
-    --cyber-yellow: #F9C80E;
-    --cyber-green: #2DE2E6;
-    --cyber-dark: #0F0F1B;
-    --cyber-darker: #070718;
-    --cyber-black: #030303;
-    --cyber-orange: #FF6B35;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-/* 
-body {
-    font-family: 'Roboto', sans-serif;
-    background: radial-gradient(ellipse at center, var(--cyber-dark) 0%, var(--cyber-darker) 60%, var(--cyber-black) 100%);
-    color: white;
-    height: 100vh;
-    overflow: hidden;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    position: relative;
-}
-
-body.authenticated {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Enhanced Cyberpunk Background */
-/* body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 80%, var(--cyber-blue) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, var(--cyber-pink) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, var(--cyber-purple) 0%, transparent 50%);
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: -2;
-    animation: backgroundPulse 8s ease-in-out infinite alternate;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(90deg, transparent 98%, rgba(5, 217, 232, 0.1) 100%),
-        linear-gradient(180deg, transparent 98%, rgba(255, 42, 109, 0.1) 100%);
-    background-size: 80px 80px;
-    pointer-events: none;
-    z-index: -1;
-    animation: gridMove 20s linear infinite; */
-/* }   */
-
-/* @keyframes backgroundPulse {
-    0% { opacity: 0.03; }
-    100% { opacity: 0.08; }
-} */
-
-/* @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(80px, 80px); }
-} */
-
 /* Floating particles */
 
 @keyframes energyFlow {
@@ -87,7 +8,7 @@ body::after {
 .topbar h1 {
     font-family: 'Orbitron', sans-serif;
     color: var(--cyber-blue);
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 3px;
@@ -255,11 +176,12 @@ body::after {
     flex: 1;
     display: flex;
     height: 80vh;
-
+    flex-direction: row; /* Default desktop layout */
 }
 
 /* Enhanced Chat List */
-#chatList {
+#chatList,
+.chat-sidebar {
     width: 300px;
     background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.95) 100%);
     border-right: 3px solid transparent;
@@ -267,6 +189,9 @@ body::after {
     padding: 25px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
+    order: initial; /* Reset order for desktop */
+    height: auto; /* Reset height for desktop */
+    position: relative; /* Ensure it's not fixed positioned like main sidebar */
 }
 
 #chatList h3 {
@@ -616,24 +541,204 @@ body.rtl {
     border-image: linear-gradient(45deg, var(--cyber-purple), var(--cyber-pink)) 1;
 }
 
+/* Mobile Sidebar Toggle Button */
+.mobile-sidebar-toggle {
+    display: none;
+    position: relative;
+    /* top: 25px; */
+    left: 80px; /* Position beside the title */
+    z-index: 1500;
+    background: linear-gradient(135deg, var(--cyber-blue) 0%, var(--cyber-green) 100%);
+    border: none;
+    border-radius: 20px;
+    padding: 4px 6px; /* Smaller padding */
+    color: var(--cyber-darker);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    font-size: 4px; /* Smaller font size */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(5, 217, 232, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(5, 217, 232, 0.3);
+}
+
+.mobile-sidebar-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(5, 217, 232, 0.6);
+    background: linear-gradient(135deg, var(--cyber-green) 0%, var(--cyber-blue) 100%);
+}
+
+.mobile-sidebar-toggle:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 8px rgba(5, 217, 232, 0.8);
+}
+
+.mobile-sidebar-toggle i {
+    margin-right: 4px; /* Smaller margin */
+    font-size: 6px; /* Smaller icon */
+}
+
+/* Ensure mobile toggle is always visible on mobile devices */
+@media (max-width: 1024px) {
+    .mobile-sidebar-toggle {
+        display: block;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
+    /* Tablet styles */
+    .mobile-sidebar-toggle {
+        display: block;
+    }
+
+    .dashboard-container {
+        padding-left: 0;
+        width: 100%;
+        height: 100vh; /* Take full screen height */
+        position: relative;
+        z-index: 1; /* Lower z-index so sidebar overlays on top */
+    }
+
     .sidebar {
-        width: 300px;
+        position: fixed;
+        top: 0;
+        left: -100%; /* Hide completely off screen */
+        width: 80%; /* Take 80% of screen width for better UX */
+        height: 100vh;
+        z-index: 2000; /* Higher z-index to overlay on top */
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%);
+        /* backdrop-filter: blur(15px); */
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.mobile-open {
+        left: 20; /* Slide in from left edge as overlay */
+        z-index: 2000; /* Keep high z-index when open */
+    }
+
+    .main {
+        width: 100%; /* Take full width - no space reserved for sidebar */
+        margin-left: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100vh; /* Take full screen height */
+        z-index: 1; /* Lower z-index so sidebar appears on top */
+    }
+
+    .topbar {
+        height: 60px; /* Fixed height for topbar */
+        flex-shrink: 0;
+    }
+
+    .chat-container {
+        flex-direction: column !important; /* Force column layout */
+        display: flex;
+        width: 100%; /* Ensure full width */
     }
 
     #chatList {
-        width: 260px;
+        width: 100% !important; /* Override desktop width */
+        height: 40vh;
+        border-right: none;
+        border-bottom: 3px solid transparent;
+        border-image: linear-gradient(90deg, var(--cyber-purple), var(--cyber-pink)) 1;
+        order: 1;
+        flex-shrink: 0;
+    }
+
+    .chatPanel {
+        height: 60vh;
+        flex: 1;
+        order: 2;
+        width: 100%; /* Ensure full width */
     }
 }
 
 @media (max-width: 768px) {
+    /* Mobile styles */
     .sidebar {
-        width: 280px;
+        width: 85%; /* Take 85% of screen width on mobile for better UX */
+        left: -100%; /* Hide completely off screen */
+        z-index: 2000; /* High z-index to overlay on top */
     }
 
-    #chatList {
-        width: 240px;
+    .sidebar.mobile-open {
+        left: 0; /* Slide to left edge as overlay */
+        z-index: 2000; /* Keep high z-index */
+    }
+
+    .dashboard-container {
+        z-index: 1; /* Lower z-index so sidebar overlays */
+    }
+
+    .main {
+        width: 100%; /* Full width - no space reserved for sidebar */
+        z-index: 1; /* Lower z-index so sidebar overlays */
+    }
+
+    .topbar h1 {
+        font-size: 1.2rem;
+        margin-left: 110px; /* Adjust margin for smaller button */
+    }
+
+    .chat-container {
+        flex-direction: column !important; /* Force column layout */
+        height: calc(100vh - 60px); /* Full screen minus topbar height */
+        display: flex;
+        width: 100%; /* Ensure full width */
+    }
+
+    #chatList,
+    .chat-sidebar {
+        width: 100% !important; /* Override desktop width */
+        height: 40vh; /* 40% of viewport height */
+        min-height: 200px;
+        border-right: none;
+        border-bottom: 3px solid transparent;
+        border-image: linear-gradient(90deg, var(--cyber-purple), var(--cyber-pink)) 1;
+        overflow-y: auto;
+        order: 1;
+        flex-shrink: 0;
+    }
+
+    .chatPanel {
+        height: 60vh; /* 60% of viewport height */
+        min-height: 300px;
+        flex: 1;
+        order: 2;
+        width: 100%; /* Ensure full width */
+    }
+
+    #messages {
+        height: calc(100% - 140px);
+        overflow-y: auto;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width calculation */
+    }
+
+    .messageInputArea {
+        padding: 15px;
+        gap: 10px;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width calculation */
+    }
+
+    #messageInput {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    #sendBtn {
+        padding: 12px 20px;
+        font-size: 12px;
     }
 
     .toast-notification {
@@ -648,8 +753,158 @@ body.rtl {
         right: 20px;
     }
 
+    .message {
+        max-width: 85%;
+        padding: 12px 16px;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    #friendSearchPopupOverlay div {
+        width: 95%;
+        padding: 20px;
+        margin: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small mobile styles */
     .topbar h1 {
-        font-size: 1.4rem;
+        font-size: 0.8 rem;
+        letter-spacing: 1px;
+    }
+
+    .mobile-sidebar-toggle {
+        padding: 6px 10px; /* Even smaller on very small screens */
+        font-size: 9px;
+        left: 70px; /* Adjust position for smaller screens */
+    }
+
+    .chat-container {
+        height: calc(100vh - 60px); /* Full screen minus topbar */
+        flex-direction: column !important; /* Force column layout */
+    }
+
+    #chatList,
+    .chat-sidebar {
+        height: 35vh;
+        min-height: 150px;
+        padding: 15px;
+        width: 100% !important; /* Force full width */
+        order: 1;
+    }
+
+    .chatPanel {
+        height: calc(65vh - 60px);
+        min-height: 250px;
+        width: 100% !important; /* Force full width */
+        order: 2;
+    }
+
+    .message {
+        max-width: 90%;
+        padding: 10px 14px;
+    }
+
+    .messageInputArea {
+        flex-direction: column;
+        padding: 12px;
+    }
+
+    #messageInput {
+        margin-bottom: 10px;
+    }
+
+    #sendBtn {
+        width: 100%;
+    }
+}
+
+/* MOBILE SIDEBAR OVERLAY - GLOBAL OVERRIDE */
+@media (max-width: 1024px) {
+    /* Force sidebar to be overlay on mobile/tablet */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 80% !important;
+        height: 100vh !important;
+        z-index: 2000 !important;
+        background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%) !important;
+        backdrop-filter: blur(15px) !important;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5) !important;
+        transition: left 0.3s ease !important;
+        overflow-y: auto !important;
+        pointer-events: auto !important; /* Ensure sidebar can be clicked */
+    }
+    
+    .sidebar.mobile-open {
+        left: 0 !important;
+        pointer-events: auto !important; /* Ensure sidebar can be clicked when open */
+    }
+    
+    /* Ensure all sidebar content is clickable */
+    .sidebar * {
+        pointer-events: auto !important;
+    }
+    
+    /* Ensure dashboard container is below sidebar */
+    .dashboard-container {
+        position: relative !important;
+        z-index: 1 !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure main content is below sidebar */
+    .main {
+        position: relative !important;
+        z-index: 1 !important;
+        width: 100% !important;
+    }
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay for better contrast */
+    z-index: 1999; /* Just below sidebar but above main content */
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none; /* Disable pointer events by default */
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto; /* Enable pointer events when active */
+}
+
+@media (max-width: 1024px) {
+    .sidebar-overlay.active {
+        display: block;
+        pointer-events: auto; /* Allow clicks on the overlay area */
+        /* Create a "hole" where the sidebar is by using clip-path */
+        clip-path: polygon(80% 0%, 100% 0%, 100% 100%, 80% 100%);
     }
 }
 
@@ -799,4 +1054,99 @@ li:focus {
 .close-dashboard:hover {
     background: var(--cyber-orange);
     transform: scale(1.1);
+}
+
+
+  /* Popup Animation */
+        @keyframes popupSlideIn {
+            from {
+                transform: scale(0.7) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Button Hover Effects */
+        #friendSearchPopupAddBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+        
+        #friendSearchPopupBlockBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 64, 0.4);
+        }
+        
+        #friendSearchPopupCloseBtn:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        /* Blocked Users List Styling */
+        #blockedUsersList li {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 68, 68, 0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #blockedUsersList li:hover {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        #blockedUsersList .unblock-btn {
+            padding: 4px 12px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        #blockedUsersList .unblock-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        /* User info styling in blocked list */
+        .blocked-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blocked-user-icon {
+            color: #ff4444;
+            font-size: 16px;
+        }
+
+#openFriendSearchBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+#openFriendSearchBtn:hover::before {
+    transform: translateX(100%);
+}
+
+#openFriendSearchBtn:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8) !important;
 }
