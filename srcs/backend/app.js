@@ -1,4 +1,3 @@
-require("dotenv").config();
 const fastify = require("fastify")({
 	logger: {
 		level: "error",
@@ -73,16 +72,6 @@ const start = async () => {
 		const tournamentModel = new Tournament(db);
 
 		// 3. Register plugins (Must register fastifyCookie before fastifyJwt and oauthPlugin)
-		fastify.register(require("@fastify/cors"), {
-			origin: [
-				"http://127.0.0.1:3000",
-				"http://localhost:3000",
-				"http://127.0.0.1:3003",
-				"http://localhost:3003",
-			],
-			method: ["GET", "POST", "HEAD", "DELETE", "PATCH"],
-			credentials: true,
-		});
 		fastify.register(fastifyStatic, {
 			root: path.join(__dirname, "public"),
 			prefix: "/", // Note 1
@@ -148,18 +137,7 @@ const start = async () => {
 		fastify.addHook("preHandler", csrfProtectionMiddleware);
 
 		// 4. Set up Socket.io
-		const io = socketIo(fastify.server, {
-			cors: {
-				origin: [
-					"http://127.0.0.1:3000",
-					"http://localhost:3000",
-					"http://127.0.0.1:3003",
-					"http://localhost:3003",
-				],
-				methods: ["GET", "POST", "HEAD", "DELETE", "PATCH"],
-				credentials: true,
-			},
-		}); // Attach Socket.io to Fastify's server instance
+		const io = socketIo(fastify.server); // Attach Socket.io to Fastify's server instance
 		
 		// Apply XSS protection to all socket connections
 		io.use(sanitizeSocketData);
