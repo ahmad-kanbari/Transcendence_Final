@@ -551,7 +551,7 @@ body.rtl {
     color: var(--cyber-darker);
     font-family: 'Orbitron', sans-serif;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 6px;
     text-transform: uppercase;
     letter-spacing: 1px;
     cursor: pointer;
