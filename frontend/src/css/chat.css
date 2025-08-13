@@ -598,14 +598,14 @@ body.rtl {
     .dashboard-container {
         padding-left: 0;
         width: 100%;
-        min-height: 100vh;
+        height: 100vh; /* Take full screen height */
     }
 
     .sidebar {
         position: fixed;
         top: 0;
-        left: -70%; /* Hide 70% width off screen */
-        width: 70%; /* Take 70% of screen width */
+        left: -100%; /* Hide full width off screen */
+        width: 100%; /* Take full screen width */
         height: 100vh;
         z-index: 1400;
         transition: left 0.3s ease;
@@ -625,6 +625,12 @@ body.rtl {
         flex: 1;
         display: flex;
         flex-direction: column;
+        height: 100vh; /* Take full screen height */
+    }
+
+    .topbar {
+        height: 60px; /* Fixed height for topbar */
+        flex-shrink: 0;
     }
 
     .chat-container {
@@ -654,8 +660,8 @@ body.rtl {
 @media (max-width: 768px) {
     /* Mobile styles */
     .sidebar {
-        width: 70%; /* Take 70% of screen width on mobile */
-        left: -70%; /* Hide 70% width off screen */
+        width: 100%; /* Take full screen width on mobile */
+        left: -100%; /* Hide full width off screen */
     }
 
     .sidebar.mobile-open {
@@ -669,15 +675,16 @@ body.rtl {
 
     .chat-container {
         flex-direction: column !important; /* Force column layout */
-        height: calc(80vh - 60px);
+        height: calc(100vh - 60px); /* Full screen minus topbar height */
         display: flex;
         width: 100%; /* Ensure full width */
     }
 
-    #chatList {
+    #chatList,
+    .chat-sidebar {
         width: 100% !important; /* Override desktop width */
-        height: 35vh;
-        min-height: 250px;
+        height: 40vh; /* 40% of viewport height */
+        min-height: 200px;
         border-right: none;
         border-bottom: 3px solid transparent;
         border-image: linear-gradient(90deg, var(--cyber-purple), var(--cyber-pink)) 1;
@@ -687,8 +694,8 @@ body.rtl {
     }
 
     .chatPanel {
-        height: calc(65vh - 60px);
-        min-height: 400px;
+        height: 60vh; /* 60% of viewport height */
+        min-height: 300px;
         flex: 1;
         order: 2;
         width: 100%; /* Ensure full width */
@@ -770,21 +777,22 @@ body.rtl {
     }
 
     .chat-container {
-        height: calc(85vh - 60px);
+        height: calc(100vh - 60px); /* Full screen minus topbar */
         flex-direction: column !important; /* Force column layout */
     }
 
-    #chatList {
-        height: 30vh;
-        min-height: 200px;
+    #chatList,
+    .chat-sidebar {
+        height: 35vh;
+        min-height: 150px;
         padding: 15px;
         width: 100% !important; /* Force full width */
         order: 1;
     }
 
     .chatPanel {
-        height: calc(70vh - 60px);
-        min-height: 350px;
+        height: calc(65vh - 60px);
+        min-height: 250px;
         width: 100% !important; /* Force full width */
         order: 2;
     }
