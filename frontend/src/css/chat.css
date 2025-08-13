@@ -8,7 +8,7 @@
 .topbar h1 {
     font-family: 'Orbitron', sans-serif;
     color: var(--cyber-blue);
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 3px;
@@ -544,18 +544,18 @@ body.rtl {
 /* Mobile Sidebar Toggle Button */
 .mobile-sidebar-toggle {
     display: none;
-    position: fixed;
-    top: 25px;
+    position: relative;
+    /* top: 25px; */
     left: 80px; /* Position beside the title */
     z-index: 1500;
     background: linear-gradient(135deg, var(--cyber-blue) 0%, var(--cyber-green) 100%);
     border: none;
     border-radius: 20px;
-    padding: 8px 12px; /* Smaller padding */
+    padding: 4px 6px; /* Smaller padding */
     color: var(--cyber-darker);
     font-family: 'Orbitron', sans-serif;
     font-weight: 600;
-    font-size: 10px; /* Smaller font size */
+    font-size: 4px; /* Smaller font size */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     cursor: pointer;
@@ -577,8 +577,8 @@ body.rtl {
 }
 
 .mobile-sidebar-toggle i {
-    margin-right: 5px; /* Smaller margin */
-    font-size: 10px; /* Smaller icon */
+    margin-right: 4px; /* Smaller margin */
+    font-size: 6px; /* Smaller icon */
 }
 
 /* Ensure mobile toggle is always visible on mobile devices */
@@ -685,7 +685,7 @@ body.rtl {
     }
 
     .topbar h1 {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         margin-left: 110px; /* Adjust margin for smaller button */
     }
 
@@ -782,7 +782,7 @@ body.rtl {
 @media (max-width: 480px) {
     /* Extra small mobile styles */
     .topbar h1 {
-        font-size: 1.2rem;
+        font-size: 0.8 rem;
         letter-spacing: 1px;
     }
 
