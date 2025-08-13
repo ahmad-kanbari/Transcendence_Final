@@ -16,10 +16,9 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode production",
-    "start": "webpack serve --mode development",
-    "all" : "webpack --mode production && webpack serve --mode development"
+    "dev": "webpack --mode development && webpack serve --mode development",
+    "start": "webpack --mode production && webpack serve --mode production",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
