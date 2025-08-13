@@ -563,141 +563,141 @@ class API {
     }
   }
 
-  async setup2FA(retryCount: number = 0): Promise<any> {
-    try {
-      const response = await fetch(ENDPOINTS.auth.setup2FA, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+  // async setup2FA(retryCount: number = 0): Promise<any> {
+  //   try {
+  //     const response = await fetch(ENDPOINTS.auth.setup2FA, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       credentials: 'include'
+  //     });
       
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
+  //     if (response.status === 401 && retryCount < 1) {
+  //       const refreshResult = await this.refreshToken();
         
-        if (refreshResult.success) {
-          return await this.setup2FA(retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp(); 
-          throw new Error('Authentication expired. Please log in again.');
-        }
-      }
+  //       if (refreshResult.success) {
+  //         return await this.setup2FA(retryCount + 1);
+  //       } else {
+  //         console.error('Token refresh failed:', refreshResult.error);
+  //         utils.cleanUp(); 
+  //         throw new Error('Authentication expired. Please log in again.');
+  //       }
+  //     }
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API.setup2FA: Error response', errorData);
-        throw new Error(errorData.error || 'Failed to setup 2FA');
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       console.error('API.setup2FA: Error response', errorData);
+  //       throw new Error(errorData.error || 'Failed to setup 2FA');
+  //     }
       
-      const responseData = await response.json();
+  //     const responseData = await response.json();
       
-      return responseData;
-    } catch (error: any) {
-      console.error(`API.setup2FA: Error caught (attempt ${retryCount + 1})`, error);
-      throw error;
-    }
-  }
+  //     return responseData;
+  //   } catch (error: any) {
+  //     console.error(`API.setup2FA: Error caught (attempt ${retryCount + 1})`, error);
+  //     throw error;
+  //   }
+  // }
   
-  async verify2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
-    try {
+  // async verify2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
+  //   try {
       
-      const response = await fetch(ENDPOINTS.auth.verify2FA, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ otp_token: code })
-      });
+  //     const response = await fetch(ENDPOINTS.auth.verify2FA, {
+  //       method: 'POST',
+  //       credentials: 'include',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ otp_token: code })
+  //     });
       
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
+  //     if (response.status === 401 && retryCount < 1) {
+  //       const refreshResult = await this.refreshToken();
         
-        if (refreshResult.success) {
-          return await this.verify2FA(code, retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp(); 
-          return { 
-            success: false, 
-            error: 'Authentication expired. Please log in again.',
-            authExpired: true 
-          };
-        }
-      }
+  //       if (refreshResult.success) {
+  //         return await this.verify2FA(code, retryCount + 1);
+  //       } else {
+  //         console.error('Token refresh failed:', refreshResult.error);
+  //         utils.cleanUp(); 
+  //         return { 
+  //           success: false, 
+  //           error: 'Authentication expired. Please log in again.',
+  //           authExpired: true 
+  //         };
+  //       }
+  //     }
       
-      const responseData = await response.json();
+  //     const responseData = await response.json();
       
-      if (!response.ok) {
-        return { 
-          success: false, 
-          error: responseData.error || 'Failed to verify 2FA code' 
-        };
-      }
+  //     if (!response.ok) {
+  //       return { 
+  //         success: false, 
+  //         error: responseData.error || 'Failed to verify 2FA code' 
+  //       };
+  //     }
       
-      return { 
-        success: true, 
-        ...responseData 
-      };
-    } catch (error: any) {
-      console.error(`2FA verification error (attempt ${retryCount + 1}):`, error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-  }
+  //     return { 
+  //       success: true, 
+  //       ...responseData 
+  //     };
+  //   } catch (error: any) {
+  //     console.error(`2FA verification error (attempt ${retryCount + 1}):`, error);
+  //     return { 
+  //       success: false, 
+  //       error: error.message 
+  //     };
+  //   }
+  // }
   
-  async disable2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
-    try {
-      const response = await fetch(ENDPOINTS.auth.disable2FA, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ otp_token: code })
-      });
+  // async disable2FA(code: string, retryCount: number = 0): Promise<ApiResponse> {
+  //   try {
+  //     const response = await fetch(ENDPOINTS.auth.disable2FA, {
+  //       method: 'POST',
+  //       credentials: 'include',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ otp_token: code })
+  //     });
       
-      if (response.status === 401 && retryCount < 1) {
-        const refreshResult = await this.refreshToken();
+  //     if (response.status === 401 && retryCount < 1) {
+  //       const refreshResult = await this.refreshToken();
         
-        if (refreshResult.success) {
-          return await this.disable2FA(code, retryCount + 1);
-        } else {
-          console.error('Token refresh failed:', refreshResult.error);
-          utils.cleanUp(); 
-          return { 
-            success: false, 
-            error: 'Authentication expired. Please log in again.',
-            authExpired: true 
-          };
-        }
-      }
+  //       if (refreshResult.success) {
+  //         return await this.disable2FA(code, retryCount + 1);
+  //       } else {
+  //         console.error('Token refresh failed:', refreshResult.error);
+  //         utils.cleanUp(); 
+  //         return { 
+  //           success: false, 
+  //           error: 'Authentication expired. Please log in again.',
+  //           authExpired: true 
+  //         };
+  //       }
+  //     }
       
-      const responseData = await response.json();
+  //     const responseData = await response.json();
       
-      if (!response.ok) {
-        return { 
-          success: false, 
-          error: responseData.error || 'Failed to disable 2FA' 
-        };
-      }
+  //     if (!response.ok) {
+  //       return { 
+  //         success: false, 
+  //         error: responseData.error || 'Failed to disable 2FA' 
+  //       };
+  //     }
       
-      return { 
-        success: true, 
-        ...responseData 
-      };
-    } catch (error: any) {
-      console.error(`2FA disabling error (attempt ${retryCount + 1}):`, error);
-      return { 
-        success: false, 
-        error: error.message 
-      };
-    }
-  }
+  //     return { 
+  //       success: true, 
+  //       ...responseData 
+  //     };
+  //   } catch (error: any) {
+  //     console.error(`2FA disabling error (attempt ${retryCount + 1}):`, error);
+  //     return { 
+  //       success: false, 
+  //       error: error.message 
+  //     };
+  //   }
+  // }
 
   async createMatch(matchData: MatchData, retryCount: number = 0): Promise<ApiResponse> {
     try {

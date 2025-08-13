@@ -1697,6 +1697,7 @@ init2FA(): void {
       const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/setup`, {
         method: 'POST',
         credentials: 'include',
+        headers: api.prepareHeaders("DELETE"),
       });
 
       if (!response.ok) {
@@ -1755,7 +1756,8 @@ init2FA(): void {
     try {
       const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // headers: { 'Content-Type': 'application/json' },
+        headers: api.prepareHeaders(),
         credentials: 'include',
         body: JSON.stringify({ token: code }),
       });
@@ -1834,7 +1836,8 @@ init2FA(): void {
     try {
       const response = await this.fetchWithAutoRefresh(`${this.baseURL}/auth/2fa/disable`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // headers: { 'Content-Type': 'application/json' },
+         headers: api.prepareHeaders(),
         credentials: 'include',
         body: JSON.stringify({ token: code }),
       });
