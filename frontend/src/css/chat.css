@@ -176,11 +176,12 @@
     flex: 1;
     display: flex;
     height: 80vh;
-
+    flex-direction: row; /* Default desktop layout */
 }
 
 /* Enhanced Chat List */
-#chatList {
+#chatList,
+.chat-sidebar {
     width: 300px;
     background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.95) 100%);
     border-right: 3px solid transparent;
@@ -188,6 +189,9 @@
     padding: 25px;
     overflow-y: auto;
     backdrop-filter: blur(10px);
+    order: initial; /* Reset order for desktop */
+    height: auto; /* Reset height for desktop */
+    position: relative; /* Ensure it's not fixed positioned like main sidebar */
 }
 
 #chatList h3 {
@@ -619,15 +623,18 @@ body.rtl {
         width: 100%;
         margin-left: 0;
         flex: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .chat-container {
-        flex-direction: column;
+        flex-direction: column !important; /* Force column layout */
         display: flex;
+        width: 100%; /* Ensure full width */
     }
 
     #chatList {
-        width: 100%;
+        width: 100% !important; /* Override desktop width */
         height: 40vh;
         border-right: none;
         border-bottom: 3px solid transparent;
@@ -640,6 +647,7 @@ body.rtl {
         height: 60vh;
         flex: 1;
         order: 2;
+        width: 100%; /* Ensure full width */
     }
 }
 
@@ -660,13 +668,14 @@ body.rtl {
     }
 
     .chat-container {
-        flex-direction: column;
+        flex-direction: column !important; /* Force column layout */
         height: calc(80vh - 60px);
         display: flex;
+        width: 100%; /* Ensure full width */
     }
 
     #chatList {
-        width: 100%;
+        width: 100% !important; /* Override desktop width */
         height: 35vh;
         min-height: 250px;
         border-right: none;
@@ -682,16 +691,21 @@ body.rtl {
         min-height: 400px;
         flex: 1;
         order: 2;
+        width: 100%; /* Ensure full width */
     }
 
     #messages {
         height: calc(100% - 140px);
         overflow-y: auto;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width calculation */
     }
 
     .messageInputArea {
         padding: 15px;
         gap: 10px;
+        width: 100%; /* Ensure full width */
+        box-sizing: border-box; /* Include padding in width calculation */
     }
 
     #messageInput {
@@ -757,17 +771,22 @@ body.rtl {
 
     .chat-container {
         height: calc(85vh - 60px);
+        flex-direction: column !important; /* Force column layout */
     }
 
     #chatList {
         height: 30vh;
         min-height: 200px;
         padding: 15px;
+        width: 100% !important; /* Force full width */
+        order: 1;
     }
 
     .chatPanel {
         height: calc(70vh - 60px);
         min-height: 350px;
+        width: 100% !important; /* Force full width */
+        order: 2;
     }
 
     .message {

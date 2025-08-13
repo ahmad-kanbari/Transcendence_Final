@@ -3,6 +3,11 @@
     <a href="#main-content" class="skip-to-content" data-i18n="chat.skipToContent" style="position: absolute; top: -50px; left: 0; padding: 8px 16px; background: var(--cyber-blue); color: var(--cyber-darker); z-index: 9999; transition: top 0.3s;">Skip to content</a>
 
 
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+
     <!-- Floating Particles -->
     <div class="particles" id="particles"></div>
 
@@ -207,21 +212,18 @@
                         <i class="bi bi-graph-up"></i><span data-i18n="chat.dashboard">Dashboard</span>
                     </button>
                 </div> -->
-
-                <!-- Mobile Sidebar Toggle Button -->
-                <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
-                    <i class="bi bi-list"></i>
+                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+                        <i class="bi bi-list"></i>
                     <span data-i18n="chat.friendManagement">Friends</span>
                 </button>
-
-                <!-- Sidebar Overlay for Mobile -->
-                <div class="sidebar-overlay" id="sidebarOverlay"></div>
             </div>
                   
             <!-- Chat Container -->
             <div class="chat-container">
+                    <!-- Mobile Sidebar Toggle Button -->
+   
                 <!-- Chat List -->
-                <div id="chatList" class="sidebar">
+                <div id="chatList" class="chat-sidebar">
                     <div id="startChatArea">
                         <input
                             type="text"
