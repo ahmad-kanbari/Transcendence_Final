@@ -599,33 +599,38 @@ body.rtl {
         padding-left: 0;
         width: 100%;
         height: 100vh; /* Take full screen height */
+        position: relative;
+        z-index: 1; /* Lower z-index so sidebar overlays on top */
     }
 
     .sidebar {
         position: fixed;
         top: 0;
-        left: -100%; /* Hide full width off screen */
-        width: 100%; /* Take full screen width */
+        left: -100%; /* Hide completely off screen */
+        width: 80%; /* Take 80% of screen width for better UX */
         height: 100vh;
-        z-index: 1400;
+        z-index: 2000; /* Higher z-index to overlay on top */
         transition: left 0.3s ease;
         overflow-y: auto;
+        overflow-x: hidden;
         background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%);
         backdrop-filter: blur(15px);
-    }
-
-    .sidebar.mobile-open {
-        left: 0;
         box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
     }
 
+    .sidebar.mobile-open {
+        left: 20; /* Slide in from left edge as overlay */
+        z-index: 2000; /* Keep high z-index when open */
+    }
+
     .main {
-        width: 100%;
+        width: 100%; /* Take full width - no space reserved for sidebar */
         margin-left: 0;
         flex: 1;
         display: flex;
         flex-direction: column;
         height: 100vh; /* Take full screen height */
+        z-index: 1; /* Lower z-index so sidebar appears on top */
     }
 
     .topbar {
@@ -660,12 +665,23 @@ body.rtl {
 @media (max-width: 768px) {
     /* Mobile styles */
     .sidebar {
-        width: 100%; /* Take full screen width on mobile */
-        left: -100%; /* Hide full width off screen */
+        width: 85%; /* Take 85% of screen width on mobile for better UX */
+        left: -100%; /* Hide completely off screen */
+        z-index: 2000; /* High z-index to overlay on top */
     }
 
     .sidebar.mobile-open {
-        left: 0;
+        left: 0; /* Slide to left edge as overlay */
+        z-index: 2000; /* Keep high z-index */
+    }
+
+    .dashboard-container {
+        z-index: 1; /* Lower z-index so sidebar overlays */
+    }
+
+    .main {
+        width: 100%; /* Full width - no space reserved for sidebar */
+        z-index: 1; /* Lower z-index so sidebar overlays */
     }
 
     .topbar h1 {
@@ -816,6 +832,42 @@ body.rtl {
     }
 }
 
+/* MOBILE SIDEBAR OVERLAY - GLOBAL OVERRIDE */
+@media (max-width: 1024px) {
+    /* Force sidebar to be overlay on mobile/tablet */
+    .sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 80% !important;
+        height: 100vh !important;
+        z-index: 2000 !important;
+        background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%) !important;
+        backdrop-filter: blur(15px) !important;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5) !important;
+        transition: left 0.3s ease !important;
+        overflow-y: auto !important;
+    }
+    
+    .sidebar.mobile-open {
+        left: 0 !important;
+    }
+    
+    /* Ensure dashboard container is below sidebar */
+    .dashboard-container {
+        position: relative !important;
+        z-index: 1 !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure main content is below sidebar */
+    .main {
+        position: relative !important;
+        z-index: 1 !important;
+        width: 100% !important;
+    }
+}
+
 /* Sidebar overlay for mobile */
 .sidebar-overlay {
     display: none;
@@ -824,9 +876,16 @@ body.rtl {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1300;
-    backdrop-filter: blur(3px);
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay for better contrast */
+    z-index: 1999; /* Just below sidebar but above main content */
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
 }
 
 @media (max-width: 1024px) {
