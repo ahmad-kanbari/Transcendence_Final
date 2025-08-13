@@ -1,0 +1,52 @@
+volumes:
+  database-vol:
+    driver: local
+
+  ssl-certs:
+    driver: local
+
+networks:
+  cyberpong-network:
+    name: cyberpong-network
+
+services:
+  backend:
+    build:
+      context: ./srcs/backend
+    container_name: backend
+    image: backend-image
+    volumes:
+      - database-vol:/app/db
+    env_file:
+      - .env
+    networks:
+      - cyberpong-network
+
+  frontend:
+    build:
+      context: ./srcs/frontend
+    container_name: frontend
+    image: frontend-image
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    networks:
+      - cyberpong-network
+
+  nginx:
+    build: 
+      context: ./srcs/nginx
+    container_name: nginx
+    image: nginx-image
+    ports:
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ssl-certs:/etc/ssl
+    env_file:
+      - .env
+    networks:
+      - cyberpong-network
