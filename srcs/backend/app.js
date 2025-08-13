@@ -35,7 +35,6 @@ const Team = require("./models/Team");
 
 const fastifyCookie = require("@fastify/cookie");
 const fastifyJwt = require("@fastify/jwt");
-const fastifyStatic = require("@fastify/static");
 const oauthPlugin = require("@fastify/oauth2");
 const multipart = require("@fastify/multipart");
 const helmet = require('@fastify/helmet');
@@ -72,10 +71,6 @@ const start = async () => {
 		const tournamentModel = new Tournament(db);
 
 		// 3. Register plugins (Must register fastifyCookie before fastifyJwt and oauthPlugin)
-		fastify.register(fastifyStatic, {
-			root: path.join(__dirname, "public"),
-			prefix: "/", // Note 1
-		});
 		fastify.register(fastifyCookie, {
 			secret: process.env.COOKIE_SECRET,
 		});
@@ -219,10 +214,6 @@ const start = async () => {
 			console.log("Remote port:", socket.remotePort);
 		});
 
-		// fastify.register(fastifyStatic, {
-		// 	root: path.join(__dirname, "public"),
-		// 	prefix: "/",
-			// });
 		// 9. Display online users in the console at regular intervals
 		setInterval(() => {
 			console.log(onlineUsers);

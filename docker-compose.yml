@@ -5,6 +5,9 @@ volumes:
   ssl-certs:
     driver: local
 
+  uploads-vol:
+    driver: local 
+
 networks:
   cyberpong-network:
     name: cyberpong-network
@@ -17,6 +20,7 @@ services:
     image: backend-image
     volumes:
       - database-vol:/app/db
+      - uploads-vol:/app/public/uploads
     env_file:
       - .env
     networks:
@@ -46,6 +50,7 @@ services:
       - frontend
     volumes:
       - ssl-certs:/etc/ssl
+      - uploads-vol:/app/public/uploads 
     env_file:
       - .env
     networks:
