@@ -614,7 +614,7 @@ body.rtl {
         overflow-y: auto;
         overflow-x: hidden;
         background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%);
-        backdrop-filter: blur(15px);
+        /* backdrop-filter: blur(15px); */
         box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
     }
 
@@ -847,10 +847,17 @@ body.rtl {
         box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5) !important;
         transition: left 0.3s ease !important;
         overflow-y: auto !important;
+        pointer-events: auto !important; /* Ensure sidebar can be clicked */
     }
     
     .sidebar.mobile-open {
         left: 0 !important;
+        pointer-events: auto !important; /* Ensure sidebar can be clicked when open */
+    }
+    
+    /* Ensure all sidebar content is clickable */
+    .sidebar * {
+        pointer-events: auto !important;
     }
     
     /* Ensure dashboard container is below sidebar */
@@ -880,17 +887,24 @@ body.rtl {
     z-index: 1999; /* Just below sidebar but above main content */
     backdrop-filter: blur(5px);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none; /* Disable pointer events by default */
 }
 
 .sidebar-overlay.active {
     display: block;
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto; /* Enable pointer events when active */
 }
 
 @media (max-width: 1024px) {
     .sidebar-overlay.active {
         display: block;
+        pointer-events: auto; /* Allow clicks on the overlay area */
+        /* Create a "hole" where the sidebar is by using clip-path */
+        clip-path: polygon(80% 0%, 100% 0%, 100% 100%, 80% 100%);
     }
 }
 

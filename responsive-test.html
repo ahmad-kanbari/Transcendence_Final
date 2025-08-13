@@ -43,15 +43,29 @@
             font-size: 12px;
             z-index: 9999;
         }
+        
+        /* Debug borders to see layout */
+        .debug .chat-container {
+            border: 2px solid red !important;
+        }
+        
+        .debug #chatList {
+            border: 2px solid green !important;
+        }
+        
+        .debug .chatPanel {
+            border: 2px solid blue !important;
+        }
     </style>
 </head>
 <body>
     <div class="responsive-test-info">
         <div>Screen: <span id="screenSize"></span></div>
         <div>Mode: <span id="deviceMode"></span></div>
+        <button onclick="toggleDebug()">Toggle Debug</button>
     </div>
 
-    <div class="chat-page">
+    <div class="chat-page debug" id="chatPage">
         <!-- Mobile Sidebar Toggle Button -->
         <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
             <i class="bi bi-list"></i>
@@ -166,6 +180,21 @@
         // Initial screen info update
         updateScreenInfo();
         window.addEventListener('resize', updateScreenInfo);
+        
+        // Debug toggle
+        function toggleDebug() {
+            document.getElementById('chatPage').classList.toggle('debug');
+        }
+        
+        // Add debug info for flexbox
+        setInterval(() => {
+            const chatContainer = document.querySelector('.chat-container');
+            if (chatContainer) {
+                const computedStyle = window.getComputedStyle(chatContainer);
+                console.log('Chat Container - Flex Direction:', computedStyle.flexDirection);
+                console.log('Chat Container - Width:', computedStyle.width);
+            }
+        }, 2000);
     </script>
 </body>
 </html>
