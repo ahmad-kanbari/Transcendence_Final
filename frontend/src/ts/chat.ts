@@ -62,6 +62,10 @@ interface ChatElements {
     // Blocked users elements
     blockedUsersList: HTMLElement | null;
     blockedUsersBadge: HTMLElement | null;
+    
+    // Mobile sidebar elements
+    mobileSidebarToggle: HTMLElement | null;
+    sidebarOverlay: HTMLElement | null;
 }
 
 class Chat {
@@ -339,6 +343,10 @@ class Chat {
             // Blocked users elements
             blockedUsersList: document.getElementById('blockedUsersList'),
             blockedUsersBadge: document.getElementById('blockedUsersBadge'),
+            
+            // Mobile sidebar elements
+            mobileSidebarToggle: document.getElementById('mobileSidebarToggle'),
+            sidebarOverlay: document.getElementById('sidebarOverlay'),
         };
     }
 
@@ -414,13 +422,36 @@ class Chat {
             this.elements.closeDashboard.addEventListener('click', () => this.hideDashboard());
         }
 
-        // Escape key for dashboard
+        // Escape key for dashboard and mobile sidebar
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.elements.dashboardView?.classList.contains('active')) {
-                this.hideDashboard();
-                this.closeFriendSearchPopup();
+            if (e.key === 'Escape') {
+                if (this.elements.dashboardView?.classList.contains('active')) {
+                    this.hideDashboard();
+                    this.closeFriendSearchPopup();
+                }
+                // Close mobile sidebar on escape
+                const sidebar = document.querySelector('.sidebar') as HTMLElement;
+                if (sidebar?.classList.contains('mobile-open')) {
+                    this.closeMobileSidebar();
+                }
             }
         });
+
+        // Mobile sidebar toggle
+        if (this.elements.mobileSidebarToggle) {
+            this.elements.mobileSidebarToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleMobileSidebar();
+            });
+        }
+
+        // Sidebar overlay click to close
+        if (this.elements.sidebarOverlay) {
+            this.elements.sidebarOverlay.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.closeMobileSidebar();
+            });
+        }
 
          document.addEventListener('click', (e) => {
         const target = e.target as HTMLElement;
@@ -1130,6 +1161,9 @@ private addSearchButtons(): void {
      */
      async selectChatFromList(chatId: number, user: any): Promise<void> {
         try {
+            // Close mobile sidebar when selecting a chat (for mobile UX)
+            this.closeMobileSidebar();
+            
             // Join the room
             console.log(`Joining chat room from selectChatFromList: ${chatId}`);
             this.currentChatWithUsername = user.username || user || null; // Store current username for later use
@@ -2605,6 +2639,37 @@ async handleFriendSearch(): Promise<void> {
      hideDashboard(): void {
         if (this.elements.dashboardView) {
             this.elements.dashboardView.classList.remove('active');
+        }
+    }
+
+    // Mobile sidebar methods
+     toggleMobileSidebar(): void {
+        const sidebar = document.querySelector('.sidebar') as HTMLElement;
+        if (sidebar) {
+            const isOpen = sidebar.classList.contains('mobile-open');
+            if (isOpen) {
+                this.closeMobileSidebar();
+            } else {
+                this.openMobileSidebar();
+            }
+        }
+    }
+
+     openMobileSidebar(): void {
+        const sidebar = document.querySelector('.sidebar') as HTMLElement;
+        if (sidebar && this.elements.sidebarOverlay) {
+            sidebar.classList.add('mobile-open');
+            this.elements.sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+    }
+
+     closeMobileSidebar(): void {
+        const sidebar = document.querySelector('.sidebar') as HTMLElement;
+        if (sidebar && this.elements.sidebarOverlay) {
+            sidebar.classList.remove('mobile-open');
+            this.elements.sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
         }
     }
 

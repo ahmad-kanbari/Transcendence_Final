@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Responsive Test</title>
+    <link rel="stylesheet" href="frontend/src/css/chat.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Orbitron Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Basic CSS variables for testing */
+        :root {
+            --cyber-blue: #05D9E8;
+            --cyber-green: #2DE2E6;
+            --cyber-purple: #9D4EDD;
+            --cyber-pink: #F72585;
+            --cyber-orange: #FF8500;
+            --cyber-yellow: #FFB700;
+            --cyber-dark: #0F0F1B;
+            --cyber-darker: #070718;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--cyber-dark) 0%, var(--cyber-darker) 100%);
+            color: white;
+            font-family: 'Orbitron', monospace;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* Test specific styles */
+        .responsive-test-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--cyber-blue);
+            color: var(--cyber-darker);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="responsive-test-info">
+        <div>Screen: <span id="screenSize"></span></div>
+        <div>Mode: <span id="deviceMode"></span></div>
+    </div>
+
+    <div class="chat-page">
+        <!-- Mobile Sidebar Toggle Button -->
+        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+            <i class="bi bi-list"></i>
+            <span>Friends</span>
+        </button>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="dashboard-container" id="main-content">
+            <!-- Friends Management Sidebar -->
+            <div class="sidebar">
+                <h2>Friend Management</h2>
+                <div class="section">
+                    <h3>Search User</h3>
+                    <button id="openFriendSearchBtn">
+                        🔍 Search for Users
+                    </button>
+                </div>
+                <div class="section">
+                    <h3>Friends</h3>
+                    <ul id="friendsList">
+                        <li>Test Friend 1</li>
+                        <li>Test Friend 2</li>
+                        <li>Test Friend 3</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="main">
+                <!-- Top Bar -->
+                <div class="topbar">
+                    <h1>Cyber Chat</h1>
+                </div>
+
+                <!-- Chat Container -->
+                <div class="chat-container">
+                    <!-- Chat List -->
+                    <div id="chatList" class="sidebar">
+                        <h3>Your Chats</h3>
+                        <div id="chatRows">
+                            <div class="chat-row">Chat 1</div>
+                            <div class="chat-row">Chat 2</div>
+                            <div class="chat-row">Chat 3</div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Panel -->
+                    <div class="chatPanel">
+                        <div id="chatHeader">Select a chat to start messaging</div>
+                        <div id="messageBox">
+                            <div class="message sent">Hello! This is a test message.</div>
+                            <div class="message received">Hi there! This is a received message.</div>
+                        </div>
+                        <div class="messageInputArea">
+                            <input type="text" id="messageInput" placeholder="Type a message..." />
+                            <button id="sendBtn"><i class="bi bi-send"></i> Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Screen size detection for testing
+        function updateScreenInfo() {
+            const width = window.innerWidth;
+            document.getElementById('screenSize').textContent = width + 'px';
+            
+            let mode;
+            if (width <= 480) mode = 'Mobile Small';
+            else if (width <= 768) mode = 'Mobile';
+            else if (width <= 1024) mode = 'Tablet';
+            else mode = 'Desktop';
+            
+            document.getElementById('deviceMode').textContent = mode;
+        }
+
+        // Mobile sidebar functionality
+        function toggleMobileSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isOpen = sidebar.classList.contains('mobile-open');
+            
+            if (isOpen) {
+                sidebar.classList.remove('mobile-open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.add('mobile-open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('mobileSidebarToggle').addEventListener('click', toggleMobileSidebar);
+        document.getElementById('sidebarOverlay').addEventListener('click', toggleMobileSidebar);
+
+        // Close sidebar on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar.classList.contains('mobile-open')) {
+                    toggleMobileSidebar();
+                }
+            }
+        });
+
+        // Initial screen info update
+        updateScreenInfo();
+        window.addEventListener('resize', updateScreenInfo);
+    </script>
+</body>
+</html>

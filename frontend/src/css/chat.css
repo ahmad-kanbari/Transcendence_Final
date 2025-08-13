@@ -1,82 +1,3 @@
-/* :root {
-    --cyber-pink: #FF2A6D;
-    --cyber-blue: #05D9E8;
-    --cyber-purple: #9D4EDD;
-    --cyber-yellow: #F9C80E;
-    --cyber-green: #2DE2E6;
-    --cyber-dark: #0F0F1B;
-    --cyber-darker: #070718;
-    --cyber-black: #030303;
-    --cyber-orange: #FF6B35;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-/* 
-body {
-    font-family: 'Roboto', sans-serif;
-    background: radial-gradient(ellipse at center, var(--cyber-dark) 0%, var(--cyber-darker) 60%, var(--cyber-black) 100%);
-    color: white;
-    height: 100vh;
-    overflow: hidden;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    position: relative;
-}
-
-body.authenticated {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Enhanced Cyberpunk Background */
-/* body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: 
-        radial-gradient(circle at 20% 80%, var(--cyber-blue) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, var(--cyber-pink) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, var(--cyber-purple) 0%, transparent 50%);
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: -2;
-    animation: backgroundPulse 8s ease-in-out infinite alternate;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: 
-        linear-gradient(90deg, transparent 98%, rgba(5, 217, 232, 0.1) 100%),
-        linear-gradient(180deg, transparent 98%, rgba(255, 42, 109, 0.1) 100%);
-    background-size: 80px 80px;
-    pointer-events: none;
-    z-index: -1;
-    animation: gridMove 20s linear infinite; */
-/* }   */
-
-/* @keyframes backgroundPulse {
-    0% { opacity: 0.03; }
-    100% { opacity: 0.08; }
-} */
-
-/* @keyframes gridMove {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(80px, 80px); }
-} */
-
 /* Floating particles */
 
 @keyframes energyFlow {
@@ -616,24 +537,171 @@ body.rtl {
     border-image: linear-gradient(45deg, var(--cyber-purple), var(--cyber-pink)) 1;
 }
 
+/* Mobile Sidebar Toggle Button */
+.mobile-sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1500;
+    background: linear-gradient(135deg, var(--cyber-blue) 0%, var(--cyber-green) 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 12px 20px;
+    color: var(--cyber-darker);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(5, 217, 232, 0.4);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(5, 217, 232, 0.3);
+}
+
+.mobile-sidebar-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(5, 217, 232, 0.6);
+    background: linear-gradient(135deg, var(--cyber-green) 0%, var(--cyber-blue) 100%);
+}
+
+.mobile-sidebar-toggle:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(5, 217, 232, 0.8);
+}
+
+.mobile-sidebar-toggle i {
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+/* Ensure mobile toggle is always visible on mobile devices */
+@media (max-width: 1024px) {
+    .mobile-sidebar-toggle {
+        display: block;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
+    /* Tablet styles */
+    .mobile-sidebar-toggle {
+        display: block;
+    }
+
+    .dashboard-container {
+        padding-left: 0;
+        width: 100%;
+        min-height: 100vh;
+    }
+
     .sidebar {
-        width: 300px;
+        position: fixed;
+        top: 0;
+        left: -350px;
+        width: 320px;
+        height: 100vh;
+        z-index: 1400;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        background: linear-gradient(135deg, var(--cyber-dark) 0%, rgba(15, 15, 27, 0.98) 100%);
+        backdrop-filter: blur(15px);
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .main {
+        width: 100%;
+        margin-left: 0;
+        flex: 1;
+    }
+
+    .chat-container {
+        flex-direction: column;
+        display: flex;
     }
 
     #chatList {
-        width: 260px;
+        width: 100%;
+        height: 40vh;
+        border-right: none;
+        border-bottom: 3px solid transparent;
+        border-image: linear-gradient(90deg, var(--cyber-purple), var(--cyber-pink)) 1;
+        order: 1;
+        flex-shrink: 0;
+    }
+
+    .chatPanel {
+        height: 60vh;
+        flex: 1;
+        order: 2;
     }
 }
 
 @media (max-width: 768px) {
+    /* Mobile styles */
     .sidebar {
         width: 280px;
+        left: -300px;
+    }
+
+    .sidebar.mobile-open {
+        left: 0;
+    }
+
+    .topbar h1 {
+        font-size: 1.4rem;
+        margin-left: 60px;
+    }
+
+    .chat-container {
+        flex-direction: column;
+        height: calc(80vh - 60px);
+        display: flex;
     }
 
     #chatList {
-        width: 240px;
+        width: 100%;
+        height: 35vh;
+        min-height: 250px;
+        border-right: none;
+        border-bottom: 3px solid transparent;
+        border-image: linear-gradient(90deg, var(--cyber-purple), var(--cyber-pink)) 1;
+        overflow-y: auto;
+        order: 1;
+        flex-shrink: 0;
+    }
+
+    .chatPanel {
+        height: calc(65vh - 60px);
+        min-height: 400px;
+        flex: 1;
+        order: 2;
+    }
+
+    #messages {
+        height: calc(100% - 140px);
+        overflow-y: auto;
+    }
+
+    .messageInputArea {
+        padding: 15px;
+        gap: 10px;
+    }
+
+    #messageInput {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    #sendBtn {
+        padding: 12px 20px;
+        font-size: 12px;
     }
 
     .toast-notification {
@@ -648,8 +716,94 @@ body.rtl {
         right: 20px;
     }
 
+    .message {
+        max-width: 85%;
+        padding: 12px 16px;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stat-card {
+        padding: 20px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+    }
+
+    #friendSearchPopupOverlay div {
+        width: 95%;
+        padding: 20px;
+        margin: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small mobile styles */
     .topbar h1 {
-        font-size: 1.4rem;
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+    }
+
+    .mobile-sidebar-toggle {
+        padding: 10px 16px;
+        font-size: 11px;
+    }
+
+    .chat-container {
+        height: calc(85vh - 60px);
+    }
+
+    #chatList {
+        height: 30vh;
+        min-height: 200px;
+        padding: 15px;
+    }
+
+    .chatPanel {
+        height: calc(70vh - 60px);
+        min-height: 350px;
+    }
+
+    .message {
+        max-width: 90%;
+        padding: 10px 14px;
+    }
+
+    .messageInputArea {
+        flex-direction: column;
+        padding: 12px;
+    }
+
+    #messageInput {
+        margin-bottom: 10px;
+    }
+
+    #sendBtn {
+        width: 100%;
+    }
+}
+
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1300;
+    backdrop-filter: blur(3px);
+}
+
+@media (max-width: 1024px) {
+    .sidebar-overlay.active {
+        display: block;
     }
 }
 
@@ -799,4 +953,99 @@ li:focus {
 .close-dashboard:hover {
     background: var(--cyber-orange);
     transform: scale(1.1);
+}
+
+
+  /* Popup Animation */
+        @keyframes popupSlideIn {
+            from {
+                transform: scale(0.7) translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Button Hover Effects */
+        #friendSearchPopupAddBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+        
+        #friendSearchPopupBlockBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 0, 64, 0.4);
+        }
+        
+        #friendSearchPopupCloseBtn:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+
+        /* Blocked Users List Styling */
+        #blockedUsersList li {
+            padding: 8px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 68, 68, 0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #blockedUsersList li:hover {
+            background: rgba(255, 68, 68, 0.2);
+        }
+
+        #blockedUsersList .unblock-btn {
+            padding: 4px 12px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        #blockedUsersList .unblock-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        /* User info styling in blocked list */
+        .blocked-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blocked-user-icon {
+            color: #ff4444;
+            font-size: 16px;
+        }
+
+#openFriendSearchBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+#openFriendSearchBtn:hover::before {
+    transform: translateX(100%);
+}
+
+#openFriendSearchBtn:active {
+    transform: scale(0.98) !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8) !important;
 }
