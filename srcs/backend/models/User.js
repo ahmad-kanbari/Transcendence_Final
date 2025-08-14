@@ -112,7 +112,7 @@ class User {
 			.then(user => {
 				// Remove the password field if it exists
 				if (user) {
-				  delete user.password;
+					delete user.password;
 				}
 				return user;
 			});
