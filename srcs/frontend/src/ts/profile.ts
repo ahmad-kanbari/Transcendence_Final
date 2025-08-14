@@ -1097,10 +1097,11 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
   // console.log('Calculating user stats for:', currentUser, 'with match history:', matchHistory.length, 'and tournament history:', tournamentHistory.length);
   // Process matches based on your API structure
   matchHistory.forEach(match => {
+    stats.totalMatches++;
+
     // Skip cancelled matches
     if (match.status === 'cancelled') return;
     
-    stats.totalMatches++;
     console.log('Processing match:');
     switch(match.match_type) {
       case 'tournament':
