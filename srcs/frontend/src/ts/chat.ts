@@ -3251,23 +3251,23 @@ private showPopup(user: any): void {
         }
     }
 
-    private async handleUnblockUser(user: any): Promise<void> {
+    private async handleUnblockUser(block: any): Promise<void> {
         try {
-            const confirmed = confirm(`Are you sure you want to unblock ${user.username}? They will be able to send you messages and friend requests again.`);
+            const confirmed = confirm(`Are you sure you want to unblock ${block.username}? They will be able to send you messages and friend requests again.`);
             if (!confirmed) return;
             
             // components.showToast('info', 'Unblocking User', `Unblocking ${user.username}...`, 2000);
-            toastManager.info(app.getUsername(), `Unblocking ${user.username}...`);
-            console.log(`Unblocking user with ID: ${user.id}`);
-            const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${user.id}`, {
+            toastManager.info(app.getUsername(), `Unblocking ${block.username}...`);
+            console.log(`Unblocking user with ID: ${block.id}`);
+            const result = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${block.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
             
             if (result.ok) {
-                this.blockedUsersCache.delete(user.id.toString());
+                this.blockedUsersCache.delete(block.id.toString());
                 // components.showToast('success', 'User Unblocked', `${user.username} has been unblocked successfully!`, 3000);
-                toastManager.success(app.getUsername(), `${user.username} has been unblocked successfully!`);
+                toastManager.success(app.getUsername(), `${block.username} has been unblocked successfully!`);
                 await this.loadBlockedUsers();
                 this.loadFriendData();
             } else {
@@ -3283,9 +3283,9 @@ private showPopup(user: any): void {
     }
 
     public async unblockUser(userId: string): Promise<void> {
-        const user = this.blockedUsersList.find(u => u.id.toString() === userId);
-        if (user) {
-            await this.handleUnblockUser(user);
+        const block = this.blockedUsersList.find(u => u.id.toString() === userId);
+        if (block) {
+            await this.handleUnblockUser(block);
         } else {
             // components.showToast('error', 'User Not Found', 'Blocked user not found', 3000);
             toastManager.error(app.getUsername(), 'Blocked user not found');

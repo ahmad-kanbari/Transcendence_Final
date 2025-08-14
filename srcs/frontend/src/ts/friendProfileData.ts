@@ -233,6 +233,9 @@ class FriendProfile {
 
             // Load relationship status
             await this.loadRelationshipStatus();
+            
+            // Debug output
+            console.log('Relationship status after loading:', this.relationshipStatus);
 
             // Load friend's match history for stats calculation
             const HistoryMatches =  await profile.fetchUserMatchHistory(this.friendId);
@@ -339,7 +342,22 @@ class FriendProfile {
 
             if (blockedResult.ok) {
                 const blockedUsers = await blockedResult.json();
-                const isBlocked = blockedUsers.some((user: any) => user.id.toString() === this.friendId);
+                console.log('Blocked users data:', blockedUsers);
+                console.log('Current friend ID:', this.friendId);
+                
+                // First try to match by userId field
+                let isBlocked = blockedUsers.some((block: any) => 
+                    block.userId && block.userId.toString() === this.friendId
+                );
+                
+                // If not found and we have username available, try by username as fallback
+                if (!isBlocked && this.friendData && this.friendData.username) {
+                    isBlocked = blockedUsers.some((block: any) => 
+                        block.username === this.friendData.username
+                    );
+                }
+                
+                console.log('Is this user blocked?', isBlocked);
                 
                 if (isBlocked) {
                     this.relationshipStatus = { type: 'blocked' };
@@ -763,6 +781,8 @@ class FriendProfile {
                     statusElement.className = 'relationship-status status-blocked';
                 }
                 if (unblockBtn) unblockBtn.style.display = 'inline-block';
+                // Ensure block button is hidden when user is already blocked
+                if (blockBtn) blockBtn.style.display = 'none';
                 break;
 
             case 'pending_sent':
@@ -913,6 +933,12 @@ class FriendProfile {
                 toastManager.success(app.getUsername(), 'User blocked successfully!');
                 this.relationshipStatus = { type: 'blocked' };
                 this.updateRelationshipDisplay();
+                
+                // Force UI update to ensure the correct button is shown
+                const blockBtn = document.getElementById('blockBtn');
+                const unblockBtn = document.getElementById('unblockBtn');
+                if (blockBtn) blockBtn.style.display = 'none';
+                if (unblockBtn) unblockBtn.style.display = 'inline-block';
             } else {
                 const errorText = await response.text();
                 toastManager.error(app.getUsername(), errorText || 'Failed to block user');
@@ -925,21 +951,56 @@ class FriendProfile {
 
     private async unblockUser(): Promise<void> {
         if (!this.friendId || !this.friendData) return;
-
+    
         if (!confirm(`Are you sure you want to unblock ${this.friendData.username}?`)) {
             return;
         }
-
+    
         try {
-            const response = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${this.friendId}`, {
+            // First get all blocks to find the blockId for this user
+            const blocksResponse = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks`, {
+                credentials: 'include'
+            });
+    
+            if (!blocksResponse.ok) {
+                toastManager.error(app.getUsername(), 'Failed to fetch block information');
+                return;
+            }
+    
+            const blocks = await blocksResponse.json();
+            console.log('Blocks for unblock function:', blocks);
+            
+            // First try to find by userId
+            let block = blocks.find((block: any) => block.userId && block.userId.toString() === this.friendId);
+            
+            // If not found by userId, try username as a fallback
+            if (!block && this.friendData && this.friendData.username) {
+                block = blocks.find((block: any) => block.username === this.friendData.username);
+            }
+            
+            if (!block) {
+                toastManager.error(app.getUsername(), 'Could not find block information for this user');
+                return;
+            }
+            
+            console.log('Found block to remove:', block);
+    
+            // Now use the blockId for the unblock request
+            const response = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${block.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
-
+    
             if (response.ok) {
                 toastManager.success(app.getUsername(), 'User unblocked successfully!');
                 this.relationshipStatus = { type: 'none' };
                 this.updateRelationshipDisplay();
+                
+                // Force UI update to ensure the correct button is shown
+                const blockBtn = document.getElementById('blockBtn');
+                const unblockBtn = document.getElementById('unblockBtn');
+                if (blockBtn) blockBtn.style.display = 'inline-block';
+                if (unblockBtn) unblockBtn.style.display = 'none';
             } else {
                 const errorText = await response.text();
                 toastManager.error(app.getUsername(), errorText || 'Failed to unblock user');

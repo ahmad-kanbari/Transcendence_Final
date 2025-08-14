@@ -228,6 +228,19 @@ class User {
 			);
 		}
 
+		// Check if block already exists
+		const existingBlock = await this.db("blocks")
+		.where({
+			blocker_id: userId,
+			blocked_id: blockRecipientId
+		})
+		.first();
+		if (existingBlock) {
+			throw new CustomError.BadRequestError(
+				"You have already blocked this user"
+			);
+		}
+
 		const [block] = await this.db("blocks")
 			.insert({
 				blocker_id: userId,
