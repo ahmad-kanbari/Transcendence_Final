@@ -96,7 +96,7 @@ class User {
 		}
 
 		// Remove password from each user object
-		  users = users.map(user => {
+		users = users.map(user => {
 			delete user.password;
 			return user;
 		});
