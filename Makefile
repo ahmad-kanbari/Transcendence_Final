@@ -7,19 +7,8 @@ RESET = \033[0m
 # Docker compose file path
 COMPOSE_FILE = docker-compose.yml
 
-# Data directory path
-DATA_PATH = /Users/$(USER)/data
-
 # Target names
-all: setup build up
-
-# Create necessary directories and setup environment
-setup:
-	@printf "$(GREEN)Creating data directories...$(RESET)\n"
-	@mkdir -p $(DATA_PATH)
-	@mkdir -p $(DATA_PATH)/ssl-certs
-	@mkdir -p $(DATA_PATH)/database
-	@printf "$(GREEN)Setup complete!$(RESET)\n"
+all: build up
 
 # Build the Docker images
 build:
@@ -42,12 +31,14 @@ clean: down
 	@docker compose -f $(COMPOSE_FILE) down -v
 	@docker system prune -af
 
-# Remove all data
 fclean: clean
-	@printf "$(RED)Warning: Next step will delete all your SSL certificates and database data!$(RESET)\n"
-	@read -p "Do you wish to proceed? (yes/no): " choice && [ "$$choice" = "yes" ] && \
-		printf "$(RED)Removing data directories...$(RESET)\n" && rm -rf $(DATA_PATH) || \
-		printf "$(YELLOW)Aborted. No files were removed.$(RESET)\n"
+	@printf "$(RED)Warning: This will remove ALL unused Docker volumes and images!$(RESET)\n"
+	@read -p "Do you wish to proceed? (yes/no): " choice && [ "$$choice" = "yes" ] && { \
+		printf "$(RED)Pruning all unused Docker volumes...$(RESET)\n"; \
+		docker volume prune -f; \
+		printf "$(RED)Pruning all unused Docker images...$(RESET)\n"; \
+		docker image prune -af; \
+	} || printf "$(YELLOW)Aborted. No volumes or images were removed.$(RESET)\n"
 
 # Restart all services
 re: fclean all
