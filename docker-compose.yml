@@ -37,6 +37,8 @@ services:
       - .env
     networks:
       - cyberpong-network
+    volumes:
+      - ./srcs/frontend/dist:/app/dist
 
   nginx:
     build: 
@@ -51,6 +53,7 @@ services:
     volumes:
       - ssl-certs:/etc/ssl
       - uploads-vol:/app/public/uploads 
+      - ./srcs/frontend/dist:/usr/share/nginx/html
     env_file:
       - .env
     networks:
