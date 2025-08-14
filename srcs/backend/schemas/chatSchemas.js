@@ -36,6 +36,7 @@ const createMessageOpts = {
 				},
 				content: {
 					type: "string",
+					maxLength: 7000,
 				},
 			},
 			required: ["chatId", "content"],
