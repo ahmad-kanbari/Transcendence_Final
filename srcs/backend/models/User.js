@@ -84,6 +84,7 @@ class User {
 
 	async listUsers(search, page, limit, userId) {
 		const baseQuery = this.db("users")
+			.select("*")
 			.where("username", "like", `%${search}%`) // `%` is for partial matching
 			.limit(limit)
 			.offset((page - 1) * limit);
@@ -94,6 +95,12 @@ class User {
 			users = await baseQuery.whereNot("id", userId);
 		}
 
+		// Remove password from each user object
+		  users = users.map(user => {
+			delete user.password;
+			return user;
+		});
+
 		return users;
 	}
 
@@ -101,7 +108,15 @@ class User {
 		const user = await this.db("users")
 			.select("*")
 			.where({ id: userId })
-			.first();
+			.first()
+			.then(user => {
+				// Remove the password field if it exists
+				if (user) {
+				  delete user.password;
+				}
+				return user;
+			});
+
 		if (!user) {
 			throw new CustomError.NotFoundError(
 				`User with id of ${userId} not found!`
