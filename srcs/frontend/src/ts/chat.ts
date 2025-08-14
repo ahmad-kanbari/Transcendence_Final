@@ -17,6 +17,7 @@ interface ChatElements {
     chatRows: HTMLElement | null;
     messageBox: HTMLElement | null;
     messageInput: HTMLInputElement | null;
+    messageCharCount: HTMLElement | null;
     sendBtn: HTMLElement | null;
     chatHeader: HTMLElement | null;
     
@@ -69,7 +70,9 @@ interface ChatElements {
 }
 
 class Chat {
-
+     // Constants
+     readonly MAX_MESSAGE_LENGTH: number = 7000;
+     
      elements: ChatElements = {} as ChatElements;
      currentChatId: number | null = null;
      currentUserId: number | null = null;
@@ -277,6 +280,12 @@ class Chat {
             this.setupMessageContextMenu();
             this.initializeParticles();
             this.loadChats();
+            
+            // Initialize character count
+            if (this.elements.messageInput && this.elements.messageCharCount) {
+                const MAX_MESSAGE_LENGTH = 7000;
+                this.elements.messageCharCount.textContent = `0/${MAX_MESSAGE_LENGTH} characters`;
+            }
             this.loadFriendData();
             this.loadBlockedUsers(); 
             this.updateDashboardStats();
@@ -298,6 +307,7 @@ class Chat {
             chatRows: document.getElementById('chatRows'),
             messageBox: document.getElementById('messageBox'),
             messageInput: document.getElementById('messageInput') as HTMLInputElement,
+            messageCharCount: document.getElementById('messageCharCount'),
             sendBtn: document.getElementById('sendBtn'),
             chatHeader: document.getElementById('chatHeader'),
             
@@ -371,7 +381,48 @@ class Chat {
             });
         }
 
+        // Create and insert character counter if it doesn't exist
+        if (!this.elements.messageCharCount && this.elements.messageBox) {
+            const messageCharCount = document.createElement('div');
+            messageCharCount.id = 'messageCharCount';
+            messageCharCount.className = 'message-char-count';
+            messageCharCount.style.textAlign = 'right';
+            messageCharCount.style.fontSize = '12px';
+            messageCharCount.style.padding = '2px 10px';
+            messageCharCount.style.color = '#888';
+            
+            // Insert before the message input or its parent
+            if (this.elements.messageInput && this.elements.messageInput.parentNode) {
+                this.elements.messageInput.parentNode.insertBefore(messageCharCount, this.elements.messageInput);
+            } else if (this.elements.messageBox) {
+                this.elements.messageBox.appendChild(messageCharCount);
+            }
+            
+            // Update element reference
+            this.elements.messageCharCount = messageCharCount;
+        }
+        
+        const MAX_MESSAGE_LENGTH = 7000;
+        
         if (this.elements.messageInput) {
+            // Add input event listener for real-time character count
+            this.elements.messageInput.addEventListener('input', () => {
+                if (!this.elements.messageCharCount) return;
+                
+                const length = this.elements.messageInput!.value.length;
+                this.elements.messageCharCount.textContent = `${length}/${MAX_MESSAGE_LENGTH} characters`;
+                
+                // Change color when approaching the limit
+                if (length > MAX_MESSAGE_LENGTH * 0.9) {
+                    this.elements.messageCharCount.style.color = 'orange';
+                } else if (length > MAX_MESSAGE_LENGTH) {
+                    this.elements.messageCharCount.style.color = 'red';
+                } else {
+                    this.elements.messageCharCount.style.color = '#888';
+                }
+            });
+            
+            // Enter key handling
             this.elements.messageInput.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter') {
                 e.stopPropagation();
@@ -1399,6 +1450,12 @@ private addSearchButtons(): void {
         let content = this.elements.messageInput.value.trim();
         if (!content) return;
         content = content.replace(/<[^>]*>/g, '');
+        
+        // Add validation for message length
+        if (content.length > this.MAX_MESSAGE_LENGTH) {
+            toastManager.error(app.getUsername(), `Message is too long. Maximum length is ${this.MAX_MESSAGE_LENGTH} characters. Your message has ${content.length} characters.`);
+            return;
+        }
 
         // Check if trying to send message to blocked user
         // if (this.currentChatWithUsername) {
@@ -1420,6 +1477,12 @@ private addSearchButtons(): void {
                 // this.appendMessage({ sender_id: this.currentUserId ,content: content});
                 toastManager.success(app.getUsername(), `Message sent to ${this.currentChatWithUsername} User AND THE MESSAGE IS ${this.elements.messageInput.value}'}`);
                 this.elements.messageInput.value = '';
+                
+                // Reset character count display
+                if (this.elements.messageCharCount) {
+                    this.elements.messageCharCount.textContent = `0/7000 characters`;
+                    this.elements.messageCharCount.style.color = '#888';
+                }
             } else {
                 // components.showToast('error', 'Send Failed', 'Failed to send message', 3000);
                 toastManager.error(app.getUsername(), 'Failed to send message');
