@@ -974,7 +974,7 @@ class FriendProfile {
             let block = blocks.find((block: any) => block.userId && block.userId.toString() === this.friendId);
             
             // If not found by userId, try username as a fallback
-            if (!block && this.friendData.username) {
+            if (!block && this.friendData && this.friendData.username) {
                 block = blocks.find((block: any) => block.username === this.friendData.username);
             }
             
