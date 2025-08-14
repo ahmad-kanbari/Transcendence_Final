@@ -925,17 +925,37 @@ class FriendProfile {
 
     private async unblockUser(): Promise<void> {
         if (!this.friendId || !this.friendData) return;
-
+    
         if (!confirm(`Are you sure you want to unblock ${this.friendData.username}?`)) {
             return;
         }
-
+    
         try {
-            const response = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${this.friendId}`, {
+            // First get all blocks to find the blockId for this user
+            const blocksResponse = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks`, {
+                credentials: 'include'
+            });
+    
+            if (!blocksResponse.ok) {
+                toastManager.error(app.getUsername(), 'Failed to fetch block information');
+                return;
+            }
+    
+            const blocks = await blocksResponse.json();
+            // Find the block for this friend
+            const block = blocks.find((block: any) => block.userId.toString() === this.friendId);
+            
+            if (!block) {
+                toastManager.error(app.getUsername(), 'Could not find block information for this user');
+                return;
+            }
+    
+            // Now use the blockId for the unblock request
+            const response = await api.fetchWithAutoRefresh(`${this.baseURL}/users/blocks/${block.id}`, {
                 method: 'DELETE',
                 credentials: 'include'
             });
-
+    
             if (response.ok) {
                 toastManager.success(app.getUsername(), 'User unblocked successfully!');
                 this.relationshipStatus = { type: 'none' };
