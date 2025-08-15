@@ -1184,7 +1184,6 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
             this.socketService.on('connect', () => {
                 const socketId = this.socketService.id;
                 console.log(`Socket connected with ID: ${socketId}`);
-                toastManager.success(this.getUsername(), 'Real-time features active!');
                 
                 // Reinitialize socket event handlers when socket reconnects
                 if (notificationManager.initialized) {
@@ -1210,7 +1209,6 @@ async setSubmitTournamentFunction(matchArray: MatchObject[]): Promise<void> {
             this.socketService.on('disconnect', () => {
                 console.log('Socket disconnected');
                 // components.showToast('warning', 'Disconnected', 'Attempting to reconnect...', 3000);
-                toastManager.warning(this.getUsername(), 'Real Time Chat Disconnected, Attempting to reconnect...');
                 console.log('Chat socket disconnected');
             });
         

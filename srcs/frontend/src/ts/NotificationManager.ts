@@ -502,7 +502,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             console.log("NotificationManager: newMessage event received", message);
             //when you send new message it will emit into two sockets to sender and reciver
             //if you are outside the chat room you will not get notified by this event but you will get notified by messageReceivedInform
-            toastManager.info(app.getUsername(), `New message from ${message.from_user?.username || 'User'}: ${message.content}`);
+          
             
             // Convert both IDs to strings for comparison to avoid type mismatch
             const messageId = message.chat_id?.toString();
@@ -529,7 +529,7 @@ private async handleGeneralNotificationClick(notification: any): Promise<void> {
             console.log('NotificationManager: messageReceivedInform event received', data);
             //the one out side the chat will get messageReceivedInform but the user inside the chat will get newMessage
             //this will emit when a message has been received and you are not in the chat  and if you are in the chat you will not get notified by this event
-            toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message}`);
+            // toastManager.info(app.getUsername(), `New message from ${data.username}: ${data.message}`);
             
             // Only show toast if not in the current chat
             console.log('NotificationManager: Message received info:', data);
