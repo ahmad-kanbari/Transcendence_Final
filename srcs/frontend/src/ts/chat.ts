@@ -2798,9 +2798,14 @@ async handleFriendSearch(): Promise<void> {
             if (!isNaN(chatIdNumber)) {
                 // this.forceJoinRoom(chatIdNumber);
                 console.log(`Joining chat room from URL: ${chatIdNumber}`);
-                this.selectChatFromList(chatIdNumber, this.currentChatWithUsername);
+                if (this.currentChatWithUsername) {
+                    this.selectChatFromList(chatIdNumber, this.currentChatWithUsername);
+                } else {
+                    console.error('No current chat username set, cannot select chat from list');
+                    this.deactivateChat();
+                }
                 // clickToOpenChat(chatIdNumber, this.currentChatWithUsername);
-            if (this.elements.chatHeader) {
+            if (this.elements.chatHeader && this.currentChatWithUsername) {
                 const username = this.currentChatWithUsername || 'Unknown User';
                 console.log(`Updating chat header: Chat Active with ${username}`);
                 console.log('chat header element' , this.elements.chatHeader);
