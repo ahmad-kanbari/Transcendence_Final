@@ -227,13 +227,13 @@ module.exports = (userModel, tokenModel, fastify) => ({
 				reply
 			);
 			const frontendUrl =
-				process.env.FRONTEND_URL || "http://localhost:5173";
+				process.env.FRONTEND_URL;
 			reply.redirect(`${frontendUrl}/?oauth=success`);
 		} catch (error) {
 			console.error("Google OAuth callback error:", error);
 
 			const frontendUrl =
-				process.env.FRONTEND_URL || "http://localhost:5173";
+				process.env.FRONTEND_URL;
 
 			reply.redirect(
 				`${frontendUrl}/?oauth=error&message=${encodeURIComponent(
