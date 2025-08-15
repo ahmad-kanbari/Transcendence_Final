@@ -801,10 +801,7 @@ class App {
       // components.showToast('success', 'Logged Out', 'You have been successfully logged out.', 5000);
       toastManager.success(this.getUsername(), 'You have been successfully logged out.');
       chat.cleanupSocketHandlers();
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
-
+      window.location.href = '/';
       
       return true;
     } catch (error) {
