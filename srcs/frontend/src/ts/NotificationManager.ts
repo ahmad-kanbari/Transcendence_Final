@@ -331,7 +331,7 @@ private async handleMessageNotificationClick(notification: any, e: Event): Promi
             // Navigate to chat page if not already there
             if (window.location.pathname !== '/chat') {
   
-                window.history.pushState({}, '',  `/chat?chatId=${chatId}`);
+                window.history.pushState({}, '',  `/chat`);
                 pages.showPage('chat');
             
                        // Wait for chat page to initialize, then join room
