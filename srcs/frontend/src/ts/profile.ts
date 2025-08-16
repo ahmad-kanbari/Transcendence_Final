@@ -1171,7 +1171,7 @@ calculateUserStats(matchHistory: any[], tournamentHistory: TournamentHistory[], 
     // Update these fields to be editable
     if (this.profileForm.displayNameField) {
         this.profileForm.displayNameField.value = user.username || app.getUsername() || '';
-        this.profileForm.displayNameField.readOnly = false; // Make it editable
+        this.profileForm.displayNameField.readOnly = true; // Make it editable
         this.profileForm.displayNameField.addEventListener('keydown', (event) => utils.preventSpaces(event));
     }
     
@@ -2057,11 +2057,11 @@ renderTournamentMatches(tableBody: HTMLElement): void {
 }
 
 setupUpdateHandlers(): void {
-    const updateUsernameBtn = document.createElement('button');
-    updateUsernameBtn.setAttribute('data-i18n', 'profile.updateUsername');
-    // updateUsernameBtn.textContent = window.localization?.getTranslation('profile.updateUsername') || 'Update Username';
-    updateUsernameBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 whitespace-nowrap';
-    updateUsernameBtn.type = 'button';
+    // const updateUsernameBtn = document.createElement('button');
+    // updateUsernameBtn.setAttribute('data-i18n', 'profile.updateUsername');
+    // // updateUsernameBtn.textContent = window.localization?.getTranslation('profile.updateUsername') || 'Update Username';
+    // updateUsernameBtn.className = 'cyber-btn-green text-sm py-2 px-4 rounded mt-2 whitespace-nowrap';
+    // updateUsernameBtn.type = 'button';
 
     const updateEmailBtn = document.createElement('button');
     updateEmailBtn.setAttribute('data-i18n', 'profile.updateEmail');
@@ -2076,9 +2076,9 @@ setupUpdateHandlers(): void {
     updatePasswordBtn.type = 'button';
 
     // Add buttons to the form
-    if (this.profileForm.displayNameField?.parentElement) {
-        this.profileForm.displayNameField.parentElement.appendChild(updateUsernameBtn);
-    }
+    // if (this.profileForm.displayNameField?.parentElement) {
+    //     this.profileForm.displayNameField.parentElement.appendChild(updateUsernameBtn);
+    // }
     if (this.profileForm.emailField?.parentElement) {
         this.profileForm.emailField.parentElement.appendChild(updateEmailBtn);
     }
@@ -2087,11 +2087,11 @@ setupUpdateHandlers(): void {
     }
 
     // Add event listeners
-    updateUsernameBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        this.handleUsernameUpdate();
-    });
+    // updateUsernameBtn.addEventListener('click', (e) => {
+    //     e.preventDefault();
+    //     e.stopPropagation();
+    //     this.handleUsernameUpdate();
+    // });
 
     updateEmailBtn.addEventListener('click', (e) => {
         e.preventDefault();
