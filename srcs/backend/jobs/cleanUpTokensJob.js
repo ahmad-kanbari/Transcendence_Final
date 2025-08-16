@@ -1,5 +1,5 @@
 
-const refreshDuration = 15 * 60 * 1000;
+const refreshDuration = 7 * 24 * 60 * 60 * 1000;
 
 module.exports = async (tokenModel) => {
     const expiryThreshold = new Date(Date.now() - refreshDuration);

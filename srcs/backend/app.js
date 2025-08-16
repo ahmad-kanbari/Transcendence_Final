@@ -223,7 +223,7 @@ const start = async () => {
 		cleanUpTokensJob(tokenModel);
 		setInterval(() => {
 			cleanUpTokensJob(tokenModel);
-		}, 5 * 60 * 1000);
+		}, 15 * 60 * 1000);
 
 		
 	} catch (err) {
