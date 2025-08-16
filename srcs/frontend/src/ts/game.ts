@@ -580,7 +580,11 @@ class PongGame {
     checkWindowSize(): void {
         const minWidth = 480;
         const minHeight = 320;
-        
+        const warningScreen = document.getElementById('sizeWarningScreen');
+        if (!warningScreen) {
+            // console.error('Size warning screen element not found');
+            return;
+        }
         if (this.gameWidth < minWidth || this.gameHeight < minHeight) {
             document.getElementById('sizeWarningScreen')!.style.display = 'block';
         } else {
