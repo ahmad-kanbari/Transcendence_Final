@@ -27,6 +27,8 @@ server {
     ssl_certificate $SSL_CERT;
     ssl_certificate_key $SSL_KEY;
 
+    ssl_protocols TLSv1.2 TLSv1.3;
+
     # Frontend static files in production
     location / {
         root /usr/share/nginx/html;
@@ -68,6 +70,8 @@ server {
 
     ssl_certificate $SSL_CERT;
     ssl_certificate_key $SSL_KEY;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
 
     # In development, proxy to the frontend dev server
     location / {
