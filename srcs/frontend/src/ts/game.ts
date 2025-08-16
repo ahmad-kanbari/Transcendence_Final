@@ -346,7 +346,7 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}_team `;
+                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}_team`;
                 this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
@@ -1973,6 +1973,7 @@ createMultiplayerMatchData(
             // Final match - announce based on stored tournamentArr winners
             let winner1 = this.getWinnerName(this.tournamentArr[0]);
             const winner2 = this.getWinnerName(this.tournamentArr[1]);
+            console.log("WINNERS: ", winner1, winner2);
             document.getElementById('tournamentAnnouncement')!.textContent =
                 `Final: ${winner1} vs ${winner2}`;
             // Update bracket display

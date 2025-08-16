@@ -117,9 +117,9 @@ module.exports = (matchModel, teamModel, userModel) => {
 			const matches = await matchModel
 				.db("matches")
 				.where(function () {
-					this.where("player1_name", user.username).orWhere(
-						"player2_name",
-						user.username
+					this.where("player1_id", user.id).orWhere(
+						"player2_id",
+						user.id
 					);
 				})
 				.whereNot({ match_type: "multiplayer" });
@@ -135,14 +135,10 @@ module.exports = (matchModel, teamModel, userModel) => {
 
 			matches.forEach((match) => {
 				if (match.status === "finished") {
-					const isPlayer1 = match.player1_name === user.username;
-					const player1Won =
-						match.player1_score > match.player2_score;
-
-					if (
-						(isPlayer1 && player1Won) ||
-						(!isPlayer1 && !player1Won)
-					) {
+					const isPlayer1 = match.player1_id === user.id;
+					const player1Won = match.player1_score > match.player2_score;
+			
+					if ((isPlayer1 && player1Won) || (!isPlayer1 && !player1Won)) {
 						stats.wins++;
 					} else {
 						stats.losses++;
