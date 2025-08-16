@@ -8,6 +8,9 @@ RUN npm install
 
 COPY . .
 
+# Install sqlite3 library
+RUN apk add --no-cache sqlite
+
 # Create the db directory if it doesn't exist
 RUN mkdir -p db
 
