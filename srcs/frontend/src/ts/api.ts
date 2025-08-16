@@ -529,6 +529,8 @@ class API {
           }
           
           const userData = await response.json();
+          console.log('User data full fetched:', userData);
+          localStorage.setItem('user', JSON.stringify(userData));
           
           return { 
               success: true, 

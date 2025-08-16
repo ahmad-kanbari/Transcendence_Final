@@ -756,17 +756,38 @@ async startGame(): Promise<void> {
     this.lastTime = performance.now();
     this.animationFrameId = requestAnimationFrame(this.gameLoop);
     
-    const storedUser = localStorage.getItem('user');
-    const userData = JSON.parse(storedUser ?? '{}');
+    // const storedUser = localStorage.getItem('user');
+    // const userData = JSON.parse(storedUser ?? '{}');
+     let CurrentUser = await api.getCurrentUser();
+          if (CurrentUser.success && CurrentUser.data) {
+              this.userId = CurrentUser.data.user.user.id ;
+              app.userId = this.userId; // Update app user ID
+              // this.userName = CurrentUser.data.user.username;
+              
+              console.log("Current user ID:", CurrentUser.data.user.user.id);
+          } 
+          let UserFromApi = await api.getUserById(String(this.userId));
+          console.log("User data from API in game:", UserFromApi);
+          let  userData = UserFromApi.data ;
+          if (UserFromApi.success && UserFromApi.data) {
+            userData = UserFromApi.data ;
+            console.log("User data from API:", userData);
+            // this.userId = userData?.id ||  this.userId || 0;
+            this.userName = userData.username;
+            // this.player1Name!.textContent = this.userName || 'PLAYER_1';
+            console.log("User name from API:", this.userName);
+            // localStorage.setItem('user', JSON.stringify(userData.user));
+            
+          }
     
     // console.log("userData in game before creating match:", userData);
     // console.log("Player 2", this.player2Name!.textContent);
     // Initialize base match object
     this.matchObj = {
         matchId: null,
-        player1_id: Number(userData.user?.id) || this.userId || 0,
+        player1_id: Number(userData.id) || this.userId || 0,
         player2_id: null,
-        player1_name: userData.user?.username || this.player1Name!.textContent || 'PLAYER_1',
+        player1_name: userData.username || this.player1Name!.textContent || 'PLAYER_1',
         player2_name: this.player2Name!.textContent || 'PLAYER_2',
         player1_score: 0,
         player2_score: 0,

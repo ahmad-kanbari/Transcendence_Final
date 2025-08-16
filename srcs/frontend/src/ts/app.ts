@@ -222,7 +222,7 @@ class App {
                     }
                   }
 
-                  toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
+                  // toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
                   login.updateUIAuthState();
                   
                   // Check if 2FA is required
@@ -269,7 +269,7 @@ class App {
               this.state.user = result.data.user;
               this.state.isAuthenticated = result.data.isAuthenticated ?? false;
               
-              toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
+              // toastManager.success(this.getUsername(), `Hello ${this.getUsername()}! Welcome Back!`);
               login.updateUIAuthState();
               
               // Check if 2FA is required
@@ -445,6 +445,28 @@ class App {
         //   login.updateUIAuthState();
         //   return;
         // }
+              // console.log('Access token found, fetching current user data ing ame');
+          let CurrentUser = await api.getCurrentUser();
+          if (CurrentUser.success && CurrentUser.data) {
+              this.userId = CurrentUser.data.user.user.id ;
+              app.userId = this.userId; // Update app user ID
+              // this.userName = CurrentUser.data.user.username;
+              
+              console.log("Current user ID:", CurrentUser.data.user.user.id);
+          } 
+          let UserFromApi = await api.getUserById(String(this.userId));
+          console.log("User data from API in game:", UserFromApi);
+          let  userData = UserFromApi.data ;
+          if (UserFromApi.success && UserFromApi.data) {
+            userData = UserFromApi.data ;
+            console.log("User data from API:", userData);
+            // this.userId = userData?.id ||  this.userId || 0;
+            this.userName = userData.username;
+            // this.player1Name!.textContent = this.userName || 'PLAYER_1';
+            console.log("User name from API:", this.userName);
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+          }
         if (this.state.user) {
             pages.showPage('game');
             // login.updateUIAuthState();
@@ -452,7 +474,7 @@ class App {
                   game.cleanup();
               }
             game.init(
-              this.getUsername(),
+              this.userName || 'PLAYER_1',
               this.setSubmitMatchFunction.bind(this),
               this.setSubmitTournamentFunction.bind(this)
             );
@@ -474,7 +496,7 @@ class App {
               pages.showPage('game');
             
               game.init(
-                this.getUsername(),
+                this.userName || 'PLAYER_1',
                 this.setSubmitMatchFunction.bind(this),
                 this.setSubmitTournamentFunction.bind(this)
               );
@@ -895,6 +917,7 @@ class App {
                 this.userName = null;
             }
         }
+
     return this.userName ||this.state.user?.username || '';
   }
 
