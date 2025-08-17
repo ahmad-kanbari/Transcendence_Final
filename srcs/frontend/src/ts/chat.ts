@@ -1315,9 +1315,8 @@ private addSearchButtons(): void {
     
 
         try {
-            console.log(`Loading messages from join room function`);
+       
             this.clearMessages(); // Clear messages before loading new ones
-            toastManager.info(app.getUsername(), 'Loading messages...');
             // toastManager.info(app.getUsername(), `Loaded  messages from chat ${chatId}`);
             setTimeout(async () => {
                 const messages = await api.getChatMessages(chatId.toString());
@@ -1474,8 +1473,7 @@ private addSearchButtons(): void {
             const result = await api.sendMessage(this.currentChatId.toString(), content);
             
             if (result.ok) {
-                // this.appendMessage({ sender_id: this.currentUserId ,content: content});
-                toastManager.success(app.getUsername(), `Message sent to ${this.currentChatWithUsername} User AND THE MESSAGE IS ${this.elements.messageInput.value}'}`);
+           
                 this.elements.messageInput.value = '';
                 
                 // Reset character count display
