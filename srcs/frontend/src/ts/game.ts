@@ -346,7 +346,7 @@ class PongGame {
         const multiplayerButton = document.getElementById('multiplayerButton');
         if (multiplayerButton) {
             multiplayerButton.addEventListener('click', () => {
-                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}_team`;
+                this.player1Name!.textContent = `${this.aliasUsernamePlayer1 || this.userName}`;
                 this.player2Name!.textContent = this.matchObj.player2_name ?? 'Opp_team';
                 this.setGameMode('multiplayer');
             });
